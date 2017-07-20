@@ -1,0 +1,9 @@
+<?page title="${applicationScope['appName']} - ${labels.usr.logout.title}"?>
+<?init class="org.gluu.credmanager.core.navigation.LogoutInitiator"?>
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <label value="${labels.usr.logout.title}" />
+    <button label="${labels.usr.logout.return}" href="{$page.homeUrl}" />
+
+</zk>

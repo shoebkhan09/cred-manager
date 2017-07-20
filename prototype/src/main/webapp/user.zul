@@ -1,0 +1,65 @@
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/templates/general.zul"?>
+<?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd"
+    xmlns:n="native">
+
+    <vlayout sclass="dpadded" self="@define(content)"
+             viewModel="@id('vm') @init('org.gluu.credmngr.UserCredentialsModel')">
+        <include src="header.zul"/>
+        <include src="messages.zul"/>
+        <include src="preferred.zul"/>
+        <panel title="${labels.usr.mobile_title}" sclass="padded" border="normal">
+            <panelchildren sclass="padded">
+                <vlayout>
+                    <label value="${labels.usr.mobile_text}"/>
+                    <div sclass="padded" align="center">
+                        <vlayout>
+                            <!--label value="${labels.usr.mobile_summary}"/-->
+                            <label value="@load(vm.textCountPhones)" sclass="de_emphasized"/>
+                            <button label="${labels.usr.mobile_changeadd}" sclass="btn-success" href="phone-sms.zul"/>
+                        </vlayout>
+                    </div>
+                </vlayout>
+            </panelchildren>
+        </panel>
+        <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" id="chg_panel">
+            <panelchildren sclass="padded">
+                <vlayout>
+                    <hlayout spacing="10px" valign="bottom">
+                        <div sclass="form_element s8"><label value="${labels.usr.passreset_current}"/></div>
+                        <textbox type="password" sclass="s8 form-control" id="current_pwd"/>
+                    </hlayout>
+                    <hlayout spacing="10px" valign="bottom">
+                        <div sclass="form_element s8"><label value="${labels.usr.passreset_newpass}"/></div>
+                        <textbox type="password" sclass="s8 form-control" id="new_pwd" onChange="@command('measureStrength', target=strength, pwd=self.value)"/>
+                    </hlayout>
+                    <hlayout spacing="10px" sclass="dpadded">
+                        <div sclass="s8">&#160;</div>
+                        <vlayout>
+                            <label value="${labels.usr.passreset_strength_hint}" sclass="de_emphasized"/>
+                            <label id="strength" sclass="de_emphasized bold"/>
+                        </vlayout>
+                    </hlayout>
+                    <hlayout spacing="10px" valign="bottom">
+                        <div sclass="form_element s8"><label value="${labels.usr.passreset_confirm}"/></div>
+                        <textbox type="password" sclass="s8 form-control" id="new_pwd_confirm" onChanging="chg_btn.disabled=false;"/>
+                    </hlayout>
+                    <div sclass="padded" align="center">
+                        <label value="${labels.usr.passreset_text}" pre="true" sclass="bold"/>
+                    </div>
+                    <div align="center" >
+                        <hlayout spacing="20px" valign="bottom">
+                            <button label="&#160;${labels.usr.passreset_change}&#160;" sclass="btn-success" id="chg_btn" onClick="@command('')" disabled="true"/>
+                            <button label="${labels.general.cancel}" sclass="btn-success" onClick='current_pwd.value="";new_pwd.value="";new_pwd_confirm.value="";chg_btn.disabled=true;chg_panel.open=false;'/>
+                        </hlayout>
+                    </div>
+                </vlayout>
+            </panelchildren>
+        </panel>
+    </vlayout>
+    <div sclass="padded" self="@define(comments)">
+        <n:p align="center">${labels.user.title}</n:p>
+        <n:p>${labels.user.description}</n:p>
+    </div>
+</zk>

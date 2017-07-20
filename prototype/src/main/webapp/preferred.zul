@@ -1,0 +1,20 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd"
+    xmlns:n="native">
+
+    <panel title="${labels.usr.preferred_title}" sclass="padded" border="normal">
+        <panelchildren sclass="padded">
+            <vlayout>
+                <label value="${labels.usr.preferred_text}"/>
+                <vlayout sclass="padded">
+                    <hlayout valign="bottom">
+                        <label value="${labels.usr.method.none}"/>
+                        <image src="images/edit_24.png" sclass="icon_edit unactivated"/>
+                    </hlayout>
+                    <!-- if image is grayed, next label is visible, and viceversa -->
+                    <label value="${labels.usr.preferred_disabled}" style="font-weight:bold"/>
+                </vlayout>
+            </vlayout>
+        </panelchildren>
+    </panel>
+</zk>

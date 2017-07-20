@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk>
+    <preference>
+        <name>org.zkoss.zk.ui.WebApp.name</name>
+        <value>Credential manager</value>
+    </preference>
+    <library-property>
+        <name>org.zkoss.zul.image.preload</name>
+        <value>true</value>
+    </library-property>
+    <library-property>
+        <name>org.zkoss.zul.Button.mold</name>
+        <value>bs</value>
+    </library-property>
+    <library-property>
+        <name>org.zkoss.zul.Menupopup.mold</name>
+        <value>bs</value>
+    </library-property>
+    <!--library-property>
+        <name>org.zkoss.zul.Panel.mold</name>
+        <value>bs</value>
+    </library-property-->
+    <library-property>
+        <name>org.zkoss.web.preferred.locale</name>
+        <value>en</value>
+    </library-property>
+    <library-property>
+        <name>org.zkoss.util.label.web.charset</name>
+        <value>ISO-8859-1</value>
+    </library-property>
+    <client-config>
+        <tooltip-delay>70</tooltip-delay>
+    </client-config>
+    <listener>
+        <listener-class>org.gluu.credmanager.core.init.AppInitializer</listener-class>
+    </listener>
+    <system-config>
+        <label-location>/WEB-INF/labels/application.properties</label-location>
+        <label-location>/WEB-INF/labels/general.properties</label-location>
+        <label-location>/WEB-INF/labels/user.properties</label-location>
+    </system-config>
+</zk>

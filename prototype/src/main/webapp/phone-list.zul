@@ -1,0 +1,57 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd"
+    xmlns:n="native">
+
+    <popup id="tooltip_edit">${labels.general.edit}</popup>
+    <popup id="tooltip_delete">${labels.general.delete}</popup>
+
+    <window id="win" title="${labels.usr.mobile_edit}" border="normal" closable="true" visible="false">
+        <vlayout sclass="padded">
+            <label value="${labels.general.new_nick}" />
+            <!--placeholder="${labels.general.new_nick}"-->
+            <div sclass="dpadded">
+                <textbox sclass="s12 form-control" id="new_nick" value=""/><!-- @bind(vm.editionCred.nickname) -->
+            </div>
+            <div align="center">
+                <hlayout spacing="20px" sclass="padded">
+                    <button label="${labels.general.update}" sclass="btn-success" onClick="@command('updateCredential', nick=new_nick.value, target=win)" />
+                    <button label="${labels.general.cancel}" sclass="btn-success" onClick="win.visible=false" />
+                </hlayout>
+            </div>
+        </vlayout>
+    </window>
+
+    <!--  visible="@load(vm.verifiedPhones)" -->
+    <grid model="@load(vm.verifiedPhones)">
+        <!--rows-->
+        <template name="model">
+            <row>
+                <hlayout>
+                    <vlayout hflex="1" sclass="padded">
+                        <hlayout>
+                            <label value="@load(each.identifier)" sclass="bold"/>
+                            <label value="-" sclass="bold" />
+                            <label value="@load(each.nickname)" sclass="bold"/>
+                        </hlayout>
+                        <hlayout>
+                            <label value="${labels.general.added_on}"/>
+                            <label value="@load(each.timeAdded) @converter('formatedDate', format='MMM d, yyyy - hh:mm aaa')"/>
+                        </hlayout>
+                        <hlayout>
+                            <label value="${labels.general.last_used}"/>
+                            <label if="${each.lastUsed != null}" value="@load(each.lastUsed) @converter('formatedDate', format='MMM d, yyyy - hh:mm aaa')"/>
+                            <label if="${each.lastUsed == null}" value="${labels.general.never}"/>
+                        </hlayout>
+                    </vlayout>
+                    <!-- height="100%" vflex="1" valign="bottom" -->
+                    <hlayout sclass="couple_icons">
+                        <image src="images/edit_24.png" sclass="icon_edit" tooltip="tooltip_edit, after_pointer" onClick="@command('prepareOnEditionCred', cred=each, target=win)"/>
+                        <space width="0px"/>
+                        <image src="images/delete_48.png" sclass="icon_delete" tooltip="tooltip_delete, after_pointer" onClick="@command('delCredential', id=each.identifier, type=each.type, nick=each.nickname)"/>
+                    </hlayout>
+                </hlayout>
+            </row>
+        <!--/rows-->
+        </template>
+    </grid>
+</zk>

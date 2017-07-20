@@ -1,0 +1,34 @@
+<div viewModel="@id('vm') @init('org.gluu.credmngr.ViewModel')">
+    <style src="@load(vm.mobile ? 'styles/mobile.css' : 'styles/desktop.css')">
+    </style>
+    <hbox>
+        <vlayout width="@load(vm.mobile ? '100%' : '950px')" self="@insert(content)" />
+        <splitter visible="@load(!vm.mobile)" collapse="after" open="true" />
+        <vlayout hflex="1" self="@insert(comments)" visible="@load(!vm.mobile)" />
+    </hbox>
+
+    <!--zk choose="">
+        <zk when="@load(vm.mobile)">
+            <style src="styles/mobile.css">
+            </style>
+            <vlayout width="100%" self="@insert(content)" />
+        </zk>
+        <zk>
+            <style src="styles/desktop.css')">
+            </style>
+            <hbox>
+                <vlayout width="1020px" self="@insert(content)" />
+                <splitter collapse="after" />
+                <vlayout hflex="1" self="@insert(comments)" />
+            </hbox>
+        </zk>
+    </zk-->
+
+    <!-- apply="org.zkoss.bind.BindComposer"
+    vlayout width="@load(vm.mobile ? '100%' : '1020px')" self="@insert(content)" /-->
+    <!--borderlayout width="@load(vm.mobile ? '100%' : '1020px')" height="100%">
+        <center self="@insert(content)" />
+
+        <east id="annotations" collapsible="true" splittable="true" width="28%" self="@insert(comments)" visible="@load(!vm.mobile)" />
+    </borderlayout-->
+</div>

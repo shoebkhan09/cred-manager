@@ -1,0 +1,39 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd"
+    xmlns:n="native">
+
+    <style>
+        .header{
+            background:#00BE79;
+            color: #fff;
+        }
+        .btn-link{
+            color: #fff;
+        }
+        .btn-link:hover{
+            color: #fff;
+            text-decoration: none;
+        }
+        .btn-link:focus{
+            color: #fff;
+            text-decoration: none;
+        }
+    </style>
+
+    <hlayout width="100%" sclass="header">
+        <hlayout hflex="1" valign="middle">
+            <image sclass="logo" src="images/logo.png"/>
+        </hlayout>
+        <div width="180px">
+            <menupopup id="pop">
+                <!-- LANGUAGE SELECTOR -->
+                <menuitem label="${labels.general.change_lang}"/>
+                <menuitem label="${labels.general.help}"/>
+                <menuseparator/>
+                <menuitem label="${labels.general.logout}"/>
+            </menupopup>
+            <!--  -->
+            <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle" iconSclass="caret" image="images/shadowed_man.png" id="menu_button" label="Welcome, Will&#160;" />
+        </div>
+    </hlayout>
+</zk>
