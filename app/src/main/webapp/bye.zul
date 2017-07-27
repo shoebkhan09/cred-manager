@@ -4,6 +4,6 @@
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
     <label value="${labels.usr.logout.title}" />
-    <button label="${labels.usr.logout.return}" href="{$page.homeUrl}" />
+    <button label="${labels.usr.logout.back_home}" href="${pageScope.homeUrl}" />
 
 </zk>

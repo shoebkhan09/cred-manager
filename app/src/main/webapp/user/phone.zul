@@ -1,0 +1,19 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.usr.mobile_title}" sclass="padded" border="normal">
+        <panelchildren sclass="padded">
+            <vlayout>
+                <label value="${labels.usr.mobile_text}"/>
+                <div sclass="padded" align="center">
+                    <vlayout>
+                        <!--label value="${labels.usr.mobile_summary}"/>
+                        <label value="@load(vm.textCountPhones)" sclass="de_emphasized"/-->
+                        <button label="${labels.usr.mobile_changeadd}" sclass="btn-success" href="user/phone-detail.zul"/>
+                    </vlayout>
+                </div>
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+</zk>

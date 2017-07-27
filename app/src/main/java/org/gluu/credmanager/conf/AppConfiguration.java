@@ -14,6 +14,7 @@ import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.swing.text.html.Option;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -37,13 +38,14 @@ public class AppConfiguration {
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
     private final String OXAUTH_WAR_LOCATION= "/opt/gluu/jetty/oxauth/webapps/oxauth.war";
     private final String DEFAULT_GLUU_VERSION="3.0.1";
-
+    public static final int ACTIVATE2AF_CREDS_GTE=2;
 
     //========== Properties exposed by this service ==========
 
     private ConfigFile configSettings;
     private boolean inOperableState=false;  //Use pesimistic approach (assume it's likelier to fail than to succeed)
     private String orgName;
+    private String u2fMetadataUri;
 
     //The following override those properties inside found inside configSettings
     private Set<CredentialType> enabledMethods;
@@ -76,6 +78,10 @@ public class AppConfiguration {
 
     public Set<CredentialType> getEnabledMethods() {
         return enabledMethods;
+    }
+
+    public String getU2fMetadataUri() {
+        return u2fMetadataUri;
     }
 
     public boolean isInOperableState() {
@@ -131,7 +137,7 @@ public class AppConfiguration {
                                 mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
                                 mapper.writeValue(src, configSettings);
                             }
-                            catch (Exception e){
+                            catch (Exception e) {
                                 logger.error(Labels.getLabel("app.conf_update_error"), e);
                             }
                 }
@@ -162,9 +168,10 @@ public class AppConfiguration {
                 if (ldapService!=null) {
                     try {
                         orgName = ldapService.getOrganizationName();
+                        computeGluuVersion(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
-                        computeGluuVersion(settings);
+                        computeAuxiliaryUris(settings); //Don't call this before computeEnabledMethods or computeGluuVersion
 
                         OxdConfig oxdConfig = settings.getOxdConfig();
                         if (oxdConfig==null)
@@ -233,6 +240,37 @@ public class AppConfiguration {
 
     }
 
+    private void computeAuxiliaryUris(ConfigFile settings) throws Exception{
+
+        Optional<String> issuer=Utils.stringOptional(ldapService.getIssuerUrl());
+        if (issuer.isPresent()){
+            if (enabledMethods.contains(CredentialType.SECURITY_KEY)) {
+
+                String u2fRelativeMetadataUri = settings.getU2fRelativeMetadataUri();
+                Optional<String> u2fOpt = Optional.ofNullable(u2fRelativeMetadataUri);
+
+                if (!u2fOpt.isPresent()) {
+                    //TODO: fix this switch
+                    switch (gluuVersion) {
+                        case "3.1.0":
+                        case "3.0.1":
+                        case "3.0.2":
+                            u2fRelativeMetadataUri = "restv1/fido-u2f-configuration";
+                            break;
+                        default:
+                            u2fRelativeMetadataUri = "restv1/fido-u2f-configuration";
+                    }
+                    logger.warn(Labels.getLabel("app.metadata_guessed"), CredentialType.SECURITY_KEY.getName(), u2fRelativeMetadataUri);
+                }
+                u2fMetadataUri = String.format("%s/%s", ldapService.getIssuerUrl(), u2fRelativeMetadataUri);
+            }
+
+        }
+        else
+            throw new Exception(Labels.getLabel("app.invalid_issuer"));
+
+    }
+
     private void computeEnabledMethods(ConfigFile settings) throws Exception{
 
         String strArr[]=new String[]{};
@@ -265,7 +303,7 @@ public class AppConfiguration {
         logger.warn(Labels.getLabel("app.effective_acrs"), Arrays.asList(strArr).toString(), strArr.length);
 
         //Put it on this bean...
-        Stream<CredentialType> stream=enabledSet.stream().map(str -> CredentialType.getType(str));
+        Stream<CredentialType> stream=enabledSet.stream().map(CredentialType::get);
         enabledMethods=stream.collect(Collectors.toCollection(HashSet::new));
 
     }

@@ -1,0 +1,19 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.usr.u2f_title}" sclass="padded" border="normal">
+        <panelchildren sclass="padded">
+            <vlayout>
+                <label value="${labels.usr.u2f_text}"/>
+                <div sclass="padded" align="center">
+                    <vlayout>
+                        <!-- u2f summary-->
+                        <button label="${labels.usr.u2f_changeadd}" sclass="btn-success" href="user/u2f-detail.zul"/>
+                        <label value="${labels.usr.u2f_buy_title}" /><!-- use native? -->
+                    </vlayout>
+                </div>
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+</zk>

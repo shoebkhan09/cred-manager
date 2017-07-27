@@ -5,10 +5,8 @@
 <?init class="org.gluu.credmanager.core.navigation.HomeInitiator"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
-    <div viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.HomeViewModel')" onCreate="@command('onViewCreated')">
+    <div if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.HomeViewModel')" onCreate="@command('onViewCreated')">
         <label value="@load(vm.hint)" />
-        <label value="${pageScope.error}" />
-        <label value="${pageScope.description}" />
 
         <radiogroup id="methods" selectedIndex="@bind(vm.selectedMethodIndex)" />
         <grid model="@load(vm.availMethods)">
@@ -20,4 +18,10 @@
         </grid>
         <button label="${labels.general.proceed}" onClick="@command('reauthenticate')" />
     </div>
+
+    <vlayout if="${not empty pageScope.error}">
+        <label value="${pageScope.error}" />
+        <label value="${pageScope.description}" />
+    </vlayout>
+
 </zk>

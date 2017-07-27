@@ -4,6 +4,8 @@ import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapDN;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
+import org.xdi.ldap.model.BaseEntry;
+import org.xdi.ldap.model.Entry;
 
 import java.io.Serializable;
 
@@ -12,24 +14,13 @@ import java.io.Serializable;
  */
 @LdapEntry
 @LdapObjectClass(values = {"top", "gluuOrganization"})
-public class GluuOrganization implements Serializable{
-
-    @LdapDN
-    private String dn;
+public class GluuOrganization extends Entry{
 
     @LdapAttribute(name = "displayName")
     private String name;
 
     public String getName() {
         return name;
-    }
-
-    public String getDn() {
-        return dn;
-    }
-
-    public void setDn(String dn) {
-        this.dn = dn;
     }
 
     public void setName(String name) {

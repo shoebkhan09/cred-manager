@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Created by jgomer on 2017-07-16.
  */
-public class HomeInitiator implements Initiator {
+public class HomeInitiator extends FailedPage implements Initiator {
 
     private ServiceMashup services;
     private String code;
@@ -28,8 +28,7 @@ public class HomeInitiator implements Initiator {
 
     public void doInit(Page page, Map <String, Object> map){
 
-        logger.info(Labels.getLabel("app.landed_home_from"), WebUtils.getRequestHeader("Referer"));
-
+        //logger.info(Labels.getLabel("app.landed_home_from"), WebUtils.getRequestHeader("Referer"));
         Session se=Sessions.getCurrent(true);
         RedirectStage stage=WebUtils.getRedirectStage(se);
 
@@ -55,9 +54,11 @@ public class HomeInitiator implements Initiator {
                         WebUtils.setUser(se, user);
 
                         CredentialType credType=usrService.getPreferredMethod(user);
-                        if (credType==null)     //Preferred method not set, go straight to landing page
-                            WebUtils.execRedirect(user.isAdmin()? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
-                        else    //See accompanying view model of this zul page
+                        if (credType==null) {     //Preferred method not set, go straight to landing page
+                            WebUtils.setRedirectStage(se, RedirectStage.BYPASS);
+                            WebUtils.execRedirect(user.isAdmin() ? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
+                        }
+                        else    //See the accompanying view model of this zul page
                             WebUtils.setRedirectStage(se, RedirectStage.REAUTHENTICATE);
                     }
                     break;
@@ -68,13 +69,20 @@ public class HomeInitiator implements Initiator {
                     */
                     if (!errorProcessed(page) && WebUtils.getQueryParam("code")!=null){
                         User user=WebUtils.getUser(se);
+                        WebUtils.setRedirectStage(se, RedirectStage.BYPASS);
                         WebUtils.execRedirect(user.isAdmin()? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
                     }
+                    break;
+                case BYPASS:
+                    //Nothing much to check
+                    User user=WebUtils.getUser(se);
+                    WebUtils.execRedirect(user.isAdmin()? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
                     break;
             }
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
+            setPageErrors(page, Labels.getLabel("general.error.general"), e.getMessage());
         }
 
     }
@@ -87,11 +95,6 @@ public class HomeInitiator implements Initiator {
             setPageErrors(page, error, WebUtils.getQueryParam("error_description"));
         return errorsFound;
 
-    }
-
-    private void setPageErrors(Page page, String error, String description){
-        page.setAttribute("error", error);
-        page.setAttribute("description", description);
     }
 
 }

@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
-import org.gluu.credmanager.services.ldap.pojo.GluuOrganization;
-import org.gluu.credmanager.services.ldap.pojo.GluuPerson;
-import org.gluu.credmanager.services.ldap.pojo.OxAuthConfiguration;
-import org.gluu.credmanager.services.ldap.pojo.OxTrustConfiguration;
+import org.gluu.credmanager.core.credential.SecurityKey;
+import org.gluu.credmanager.core.credential.VerifiedPhone;
+import org.gluu.credmanager.services.UserService;
+import org.gluu.credmanager.services.ldap.pojo.*;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
+import org.gluu.site.ldap.persistence.AttributeData;
+import org.gluu.site.ldap.persistence.AttributeDataModification;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.PropertiesDecrypter;
@@ -20,6 +22,7 @@ import org.zkoss.util.resource.Labels;
 import javax.enterprise.context.ApplicationScoped;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by jgomer on 2017-07-06.
@@ -86,8 +89,8 @@ public class LdapService {
         return strOxAuthConfig;
     }
 
-    public GluuPerson getGluuPerson(String inum) throws Exception{
-        String dn=String.format("inum=%s,ou=people,o=%s,o=gluu", inum, ldapSettings.getOrgInum());
+    public GluuPerson getGluuPerson(String rdn) throws Exception{
+        String dn=String.format("%s,ou=people,o=%s,o=gluu", rdn, ldapSettings.getOrgInum());
         return ldapEntryManager.find(GluuPerson.class, dn);
     }
 
@@ -102,17 +105,52 @@ public class LdapService {
     }
 
     public String getOIDCEndpoint() throws Exception{
-
         JsonNode tree=mapper.readTree(getStrOxAuthConfig());
         return tree.get("openIdConfigurationEndpoint").asText();
-
     }
 
+    public String getIssuerUrl() throws Exception{
+        JsonNode tree=mapper.readTree(getStrOxAuthConfig());
+        return tree.get("issuer").asText();
+    }
 
-    //String here=ldapService.getEntryValue("ou=oxauth,ou=configuration,inum=@!3245.DF39.6A34.9E97!0002!CFBE.8F9E,ou=appliances,o=gluu");
-    //logger.info("HERE: "+ here);
-    public String getEntryValue(String dn){
-        return Arrays.asList(ldapEntryManager.getLDIF(dn)).toString();
+    public List<SecurityKey> getFidoDevices(String userRdn){
+
+        //TODO: implement this thoroughly
+        String dn=String.format("%s,ou=people,o=%s,o=gluu", userRdn, ldapSettings.getOrgInum());
+        return ldapEntryManager.findEntries(String.format("ou=fido,%s", dn), SecurityKey.class, null);
+    }
+
+    public void updateMobilePhones(String userRdn, List<VerifiedPhone> mobs, VerifiedPhone phone, String jsonPhones) throws Exception{
+    /*
+        String attributeName="mobile";
+        String dn=String.format("%s,ou=people,o=%s,o=gluu", userRdn, ldapSettings.getOrgInum());
+
+        //Extract list of numbers first
+        List<String> phones=mobs.stream().map(VerifiedPhone::getNumber).collect(Collectors.toList());
+        String[] emptyArr =new String[]{};
+
+        //Delete previous phones
+        AttributeData data=new AttributeData(attributeName, phones.toArray(emptyArr));
+        AttributeDataModification mod=new AttributeDataModification(AttributeDataModification.AttributeModificationType.REMOVE, null, data);
+        ldapEntryManager.merge(dn, Collections.singletonList(mod));
+
+        //Create new phones
+        List<String> newPhones=new ArrayList<> (phones);
+        newPhones.add(phone.getNumber());
+        data=new AttributeData(attributeName, newPhones.toArray(emptyArr));
+        mod=new AttributeDataModification(AttributeDataModification.AttributeModificationType.ADD, data, null);
+        ldapEntryManager.merge(dn, Collections.singletonList(mod));
+    */
+        GluuPerson person=getGluuPerson(userRdn);
+
+        List<String> phones=mobs.stream().map(VerifiedPhone::getNumber).collect(Collectors.toList());
+        phones.add(phone.getNumber());
+        person.setMobileNumbers(phones);
+
+        person.setVerifiedPhonesJson(jsonPhones);
+        ldapEntryManager.merge(person);
+
     }
 
 }

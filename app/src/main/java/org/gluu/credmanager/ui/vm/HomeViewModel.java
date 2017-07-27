@@ -9,6 +9,7 @@ import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ServiceMashup;
 import org.gluu.credmanager.services.UserService;
 import org.gluu.credmanager.services.oxd.OxdService;
+import org.gluu.credmanager.ui.model.UIModel;
 import org.zkoss.bind.annotation.Command;
 import org.zkoss.bind.annotation.Init;
 import org.zkoss.util.Pair;
@@ -17,8 +18,6 @@ import org.zkoss.zk.ui.*;
 import org.zkoss.zul.ListModelSet;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.gluu.credmanager.core.WebUtils.RedirectStage;
 import static org.gluu.credmanager.core.WebUtils.RedirectStage.REAUTHENTICATE;
@@ -26,7 +25,7 @@ import static org.gluu.credmanager.core.WebUtils.RedirectStage.REAUTHENTICATE;
 /**
  * Created by jgomer on 2017-07-19.
  */
-public class HomeViewModel {
+public class HomeViewModel{
 
     private Logger logger = LogManager.getLogger(getClass());
     private ServiceMashup services;
@@ -76,23 +75,16 @@ public class HomeViewModel {
                     //show in this page the method selector
                     setHint(Labels.getLabel("usr.method.choose"));
 
-                    //Create model for list of methods
-                    Stream<Pair<CredentialType, String>> streamPairs=enabledMethods.stream().map(this::createPair);
-                    List<Pair<CredentialType, String>> list=streamPairs.collect(Collectors.toList());
-
-                    availMethods=new ListModelSet<>(list);
+                    //get a model for list of methods
+                    availMethods= UIModel.getCredentialList(enabledMethods);
                     CredentialType cdtype=usrService.getPreferredMethod(WebUtils.getUser(se));
-                    selectedMethodIndex=availMethods.indexOf(createPair(cdtype));
+                    selectedMethodIndex=availMethods.indexOf(UIModel.createPair(cdtype));
                 }
             }
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
         }
-    }
-
-    private Pair<CredentialType, String> createPair(CredentialType cdtype){
-        return new Pair(cdtype, Labels.getLabel("general.credentials." + cdtype));
     }
 
     @Command
@@ -114,7 +106,7 @@ public class HomeViewModel {
                     //do second Authz Redirect
                     WebUtils.execRedirect(oxdService.getAuthzUrl(Collections.singletonList(acrOptional.get()), "login"));
                 else
-                    //theorically this branch should not be reached... (this is hit in the Initiator already)
+                    //In theory this branch should not be reached... (this is hit in the Initiator already)
                     WebUtils.execRedirect(user.isAdmin()? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
             }
         }

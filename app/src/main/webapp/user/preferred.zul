@@ -1,0 +1,51 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.usr.preferred_title}" sclass="padded" border="normal" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserPreferenceViewModel')">
+        <panelchildren sclass="padded">
+            <vlayout>
+                <label value="${labels.usr.preferred_text}"/>
+                <vlayout sclass="padded">
+                    <hlayout valign="bottom">
+                        <label value="@load(vm.currentPreferred)"/>
+                        <zk choose="">
+                            <zk when="@load(vm.editable)">
+                                <image src="images/edit_24.png" tooltip="tooltip_delete, after_pointer" sclass="icon_edit" onClick="@command('prepareUpdateMethod')" />
+                            </zk>
+                            <zk>
+                                <image src="images/edit_24.png" sclass="icon_edit unactivated" />
+                            </zk>
+                        </zk>
+                    </hlayout>
+                    <!-- if image is "unactivated", next label is visible, and viceversa -->
+                    <label value="${labels.usr.preferred_disabled}" sclass="bold" visible="@load(not vm.editable)"/>
+                </vlayout>
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+    <zk if="@load(vm.editable)">
+        <popup id="tooltip_choose">${labels.usr.preferred_tooltip}</popup>
+
+        <window id="win" title="${labels.usr.preferred_title}" border="normal" closable="true" visible="@load(vm.editing)">
+            <vlayout sclass="padded">
+                <radiogroup id="methods" selectedIndex="@bind(vm.selectedMethodIndex)" />
+                <grid model="@load(vm.availMethods)">
+                    <template name="model">
+                        <row>
+                            <radio label="@load(each.y)" radiogroup="methods" />
+                        </row>
+                    </template>
+                </grid>
+            </vlayout>
+
+            <div align="center">
+                <hlayout spacing="20px" sclass="padded">
+                    <button label="${labels.general.update}" sclass="btn-success" onClick="@command('updateMethod')" />
+                    <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancelMethod')" />
+                </hlayout>
+            </div>
+        </window>
+    </zk>
+
+</zk>

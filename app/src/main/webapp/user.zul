@@ -1,6 +1,15 @@
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="general.zul"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.title}"?>
-<?init class="org.gluu.credmanager.core.navigation.PageInitiator"?>
+
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <!--button label="logout" onClick="@command('logoutFromAuthzServer')" if="${empty pageScope.error}" /-->
+    <!--include src="header.zul"/-->
+    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserMainViewModel')" self="@define(content)">
+        <include user="@load(vm.user)" src="@load('user/preferred.zul')" /><!--  src="@load(vm.secondFactorAllowed ? 'user/preferred.zul' : '')" -->
+        <include src="@load(vm.credentialsVisibility['SECURITY_KEY'] ? 'user/u2f.zul' : '')" />
+        <include src="@load(vm.credentialsVisibility['VERIFIED_PHONE'] ? 'user/phone.zul' : '')" />
+    </vlayout>
 
 </zk>

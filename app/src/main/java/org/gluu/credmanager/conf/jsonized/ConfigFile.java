@@ -8,16 +8,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Created by jgomer on 2017-07-06.
  */
 
-//TODO: implement the twilio part
-
-@JsonIgnoreProperties({ "twilio_settings" })
 public class ConfigFile {
 
     private boolean enablePassReset;
     private OxdConfig oxdConfig;
     private LdapSettings ldapSettings;
+    private TwilioConfig twilioConfig;
     private String[] enabledMethods;
     private String gluuVersion;
+    private String u2fRelativeMetadataUri;
+
+    public String getU2fRelativeMetadataUri() {
+        return u2fRelativeMetadataUri;
+    }
 
     public LdapSettings getLdapSettings() {
         return ldapSettings;
@@ -33,6 +36,11 @@ public class ConfigFile {
 
     public String[] getEnabledMethods() {
         return enabledMethods;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public TwilioConfig getTwilioConfig() {
+        return twilioConfig;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -63,6 +71,16 @@ public class ConfigFile {
     @JsonProperty("gluu_version")
     public void setGluuVersion(String gluuVersion) {
         this.gluuVersion = gluuVersion;
+    }
+
+    @JsonProperty("twilio_settings")
+    public void setTwilioConfig(TwilioConfig twilioConfig) {
+        this.twilioConfig = twilioConfig;
+    }
+
+    @JsonProperty("u2f_relative_uri")
+    public void setU2fRelativeMetadataUri(String u2fRelativeMetadataUri) {
+        this.u2fRelativeMetadataUri = u2fRelativeMetadataUri;
     }
 
 }

@@ -1,5 +1,7 @@
 package org.gluu.credmanager.conf;
 
+import org.zkoss.util.resource.Labels;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +14,7 @@ public enum CredentialType {
     OTP             ("otp",null),
     VERIFIED_PHONE  ("twilio","twilio_sms");
 
-    //Array with all possible acr values that may exist in a Gluu serer installation and which are related to credential types
+    //Array with all possible acr values that may exist in a Gluu serer installation and which are related to credential types for this app
     public static final List<String> ACR_NAMES_SUPPORTED;
 
     static{
@@ -44,13 +46,17 @@ public enum CredentialType {
         alternativeName=altername;
     }
 
-    public static CredentialType getType(String name){
+    public static CredentialType get(String name){
         CredentialType type=null;
 
         for (CredentialType cdtype : CredentialType.values())
             if (cdtype.name.equals(name) || (cdtype.alternativeName!=null && cdtype.alternativeName.equals(name)))
                 type=cdtype;
         return type;
+    }
+
+    public String getUIName(){
+        return Labels.getLabel("general.credentials." + this);
     }
 
 }

@@ -1,0 +1,88 @@
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/general.zul"?>
+<?page title="${applicationScope['appName']} - ${labels.usr.u2f_title}"?>
+<?script src="/u2f-api.js"?>
+<?script src="/u2f-util.js"?>
+
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <vlayout viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserSecurityKeyViewModel')" self="@define(content)">
+
+        <popup id="tooltip_edit">${labels.general.edit}</popup>
+        <popup id="tooltip_delete">${labels.general.delete}</popup>
+
+        <window id="win" title="${usr.u2f_edit}" border="normal" closable="true" visible="false">
+            <vlayout sclass="padded">
+                <label value="${labels.general.new_nick}" />
+                <div sclass="dpadded">
+                    <textbox sclass="s12 form-control" id="new_nick" />
+                </div>
+                <div align="center">
+                    <hlayout spacing="20px" sclass="padded">
+                        <button label="${labels.general.update}" sclass="btn-success" onClick="@command('')" />
+                        <button label="${labels.general.cancel}" sclass="btn-success" onClick="win.visible=false" />
+                    </hlayout>
+                </div>
+            </vlayout>
+        </window>
+
+        <!--include src="header.zul"/-->
+
+        <div sclass="dpadded" style="padding-left:10px">
+            <button image="../images/back.png" label="&#160; ${labels.general.back_main}" sclass="btn-warning btn-sm form_button" style="padding-left:5px;opacity:0.85" href="../user.zul"/>
+        </div>
+
+        <div align="center" sclass="dpadded"><label value="${labels.usr.u2f_title}" sclass="titled" /></div>
+        <div sclass="padded"><label value="${labels.usr.u2f_text}" /></div>
+        <div sclass="padded">
+            <!-- list -->
+        </div>
+
+        <panel title="${labels.usr.u2f_add}" collapsible="true" border="normal" sclass="padded" open="@load(vm.uiPanelOpened)">
+            <panelchildren sclass="padded">
+                <vlayout>
+                    <zk choose="">
+                        <zk when="@load(vm.onMobile)">
+                            <div align="center">
+                                <label sclass="bold" value="${labels.usr.u2f_mobile_unsupported}" />
+                            </div>
+                        </zk>
+                        <zk when="${zk.ff>0 or zk.chrome>0 or zk.opera>40}">
+                            <hlayout valign="middle">
+                                <label value="${labels.usr.u2f_pressready}" />
+                                <image src="/images/throbber.gif" visible="@load(vm.uiAwaiting)" />
+                            </hlayout>
+                            <div align="center">
+                                <vlayout>
+                                    <button id="readyButton" w:onClick="initialize(this)" onClick="@command('triggerU2fRegisterRequest')"
+                                            label="&#160;${labels.general.ready}&#160;" sclass="btn-success form_button" />
+                                    <label if="${zk.ff>0}" sclass="bold" value="${labels.usr.u2f_unsupported_ff}" />
+                                </vlayout>
+                            </div>
+                            <separator/>
+                            <vlayout visible="@load(vm.uiEnrolled)">
+                                <label value="${labels.usr.u2f_nick}"/>
+                                <div sclass="padded">
+                                    <textbox placeholder="${labels.general.nick}" sclass="s12 form-control" value="@bind(vm.nickName)"/>
+                                </div>
+                                <div align="center">
+                                    <hlayout spacing="10px">
+                                        <button label="&#160;${labels.general.add}&#160;" sclass="btn-success" onClick="@command('addKey')"/>
+                                        <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancelAddKey')"/>
+                                    </hlayout>
+                                </div>
+                            </vlayout>
+                        </zk>
+                        <zk>
+                            <div align="center">
+                                <label sclass="bold" value="${labels.usr.u2f_unsupported_browser}" />
+                            </div>
+                        </zk>
+                    </zk>
+                </vlayout>
+            </panelchildren>
+        </panel>
+
+    </vlayout>
+
+</zk>

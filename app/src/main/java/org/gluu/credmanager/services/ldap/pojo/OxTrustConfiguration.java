@@ -4,30 +4,20 @@ import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapDN;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
+import org.xdi.ldap.model.Entry;
 
 /**
  * Created by jgomer on 2017-07-09.
  */
 @LdapEntry
 @LdapObjectClass(values = { "top", "oxTrustConfiguration"})
-public class OxTrustConfiguration {
-
-    @LdapDN
-    private String dn;
+public class OxTrustConfiguration extends Entry{
 
     @LdapAttribute(name="oxTrustConfCacheRefresh")
     private String strConfCacheRefresh;
 
     @LdapAttribute(name="oxTrustConfApplication")
     private String strConfApplication;
-
-    public String getDn() {
-        return dn;
-    }
-
-    public void setDn(String dn) {
-        this.dn = dn;
-    }
 
     public String getStrConfCacheRefresh() {
         return strConfCacheRefresh;

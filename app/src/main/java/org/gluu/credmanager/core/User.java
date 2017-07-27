@@ -1,6 +1,9 @@
 package org.gluu.credmanager.core;
 
 import org.gluu.credmanager.conf.CredentialType;
+import org.gluu.credmanager.core.credential.RegisteredCredential;
+
+import java.util.List;
 
 /**
  * Created by jgomer on 2017-07-16.
@@ -9,18 +12,13 @@ public class User {
     private String userName;
     private String givenName;
     private String email;
-    private String phone;
-    private String mobilePhone;
     private String rdn;
     private CredentialType preference;
     private boolean admin;
 
+    private List<RegisteredCredential> credentials;
+
     public User(){
-
-    }
-
-    public boolean isAdmin() {
-        return admin;
     }
 
     public void setUserName(String userName) {
@@ -35,16 +33,20 @@ public class User {
         this.email = email;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public void setMobilePhone(String mobilePhone) {
-        this.mobilePhone = mobilePhone;
-    }
-
     public void setRdn(String rdn) {
         this.rdn = rdn;
+    }
+
+    public void setPreference(CredentialType preference) {
+        this.preference = preference;
+    }
+
+    public void setCredentials(List<RegisteredCredential> credentials) {
+        this.credentials = credentials;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 
     public String getUserName() {
@@ -59,14 +61,6 @@ public class User {
         return email;
     }
 
-    public String getPhone() {
-        return phone;
-    }
-
-    public String getMobilePhone() {
-        return mobilePhone;
-    }
-
     public String getRdn() {
         return rdn;
     }
@@ -75,12 +69,33 @@ public class User {
         return preference;
     }
 
-    public void setPreference(CredentialType preference) {
-        this.preference = preference;
+    public List<RegisteredCredential> getCredentials() {
+        return credentials;
     }
 
-    public void setAdmin(boolean admin) {
-        this.admin = admin;
+    public boolean isAdmin() {
+        return admin;
     }
 
+    /*
+    private List<String> mobilePhones;
+
+    public void setMobilePhones(List<String> mobilePhones) {
+        this.mobilePhones = mobilePhones;
+    }
+
+    public List<String> getMobilePhones() {
+        return mobilePhones;
+    }
+
+    private String phone;
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+     */
 }

@@ -94,6 +94,18 @@
             <version>${ox.version}</version>
         </dependency>
 
+        <!-- Gluu's oxauth -->
+        <dependency>
+            <artifactId>oxauth-client</artifactId>
+            <groupId>org.xdi</groupId>
+            <version>${ox.version}</version>
+        </dependency>
+        <dependency>
+            <artifactId>oxauth-model</artifactId>
+            <groupId>org.xdi</groupId>
+            <version>${ox.version}</version>
+        </dependency>
+
 		<!-- ZK -->
 		<dependency>
 			<groupId>org.zkoss.zk</groupId>
@@ -226,6 +238,19 @@
             <version>LATEST</version>
         </dependency>
          -->
+
+        <!-- Twilio SDK. Dependency problems with 7.x.x (specially oxd)
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>7.12.0</version>
+        </dependency>-->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio-java-sdk</artifactId>
+            <version>6.3.0</version>
+        </dependency>
+
 	</dependencies>
 <!--
 	<dependency>

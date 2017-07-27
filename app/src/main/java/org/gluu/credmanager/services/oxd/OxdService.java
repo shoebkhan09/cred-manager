@@ -83,8 +83,6 @@ public class OxdService {
             cmdParams.setTrustedClient(true);
             //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
             cmdParams.setClientName(params.getClientName());
-            //TODO: investigate logout uri?
-            //commandParams.setClientLogoutUri();
 
             Command command = new Command(CommandType.REGISTER_SITE).setParamsObject(cmdParams);
 
@@ -147,6 +145,18 @@ public class OxdService {
         Command command=new Command(CommandType.GET_USER_INFO).setParamsObject(params);
         GetUserInfoResponse resp = commandClient.send(command).dataAsResponse(GetUserInfoResponse.class);
         return resp.getClaims();
+    }
+
+    public String getLogoutUrl() throws Exception{
+
+        GetLogoutUrlParams params = new GetLogoutUrlParams();
+        params.setOxdId(config.getOxdId());
+        params.setPostLogoutRedirectUri(config.getPostLogoutUri());
+
+        Command command=new Command(CommandType.GET_LOGOUT_URI).setParamsObject(params);
+        LogoutResponse resp = commandClient.send(command).dataAsResponse(LogoutResponse.class);
+        return resp.getUri();
+
     }
 
 }

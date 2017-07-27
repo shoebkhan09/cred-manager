@@ -9,18 +9,21 @@ import org.zkoss.zk.ui.Execution;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Session;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-16.
  */
 public class WebUtils {
 
-    public enum RedirectStage {NONE, INITIAL, REAUTHENTICATE, FINAL};
+    public enum RedirectStage {NONE, INITIAL, REAUTHENTICATE, FINAL, BYPASS};
     public static final String USER_PAGE_URL ="user.zul";
     public static final String ADMIN_PAGE_URL ="admin.zul";
     public static final String HOME_PAGE_URL ="index.zul";
@@ -70,6 +73,7 @@ public class WebUtils {
         catch (IOException e){
             logger.error(e.getMessage(),e);
         }
+
     }
 
     public static String getRequestHeader(String headerName){
@@ -77,19 +81,20 @@ public class WebUtils {
         return req.getHeader(headerName);
     }
 
+    public static String getCookie(String name){
+        HttpServletRequest req= (HttpServletRequest)Executions.getCurrent().getNativeRequest();
+        Stream<Cookie> cooks=Arrays.asList(req.getCookies()).stream();
+        Optional<Cookie> cookie=cooks.filter(cook -> cook.getName().equals(name)).findFirst();
+        return cookie.isPresent()? cookie.get().getValue() : null;
+    }
+
     public static ServiceMashup getServices(Session session){
-        //TODO: Check this alternative works
         return (ServiceMashup) session.getAttribute(SERVICES_ATTRIBUTE);
-        /*
-        HttpSession se=(HttpSession)session.getNativeSession();
-        return (ServiceMashup) se.getAttribute(SERVICES_ATTRIBUTE);
-        */
     }
 
     public static void purgeSession(Session session){
         session.removeAttribute(USER_ATTRIBUTE);
         session.removeAttribute(REDIRECT_STAGE_ATTRIBUTE);
-        session.removeAttribute(SERVICES_ATTRIBUTE);
     }
 
 }

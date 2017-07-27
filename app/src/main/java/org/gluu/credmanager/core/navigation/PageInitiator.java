@@ -1,5 +1,7 @@
 package org.gluu.credmanager.core.navigation;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.WebUtils;
 import org.zkoss.util.resource.Labels;
@@ -13,7 +15,9 @@ import java.util.Map;
 /**
  * Created by jgomer on 2017-07-19.
  */
-public class PageInitiator implements Initiator {
+public class PageInitiator extends FailedPage implements Initiator {
+
+    private Logger logger = LogManager.getLogger(getClass());
 
     private boolean checkAdminRights;
 
@@ -25,12 +29,10 @@ public class PageInitiator implements Initiator {
     }
 
     public void doInit(Page page, Map<String, Object> map) throws Exception {
-
         Session se= Sessions.getCurrent();
         User user= WebUtils.getUser(se);
         if (user==null || (checkAdminRights && !user.isAdmin()))
-            throw new Exception(Labels.getLabel("usr.not_authorized"));
-
+            setPageErrors(page, Labels.getLabel("usr.not_authorized"), null);
     }
 
 }
