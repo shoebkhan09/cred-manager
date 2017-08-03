@@ -5,11 +5,12 @@ Please visit [wiki](https://github.com/GluuFederation/cred-manager/wiki/Cred-Man
 ## Java Packages Hierarchy
 
 #### Top-level package
+
 *org.gluu.credmanager*
 
 #### User Interface packages
 
-*ui.vm*: ZK's viewmodel (cred-manager uses the MVVM pattern, see [ZK documentation](https://www.zkoss.org/documentation)) 
+*ui.vm*: ZK's viewmodel POJOs (cred-manager uses the MVVM pattern, see [ZK documentation](https://www.zkoss.org/documentation)) 
 
 *ui.model*: Model classes (in MVVM pattern)
 
@@ -23,19 +24,11 @@ Please visit [wiki](https://github.com/GluuFederation/cred-manager/wiki/Cred-Man
 
 *core.navigation*: Session management and page navigation 
 
+*core.credential*: POJOs that represent different credential types
+
 #### Services packages
 
-*services.ldap* 
-
-*services.scim* 
-
-*services.oxd* 
-
-*services.filesystem* 
-
-*services.oxauth* 
-
-*services.sms* 
+Java classes that encapsulate important business logic and interactions with the outside.
 
 #### Configuration package
 
@@ -48,11 +41,12 @@ Please visit [wiki](https://github.com/GluuFederation/cred-manager/wiki/Cred-Man
 	
 ### Notes
 
-Whenever possible:
+Normally, the following holds:
 
 *ui* uses: *conf*, *core* 
 
 *core* uses: *conf*, *service*, *misc*
+
 
 ## Application Initialization
 
@@ -62,26 +56,29 @@ When starting up, the following is looked up:
 
 This just follows the same pattern currently used in **oxAuth** and **oxTrust**.
 
-For the first time, **oxd** registration should take place. See the appropriate section.
+For the first time, **oxd** registration should take place. See the appropriate [section](#oxd-registration).
 
 ## Configuration File Structure
 
 Location example: `/etc/gluu/conf/cred-manager.json`
+
 Contents example:
 ```
 {
 	"ldap_settings":{
-		"ox-ldap_location": "/etc/gluu/conf/ox-ldap.properties",	//mandatory. location of ox-ldap.properties file
+		"ox-ldap_location": "/etc/gluu/conf/ox-ldap.properties",	//Location of ox-ldap.properties file
 		"salt" : "/etc/gluu/conf/salt", //Optional. location of salt properties file
 		"applianceInum": "@!3245.DF39.6A34.9E97!0002!CFBE.8F9E",
 		"orgInum": "@!3245.DF39.6A34.9E97!0001!513A.9888"
 	},
 	"enable_pass_reset": true,	//optional
-	"oxd_config": { "host": "localhost", "port": 8099, "oxd-id": "...", "authz_redirect_uri" : "..." , "post_logout_uri": "..." },	//mandatory (except for "oxd-id")
+	"oxd_config": { "host": "localhost", "port": 8099, "oxd-id": "...", "authz_redirect_uri" : "..." , "post_logout_uri": "..." },	//"oxd-id" is optional
 	"enabled_methods": [],		//optional
-	"twilio_settings": { "account_sid": "", "auth_token" : "", "from_number": }	//optional. Provide if sms was added in enabled_methods or if inferred methods will contain SMS
+	"twilio_settings": { "account_sid": "", "auth_token" : "", "from_number": ""},	//optional. Provide if sms was added in enabled_methods or if inferred methods will contain SMS
+	"u2f_relative_uri" : "restv1/fido-u2f-configuration"	//optional. Endpoint for registration of fido devices
 }
 ```
+Unless otherwise stated, the params in the example are mandatory
 
 ### Notes on parameters inference:
 * This app uses `ox-ldap.properties` file to lookup LDAP connection settings. Once connected to LDAP, this app will find:
@@ -89,6 +86,8 @@ Contents example:
 	* oxTrust's oxTrustConfCacheRefresh attribute to determine if a source backend LDAP is enabled ("sourceConfigs" property in JSON). If so, password reset won't be enabled regardless of the value of *"enable_pass_reset"*. If *"enable_pass_reset"* is not provided and there is no enabled backend LDAP detected, a default value of false is assumed.
 	* oxAuth's oxAuthConfDynamic attribute to get:
 		* the OIDC config endpoint (property "openIdConfigurationEndpoint" in JSON)
+	* The entry corresponding to the OTP custom script to grab configurations needed in case OTP is recognized as an active method for 2FA. The file pointed by the `opt_conf_file` entry is parsed as well.
+	
 * app checks Implementation-Version entry in `MANIFEST.MF` file inside `oxauth.war` to guess Gluu version it is running on
 * If *"enabled_methods"* is not present, or has empty value or null, then all supported methods will be enabled. The exact set of methods is deduced after inspecting acr_supported_values in the server. Depending on current server setup, this can lead to only password (no 2FA at all).
 * If *"oxd-id"* is not present, or has empty value or null, registration of this app with **oxd** will take place.
