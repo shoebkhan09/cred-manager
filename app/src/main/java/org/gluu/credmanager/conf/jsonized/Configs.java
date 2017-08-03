@@ -1,19 +1,20 @@
 package org.gluu.credmanager.conf.jsonized;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.gluu.credmanager.conf.OTPConfig;
 
 /**
  * Created by jgomer on 2017-07-06.
  */
 
-public class ConfigFile {
+public class Configs {
 
     private boolean enablePassReset;
     private OxdConfig oxdConfig;
     private LdapSettings ldapSettings;
     private TwilioConfig twilioConfig;
+    private OTPConfig otpConfig;
     private String[] enabledMethods;
     private String gluuVersion;
     private String u2fRelativeMetadataUri;
@@ -46,6 +47,10 @@ public class ConfigFile {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getGluuVersion() {
         return gluuVersion;
+    }
+
+    public OTPConfig getOtpConfig() {
+        return otpConfig;
     }
 
     @JsonProperty("ldap_settings")
@@ -81,6 +86,10 @@ public class ConfigFile {
     @JsonProperty("u2f_relative_uri")
     public void setU2fRelativeMetadataUri(String u2fRelativeMetadataUri) {
         this.u2fRelativeMetadataUri = u2fRelativeMetadataUri;
+    }
+
+    public void setOtpConfig(OTPConfig otpConfig) {
+        this.otpConfig = otpConfig;
     }
 
 }

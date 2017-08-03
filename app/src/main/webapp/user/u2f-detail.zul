@@ -1,7 +1,7 @@
 <?init class="org.zkoss.zk.ui.util.Composition" arg0="/general.zul"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.u2f_title}"?>
-<?script src="/u2f-api.js"?>
-<?script src="/u2f-util.js"?>
+<?script src="/scripts/u2f-api.js"?>
+<?script src="/scripts/u2f-util.js"?>
 
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
@@ -27,10 +27,7 @@
         </window>
 
         <!--include src="header.zul"/-->
-
-        <div sclass="dpadded" style="padding-left:10px">
-            <button image="../images/back.png" label="&#160; ${labels.general.back_main}" sclass="btn-warning btn-sm form_button" style="padding-left:5px;opacity:0.85" href="../user.zul"/>
-        </div>
+        <include src="back.zul" />
 
         <div align="center" sclass="dpadded"><label value="${labels.usr.u2f_title}" sclass="titled" /></div>
         <div sclass="padded"><label value="${labels.usr.u2f_text}" /></div>

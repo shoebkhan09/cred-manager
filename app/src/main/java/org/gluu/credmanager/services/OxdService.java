@@ -1,41 +1,35 @@
-package org.gluu.credmanager.services.oxd;
+package org.gluu.credmanager.services;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
-import org.gluu.credmanager.services.UserService;
 import org.xdi.oxd.client.CommandClient;
 import org.xdi.oxd.common.Command;
 import org.xdi.oxd.common.CommandType;
 import org.xdi.oxd.common.params.*;
 import org.xdi.oxd.common.response.*;
 import org.zkoss.util.resource.Labels;
-import org.zkoss.zk.ui.Execution;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by jgomer on 2017-07-11.
+ * An app. scoped bean that encapsulates interactions with on oxd-server. Contains methods depicting the steps of the
+ * authorization code flow of OpenId Connect spec
  */
 @ApplicationScoped
 public class OxdService {
 
     /*
     ACR value for user+password auth only. It is not necessarily equivalent to Gluu's default authn method which is found
-    in the oxAuthenticationMode attribute of the appliance. Anyway, simpleAuthAcr should be part of acr_supported_values
+    in the oxAuthenticationMode attribute of the appliance. Anyway, SIMPLE_AUTH_ACR should be part of acr_supported_values
      */
-    private String simpleAuthAcr="auth_ldap_server";
+    private static final String SIMPLE_AUTH_ACR ="auth_ldap_server";
     private Logger logger = LogManager.getLogger(getClass());
 
     private OxdConfig config;
     private CommandClient commandClient;
-
-    public String getSimpleAuthAcr() {
-        return simpleAuthAcr;
-    }
 
     public void setSettings(OxdConfig config) throws Exception{
 
@@ -44,12 +38,13 @@ public class OxdService {
 
     }
 
-    public void modifyExpiration(CommandClient client, String oxdId) throws Exception{
+    private void modifyExpiration(CommandClient client, String oxdId) throws Exception{
 
         UpdateSiteParams cmdParams = new UpdateSiteParams();
         cmdParams.setOxdId(oxdId);
         /*
         oxd does not let me to set indefinite expiration :(
+        The following apparently does not have effect. See https://github.com/GluuFederation/oxd/issues/85
         cmdParams.setClientSecretExpiresAt(null);
         cmdParams.setClientSecretExpiresAt(new Date(0));
         */
@@ -74,12 +69,12 @@ public class OxdService {
             RegisterSiteParams cmdParams = new RegisterSiteParams();
             cmdParams.setAuthorizationRedirectUri(params.getRedirectUri());
             cmdParams.setPostLogoutRedirectUri(params.getPostLogoutUri());
-            cmdParams.setAcrValues(params.getAcrValues().stream().collect(Collectors.toList()));
+            cmdParams.setAcrValues(new ArrayList<>(params.getAcrValues()));
 
-            //TODO: oxd bug? setting scopes...
+            //The following apparently does not have effect. See https://github.com/GluuFederation/oxd/issues/85
             cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
 
-            cmdParams.setResponseTypes(Arrays.asList("code"));  //Use "token","id_token" for implicit flow
+            cmdParams.setResponseTypes(Collections.singletonList("code"));  //Use "token","id_token" for implicit flow
             cmdParams.setTrustedClient(true);
             //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
             cmdParams.setClientName(params.getClientName());
@@ -98,6 +93,13 @@ public class OxdService {
         return oxdId;
     }
 
+    /**
+     * Returns a string with an autorization URL to redirect an application (see OpenId connect "code" flow)
+     * @param acrValues List of acr_values. See OpenId Connect core 1.0 (section 3.1.2.1)
+     * @param prompt See OpenId Connect core 1.0 (section 3.1.2.1)
+     * @return String consisting of an authentication request with desired parameters
+     * @throws Exception
+     */
     public String getAuthzUrl(List<String> acrValues, String prompt) throws Exception{
 
         GetAuthorizationUrlParams commandParams = new GetAuthorizationUrlParams();
@@ -119,7 +121,7 @@ public class OxdService {
     }
 
     public String getDefaultAuthzUrl() throws Exception{
-        return getAuthzUrl(Collections.singletonList(getSimpleAuthAcr()));
+        return getAuthzUrl(Collections.singletonList(SIMPLE_AUTH_ACR));
     }
 
     public String getAccessToken(String code, String state) throws Exception{

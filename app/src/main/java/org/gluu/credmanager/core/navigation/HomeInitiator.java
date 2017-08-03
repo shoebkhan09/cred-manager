@@ -8,7 +8,7 @@ import org.gluu.credmanager.core.WebUtils;
 import static org.gluu.credmanager.core.WebUtils.RedirectStage;
 import org.gluu.credmanager.services.ServiceMashup;
 import org.gluu.credmanager.services.UserService;
-import org.gluu.credmanager.services.oxd.OxdService;
+import org.gluu.credmanager.services.OxdService;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.*;
 import org.zkoss.zk.ui.util.Initiator;

@@ -1,0 +1,8 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <div sclass="dpadded" style="padding-left:10px">
+        <button image="/images/back.png" label="&#160; ${labels.general.back_main}" sclass="btn-warning btn-sm form_button" style="padding-left:5px;opacity:0.85" href="/user.zul"/>
+    </div>
+
+</zk>

@@ -3,8 +3,6 @@
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <script type="text/javascript" src="zxcvbn.js" />
-
     <vlayout width="@load(vm.onMobile ? '100%' : '950px')" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.BasicViewModel')" self="@insert(content)">
         <style src="@load(vm.onMobile ? '/styles/mobile.css' : '/styles/desktop.css')">
         </style>

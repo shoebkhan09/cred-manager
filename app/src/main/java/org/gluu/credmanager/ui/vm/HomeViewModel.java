@@ -8,7 +8,7 @@ import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ServiceMashup;
 import org.gluu.credmanager.services.UserService;
-import org.gluu.credmanager.services.oxd.OxdService;
+import org.gluu.credmanager.services.OxdService;
 import org.gluu.credmanager.ui.model.UIModel;
 import org.zkoss.bind.annotation.Command;
 import org.zkoss.bind.annotation.Init;

@@ -14,6 +14,17 @@ public class Utils {
     public static <T> Optional<T[]> arrayOptional(T[] array){
         return Optional.ofNullable(array).map(arr -> arr.length==0 ? null : arr);
     }
+
+    public static boolean stringContains(String string, String value, boolean ci){
+        string=Optional.ofNullable(string).orElse("");
+        string=ci ? string.toLowerCase() : string;
+        value=ci ? value.toLowerCase() : value;
+        return string.contains(value);
+    }
+
+    public static boolean stringContains(String string, String value){
+        return stringContains(string, value, false);
+    }
 /*
     public Reader readerFromFile(String fileName, Charset cs) throws FileNotFoundException{
         return new InputStreamReader(new FileInputStream(fileName), cs);

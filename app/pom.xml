@@ -61,6 +61,11 @@
             <artifactId>oxcore-ldap</artifactId>
             <version>${ox.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.xdi</groupId>
+            <artifactId>oxcore-model</artifactId>
+            <version>${ox.version}</version>
+        </dependency>
         <!-- Including any of the following gives trouble with weld (unsatisfied dependencies)
         <dependency>
             <groupId>org.xdi</groupId>
@@ -74,14 +79,15 @@
         </dependency>
         <dependency>
             <groupId>org.xdi</groupId>
+            <artifactId>oxcore-service</artifactId>
+            <version>${ox.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.xdi</groupId>
             <artifactId>oxcore-saml</artifactId>
             <version>${ox.version}</version>
         </dependency-->
-        <dependency>
-            <groupId>org.xdi</groupId>
-            <artifactId>oxcore-model</artifactId>
-            <version>${ox.version}</version>
-        </dependency>
+
         <!-- Gluu's oxd -->
         <dependency>
             <artifactId>oxd-client</artifactId>
@@ -251,6 +257,17 @@
             <version>6.3.0</version>
         </dependency>
 
+        <!-- OTP -->
+        <dependency>
+            <groupId>com.lochbridge.oath</groupId>
+            <artifactId>oath-otp</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lochbridge.oath</groupId>
+            <artifactId>oath-otp-keyprovisioning</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
 	</dependencies>
 <!--
 	<dependency>

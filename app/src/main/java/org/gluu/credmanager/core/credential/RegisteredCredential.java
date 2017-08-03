@@ -22,9 +22,6 @@ public class RegisteredCredential  implements Serializable {
     private String dn;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private String id;
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String nickName;
 
     @JsonIgnore
@@ -36,14 +33,6 @@ public class RegisteredCredential  implements Serializable {
 
     public void setDn(String dn) {
         this.dn = dn;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public CredentialType getType() {

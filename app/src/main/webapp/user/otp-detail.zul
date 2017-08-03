@@ -1,0 +1,64 @@
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/general.zul"?>
+<?page title="${applicationScope['appName']} - ${labels.usr.gauth_title}"?>
+<?script src="/scripts/jquery.qrcode-0.12.0.min.js"?>
+<?script src="/scripts/jquery-ui-1.12.1.min.js"?>
+<?script src="/scripts/gluu-auth.js"?>
+<?script src="/scripts/otp-util.js"?>
+
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client" xmlns:n="native"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <vlayout viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserOTPViewModel')" self="@define(content)">
+
+        <style src="/styles/jquery-ui-1.12.1.min.css">
+            <!-- one cannot use the processing instruction when using templating, so resort to HTML directly -->
+        </style>
+        <!--include src="header.zul"/-->
+        <include src="back.zul"/>
+
+        <div align="center" sclass="dpadded">
+            <label value="${labels.usr.gauth_title}" sclass="titled"/>
+        </div>
+        <div sclass="padded">
+            <label value="${labels.usr.gauth_text}"/>
+        </div>
+        <div sclass="padded">
+            <!--detailed list-->
+        </div>
+
+        <panel title="${labels.usr.gauth_add}" collapsible="true" border="normal" sclass="padded" open="@bind(vm.uiPanelOpened)">
+            <panelchildren sclass="padded">
+                <label value="${labels.usr.gauth_install_ready}"/>
+                <div align="center">
+                    <vlayout sclass="padded">
+                        <button id="readyButton" label="&#160;${labels.general.ready}&#160;" sclass="btn-success"
+                                w:onClick="initialize(this)" onClick="@command('showQR')" disabled="@load(vm.uiQRShown)"/>
+                        <label value="${labels.usr.gauth_download}" visible="@load(vm.onMobile)"/><!-- use native -->
+                    </vlayout>
+                </div>
+
+                <div align="center">
+                    <vlayout visible="@load(vm.uiQRShown)">
+                        <label value="${labels.usr.gauth_scan}"/>
+
+                        <n:div> <!-- these 2 have to be grouped in a div -->
+                            <n:div id="container"></n:div>
+                            <n:div id="progressbar" style="width:40%"></n:div>
+                        </n:div>
+
+                        <hlayout spacing="10px" valign="middle" sclass="padded">
+                            <label value="${labels.usr.gauth_enter_code}"/>
+                            <textbox placeholder="${labels.usr.gauth_enter_code_short}" sclass="s6 form-control" value="@bind(vm.code)"/>
+                        </hlayout>
+                        <hlayout spacing="30px" valign="middle" sclass="padded">
+                            <button label="&#160;${labels.general.add}&#160;" sclass="btn-success" onClick="@command('enroll')"/>
+                            <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancel')"/>
+                        </hlayout>
+                    </vlayout>
+                </div>
+            </panelchildren>
+        </panel>
+
+    </vlayout>
+
+</zk>

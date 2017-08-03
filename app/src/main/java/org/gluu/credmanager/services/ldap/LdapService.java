@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.core.credential.SecurityKey;
 import org.gluu.credmanager.core.credential.VerifiedPhone;
-import org.gluu.credmanager.services.UserService;
 import org.gluu.credmanager.services.ldap.pojo.*;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
@@ -20,16 +19,21 @@ import org.xdi.util.security.StringEncrypter;
 import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * Created by jgomer on 2017-07-06.
+ * An app. scoped bean that executes operations on local LDAP. Before usage, setup method has to be called (initializes
+ * the connection) - this is done only once during app. start (see AppConfiguration bean).
+ * Most operations (methods) in this class are self explanatory
  */
 @ApplicationScoped
 public class LdapService {
 
+    private static final String OTP_SCRIPT_BRANCH_PATTERN="inum={0}!0011!5018.D4BF,ou=scripts,o={0},o=gluu";
     private Logger logger = LogManager.getLogger(getClass());
 
     private Properties ldapProperties;
@@ -40,6 +44,11 @@ public class LdapService {
     private String strOxTrustConfig =null;
     private String strOxAuthConfig =null;
 
+    /**
+     * Initializes and LdapEntryManager instance for operation
+     * @param settings LDAP settings as entered into the global configuration file
+     * @throws Exception
+     */
     public void setup(LdapSettings settings) throws Exception{
 
         mapper = new ObjectMapper();
@@ -94,6 +103,12 @@ public class LdapService {
         return ldapEntryManager.find(GluuPerson.class, dn);
     }
 
+    /**
+     * Tries to determine whether local installation of Gluu is using a backend LDAP. This reads the OxTrust configuration
+     * Json and inspects inside property "sourceConfigs"
+     * @return
+     * @throws Exception
+     */
     public boolean isBackendLdapEnabled() throws Exception{
 
         JsonNode tree=mapper.readTree(getStrOxTrustConfig());
@@ -115,12 +130,20 @@ public class LdapService {
     }
 
     public List<SecurityKey> getFidoDevices(String userRdn){
-
-        //TODO: implement this thoroughly
         String dn=String.format("%s,ou=people,o=%s,o=gluu", userRdn, ldapSettings.getOrgInum());
         return ldapEntryManager.findEntries(String.format("ou=fido,%s", dn), SecurityKey.class, null);
     }
 
+    /**
+     * Updates in LDAP the attributes that store the raw mobile phones as well as the Json representation that contains
+     * the credential information associated to those phones for the person being referenced
+     * @param userRdn LDAP RDN of user
+     * @param mobs List of current VerifiedPhones (only the number attribute is read by this method)
+     * @param phone An additional phone to the list
+     * @param jsonPhones A Json representation of an array of VerifiedPhones. The information related to parameter phone
+     *                   is already included here
+     * @throws Exception
+     */
     public void updateMobilePhones(String userRdn, List<VerifiedPhone> mobs, VerifiedPhone phone, String jsonPhones) throws Exception{
     /*
         String attributeName="mobile";
@@ -151,6 +174,11 @@ public class LdapService {
         person.setVerifiedPhonesJson(jsonPhones);
         ldapEntryManager.merge(person);
 
+    }
+
+    public CustomScript getOTPScriptInfo() throws Exception{
+        String dn= MessageFormat.format(OTP_SCRIPT_BRANCH_PATTERN, ldapSettings.getOrgInum());
+        return ldapEntryManager.find(CustomScript.class, dn);
     }
 
 }

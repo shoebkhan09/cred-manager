@@ -1,0 +1,18 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.usr.gauth_title}" sclass="padded" border="normal">
+        <panelchildren sclass="padded">
+            <vlayout>
+                <label value="${labels.usr.gauth_text}"/>
+                <div sclass="padded" align="center">
+                    <vlayout>
+                        <!-- otp summary-->
+                        <button label="${labels.usr.gauth_changeadd}" sclass="btn-success" href="user/otp-detail.zul"/>
+                    </vlayout>
+                </div>
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+</zk>

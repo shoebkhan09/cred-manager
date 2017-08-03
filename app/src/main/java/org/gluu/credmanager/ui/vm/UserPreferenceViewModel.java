@@ -2,6 +2,7 @@ package org.gluu.credmanager.ui.vm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.WebUtils;
@@ -45,8 +46,8 @@ public class UserPreferenceViewModel {
         usrService=services.getUserService();
         this.user=user;
         CredentialType cdtype=user.getPreference();
-        editable=user.getCredentials().size() >= services.getAppConfig().ACTIVATE2AF_CREDS_GTE;
-
+        editable=user.getCredentials().size() >= AppConfiguration.ACTIVATE2AF_CREDS_GTE;
+logger.debug("cred {}{}", user.getCredentials().size(), editable);
         Optional<String> optCred=Optional.ofNullable(cdtype).map(CredentialType::getUIName);
         currentPreferred=optCred.orElse(noMethod);
 

@@ -1,5 +1,6 @@
 <?init class="org.zkoss.zk.ui.util.Composition" arg0="general.zul"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.title}"?>
+<?script src="/scripts/zxcvbn.js"?>
 
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
@@ -10,6 +11,7 @@
         <include user="@load(vm.user)" src="@load('user/preferred.zul')" /><!--  src="@load(vm.secondFactorAllowed ? 'user/preferred.zul' : '')" -->
         <include src="@load(vm.credentialsVisibility['SECURITY_KEY'] ? 'user/u2f.zul' : '')" />
         <include src="@load(vm.credentialsVisibility['VERIFIED_PHONE'] ? 'user/phone.zul' : '')" />
+        <include src="@load(vm.credentialsVisibility['OTP'] ? 'user/otp.zul' : '')" />
     </vlayout>
 
 </zk>

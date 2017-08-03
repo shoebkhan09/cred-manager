@@ -5,6 +5,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.xdi.ldap.model.Entry;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,11 +26,17 @@ public class GluuPerson extends Entry {
         this.mobileNumbers = mobileNumbers;
     }
 
-    //TODO: use another LDAP attributes: preferredAuthMethod, VerfiedPhones
+    @LdapAttribute(name = "oxExternalUid")
+    private List<String> externalUids;
+
+    //TODO: use another LDAP attributes
     @LdapAttribute(name = "preferredDeliveryMethod")
     private String preferredAuthMethod;
 
-    @LdapAttribute(name = "description")
+    @LdapAttribute(name = "persistentId")
+    private String otpDevicesJson;
+
+    @LdapAttribute(name = "transientId")
     private String verifiedPhonesJson;
 
     public String getPreferredAuthMethod() {
@@ -48,4 +55,19 @@ public class GluuPerson extends Entry {
         this.verifiedPhonesJson = verifiedPhonesJson;
     }
 
+    public String getOtpDevicesJson() {
+        return otpDevicesJson;
+    }
+
+    public void setOtpDevicesJson(String otpDevicesJson) {
+        this.otpDevicesJson = otpDevicesJson;
+    }
+
+    public List<String> getExternalUids() {
+        return (externalUids==null) ? Collections.emptyList() : externalUids;
+    }
+
+    public void setExternalUids(List<String> externalUids) {
+        this.externalUids = externalUids;
+    }
 }

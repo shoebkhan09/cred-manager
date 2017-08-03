@@ -12,7 +12,7 @@ public class VerifiedPhone extends RegisteredCredential {
     private String number;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private long lastUsed;
+    private long addedOn;
 
     public String getNumber() {
         return number;
@@ -31,12 +31,12 @@ public class VerifiedPhone extends RegisteredCredential {
         setType(CredentialType.VERIFIED_PHONE);
     }
 
-    public long getLastUsed() {
-        return lastUsed;
+    public long getAddedOn() {
+        return addedOn;
     }
 
-    public void setLastUsed(long lastUsed) {
-        this.lastUsed = lastUsed;
+    public void setAddedOn(long addedOn) {
+        this.addedOn = addedOn;
     }
 
     public String toString(){

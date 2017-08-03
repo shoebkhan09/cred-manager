@@ -8,14 +8,8 @@
                 <vlayout sclass="padded">
                     <hlayout valign="bottom">
                         <label value="@load(vm.currentPreferred)"/>
-                        <zk choose="">
-                            <zk when="@load(vm.editable)">
-                                <image src="images/edit_24.png" tooltip="tooltip_delete, after_pointer" sclass="icon_edit" onClick="@command('prepareUpdateMethod')" />
-                            </zk>
-                            <zk>
-                                <image src="images/edit_24.png" sclass="icon_edit unactivated" />
-                            </zk>
-                        </zk>
+                        <image visible="@load(vm.editable)" src="images/edit_24.png" tooltip="tooltip_delete, after_pointer" sclass="icon_edit" onClick="@command('prepareUpdateMethod')" />
+                        <image visible="@load(not vm.editable)" src="images/edit_24.png" sclass="icon_edit unactivated" />
                     </hlayout>
                     <!-- if image is "unactivated", next label is visible, and viceversa -->
                     <label value="${labels.usr.preferred_disabled}" sclass="bold" visible="@load(not vm.editable)"/>

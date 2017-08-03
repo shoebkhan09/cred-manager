@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 /**
  * Created by jgomer on 2017-07-25.
  */
-public class UserVerifiedPhoneModel extends BasicViewModel {
+public class UserVerifiedPhoneViewModel extends BasicViewModel {
 
     private static final long ARRIVAL_DELAY=5000;    //5 secs
 

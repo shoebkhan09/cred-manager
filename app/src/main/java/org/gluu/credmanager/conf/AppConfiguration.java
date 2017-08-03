@@ -5,19 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.gluu.credmanager.conf.jsonized.ConfigFile;
+import org.gluu.credmanager.conf.jsonized.Configs;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.gluu.credmanager.misc.Utils;
+import org.gluu.credmanager.services.OTPService;
 import org.gluu.credmanager.services.ldap.LdapService;
-import org.gluu.credmanager.services.oxd.OxdService;
+import org.gluu.credmanager.services.OxdService;
 import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.swing.text.html.Option;
 import java.io.*;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,7 +32,6 @@ import java.util.zip.ZipFile;
 @ApplicationScoped
 public class AppConfiguration {
 
-    private final Charset DEFAULT_CHARSET=Charset.forName("UTF-8"); //Charset for reading .properties
     private final String DEFAULT_GLUU_BASE="/etc/gluu";
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
     private final String OXAUTH_WAR_LOCATION= "/opt/gluu/jetty/oxauth/webapps/oxauth.war";
@@ -42,7 +40,7 @@ public class AppConfiguration {
 
     //========== Properties exposed by this service ==========
 
-    private ConfigFile configSettings;
+    private Configs configSettings;
     private boolean inOperableState=false;  //Use pesimistic approach (assume it's likelier to fail than to succeed)
     private String orgName;
     private String u2fMetadataUri;
@@ -63,6 +61,9 @@ public class AppConfiguration {
 
     @Inject
     private OxdService oxdService;
+
+    @Inject
+    private OTPService OtpService;
 
     public String getOrgName() {
         return orgName;
@@ -88,7 +89,7 @@ public class AppConfiguration {
         return inOperableState;
     }
 
-    public ConfigFile getConfigSettings() {
+    public Configs getConfigSettings() {
         return configSettings;
     }
 
@@ -122,7 +123,7 @@ public class AppConfiguration {
                 logger.error(Labels.getLabel("app.conf_file_not_readable"), CONF_FILE_RELATIVE_PATH);
             else
                 try{
-                    configSettings=mapper.readValue(src, ConfigFile.class);
+                    configSettings=mapper.readValue(src, Configs.class);
                 }
                 catch (IOException e){
                     String params[]=new String[]{CONF_FILE_RELATIVE_PATH, e.getMessage()};
@@ -145,7 +146,7 @@ public class AppConfiguration {
 
     }
 
-    private boolean computeSettings(ConfigFile settings) {
+    private boolean computeSettings(Configs settings) {
 
         boolean update=false;
         Optional<String> oxLdapOpt=Utils.stringOptional(settings.getLdapSettings().getOxLdapLocation());
@@ -171,7 +172,8 @@ public class AppConfiguration {
                         computeGluuVersion(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
-                        computeAuxiliaryUris(settings); //Don't call this before computeEnabledMethods or computeGluuVersion
+                        computeAuxiliaryUris(settings); //Call this after computeEnabledMethods and computeGluuVersion only
+                        computeOTPSettings(settings);//Call this after computeEnabledMethods only
 
                         OxdConfig oxdConfig = settings.getOxdConfig();
                         if (oxdConfig==null)
@@ -222,7 +224,7 @@ public class AppConfiguration {
 
     }
 
-    private void computeGluuVersion(ConfigFile settings){
+    private void computeGluuVersion(Configs settings){
 
         Optional<String> optGluu = Utils.stringOptional(settings.getGluuVersion());
         optGluu = Utils.stringOptional(optGluu.orElse(guessGluuVersion()));   //try guessing if necessary
@@ -230,7 +232,7 @@ public class AppConfiguration {
 
     }
 
-    private void computePassReseteable(ConfigFile settings, boolean withBackend){
+    private void computePassReseteable(Configs settings, boolean withBackend){
 
         passReseteable=settings.isEnablePassReset();
         if (settings.isEnablePassReset() && withBackend) {
@@ -240,7 +242,14 @@ public class AppConfiguration {
 
     }
 
-    private void computeAuxiliaryUris(ConfigFile settings) throws Exception{
+    private void computeOTPSettings(Configs settings) throws Exception{
+
+        if (enabledMethods.contains(CredentialType.OTP))
+            settings.setOtpConfig(OtpService.getConfig(ldapService.getOTPScriptInfo()));
+
+    }
+
+    private void computeAuxiliaryUris(Configs settings) throws Exception{
 
         Optional<String> issuer=Utils.stringOptional(ldapService.getIssuerUrl());
         if (issuer.isPresent()){
@@ -271,7 +280,7 @@ public class AppConfiguration {
 
     }
 
-    private void computeEnabledMethods(ConfigFile settings) throws Exception{
+    private void computeEnabledMethods(Configs settings) throws Exception{
 
         String strArr[]=new String[]{};
         String OIDCEndpointURL=ldapService.getOIDCEndpoint();
@@ -282,14 +291,12 @@ public class AppConfiguration {
 
         //Store server's supported acr values in a set
         Set<String> supportedSet=new HashSet<>();
-//supportedSet.addAll(Arrays.asList("twilio","u2f"));
         values.forEach(node -> supportedSet.add(node.asText()));
         //Add them all to oxd configuration object. These will be a superset of methods used in practice...
         settings.getOxdConfig().setAcrValues(new HashSet(supportedSet));
         //Now, keep the interesting ones. This will filter things like "basic", "auth_ldap_server", etc.
         supportedSet.retainAll(possibleMethods);
 
-//logger.debug("retained " + supportedSet.toString());
         Optional<String[]> methods=Utils.arrayOptional(settings.getEnabledMethods());
         //If there are no enabled methods in config file, assume we want all of them
         String tmp[]=(methods.isPresent()) ? methods.get() : possibleMethods.toArray(strArr);
@@ -323,7 +330,6 @@ public class AppConfiguration {
             logger.warn(Labels.getLabel("app.gluu_version_not_guessable"), e.getMessage());
         }
         return version;
-
 
     }
 
