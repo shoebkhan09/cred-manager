@@ -56,7 +56,7 @@ Given the project's requirements regarding to usability, mobile-friendliness, re
 
 Pages built with ZK are lightweight, still preserving a Java backend binding typical of JSF interfaces. The lifecycle of ZK pages and components is simpler than its counterpart (JSF) but still resembles many aspects of JSF such as interfaces defined in terms of XML tags and usage of EL expressions. So it's basically less overhead and complexity using similar dialects.
 
-Depending on the approach taken (there are many), resulting interfaces may end up looking a lot like facelets. Nonetheless, **.zul** pages (file extension used in ZK) can include features similar to those found in JSP, JSTL, taglibs or more static approaches such as (X)HTML+CSS. If needed, scripting can also take place with a variety of languages such Groovy, Ruby, JavaScript and Python.
+Depending on the approach taken (there are many), resulting interfaces may end up looking a lot like facelets. Nonetheless, **.zul** pages (file extension used in ZK) can include features similar to those found in JSP, JSTL, taglibs or even static approaches such as (X)HTML+CSS. If needed, scripting can also take place with a variety of languages such Groovy, Ruby, JavaScript and Python.
 
 The following document is the recommended reading to be able to edit, change or add behavior to cred-manager's UI: *ZK MVVM reference*. This can be found in PDF format from ZK's website. It's important to understand the operation flow and concepts of the MVVM pattern before undertaking any task.
 
