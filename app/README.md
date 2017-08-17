@@ -65,15 +65,13 @@ Log4j2 framework is used and configure via a file named `log4j2.xml` located at 
 
 ## Installation
 
-### Requisites
+### Requirements
 
 This application requires a working installation of Gluu Server with at least the following: Apache server, LDAP server and oxAuth server. The use of oxTrust is highly recommended.
 
-* Enable the custom scripts required for your particular case (this can be done by tweaking LDAP directly or via oxTrust). Ensure that settings of scripts are properly configured - it's recommended to test if they are working fine by logging in to oxTrust by changing the authentication method: go to `Manage authentication` > `Default authentication method` > `oxTrust acr`.
+* Enable the custom scripts required for your particular case (this can be done by tweaking LDAP directly or via oxTrust). Ensure that settings of scripts are properly configured - it's recommended to test if they are working fine by logging in to oxTrust by changing the authentication method: go to `Manage authentication` > `Default authentication method` > `oxTrust acr`. For a deeper insight, check `oxauth_script.log` of gluu server.
 
-For a deeper insight, check oxauth_script.log of gluu server.
-
-* Set the following scopes to be default: openid, profile, user_name, email, mobile_phone, phone, and clientinfo. This can be done with oxTrust or manually in LDAP by setting the defaultScope attribute to true for the appropriate entries under the branch of `scopes`.
+* Set the following scopes to be default: openid, profile, user_name, email, mobile_phone, phone, and clientinfo. This can be done with oxTrust or manually in LDAP by setting the *defaultScope* attribute to true for the appropriate entries under the branch of `scopes`.
 
 * Purchase an oxd license. You will be given 4 bits of data: license ID, public Key, public password, and license password.
 
@@ -88,6 +86,7 @@ Oxd can be installed in the same server where the IDP is running.
 
 ### Update LDAP schema
 
+???
 
 ### Jetty base instance configuration
 
@@ -123,7 +122,7 @@ Double check your Gluu server has proper acr_values_supported in the OIDC metada
 
 Once changes are saved, you will have to restart the application.
 
-Check the (troubleshooting guide)[#troubleshooting] for more information
+Check the [troubleshooting guide](#troubleshooting) for more information
 
 ## Troubleshooting
 
