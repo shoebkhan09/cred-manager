@@ -29,7 +29,10 @@ Contents example:
 	"enable_pass_reset": true,	//optional
 	"oxd_config": { "host": "localhost", "port": 8099, "oxd-id": "...", "authz_redirect_uri" : "..." , "post_logout_uri": "..." },	//"oxd-id" is optional
 	"enabled_methods": [],		//optional
-	"u2f_relative_uri" : "restv1/fido-u2f-configuration"	//optional. Endpoint for registration of fido devices
+	"u2f_settings" : {
+		"u2f_relative_uri" : "restv1/fido-u2f-configuration",	//optional. Endpoint for registration of fido devices
+		"app_id": null	//optional. The U2F app ID
+	}
 }
 ```
 Unless otherwise stated, the params in the example are mandatory
@@ -41,12 +44,14 @@ Unless otherwise stated, the params in the example are mandatory
 	* oxAuth's oxAuthConfDynamic attribute to get:
 		* the OIDC config endpoint (property "openIdConfigurationEndpoint" in JSON)
 		* the issuer attribute
-	* The entry corresponding to the OTP custom script to grab configurations needed in case OTP is recognized as an active method for 2FA. The file pointed by the `opt_conf_file` entry is parsed as well.
+	* The entry corresponding to the OTP custom script to grab configurations needed in case OTP is recognized as an active method for 2FA. The file pointed to by the `opt_conf_file` entry is parsed as well.
+	* The entry corresponding to the SMS custom script to grab configurations needed in case SMS is used for 2FA.
 	
 * app checks Implementation-Version entry in `MANIFEST.MF` file inside `oxauth.war` to guess Gluu version it is running on
 * If *"enabled_methods"* is not present, or has empty value or null, then all supported methods will be enabled. The exact set of methods is deduced after inspecting acr_supported_values in the server. Depending on current server setup, this can lead to only password (no 2FA at all).
 * If *"oxd-id"* is not present, or has empty value or null, registration of this app with **oxd** will take place.
 * If *"u2f_relative_uri"* is not present, or has empty value or null, it will default to ".well-known/fido-u2f-configuration" for versions earlier than 3.1.0 or "restv1/fido-u2f-configuration" for version 3.1.0. The value of issuer property found in LDAP followed by a slash (/) will be prepended to this to get a correct endpoint URL for U2F devices enrolling.
+* If *"app_id"* is not present, or has empty value or null, it will default to the *issuer* value in oxAuth's oxAuthConfDynamic. Passing an *app_id* is useful for [multi-facets apps](https://developers.yubico.com/U2F/App_ID.html) where an HTTPS URL that resolves to a JSON list of facet IDs needs to be supplied.
 
 ### "Hidden" properties
 These are extra properties that can be set in the JSON file to tweak certain behaviors. Mostly useful in development and testing scenarios:
@@ -86,7 +91,7 @@ Oxd can be installed in the same server where the IDP is running.
 
 ### Update LDAP schema
 
-???
+TODO
 
 ### Jetty base instance configuration
 
@@ -141,7 +146,7 @@ During normal use, the app will show feedback to users if operations were succes
 To be able to enroll u2f keys, ensure all of the following are met:
 
 * You are accessing the application via https (this a requirement by design of fido standard)
-* Ensure the IDP URL (*"op_host"* property of oxd-default-site-config.json) matches the same host under which cred-manager is being served. Both FQDNs should match. If you cannot have both oxAuth and cred-manager at the same host, you have to set the property *"facet-id-url"* of cred-manager.json accordingly. For an example see "multi-facet apps" from [https://developers.yubico.com/U2F/App_ID.html](https://developers.yubico.com/U2F/App_ID.html)
+* Ensure the IDP URL (*"op_host"* property of oxd-default-site-config.json) matches the same host under which cred-manager is being served. Both FQDNs should match. If you cannot have both oxAuth and cred-manager at the same host, you have to set the property *"app_id"* of cred-manager.json accordingly. For an example see "multi-facet apps" from [https://developers.yubico.com/U2F/App_ID.html](https://developers.yubico.com/U2F/App_ID.html)
 * Ensure you are using Chrome, Opera (version greater than 40), or Firefox (with the proper [u2f add-on](https://addons.mozilla.org/en-US/firefox/addon/u2f-support-add-on/) installed) and javascript enabled. These are the only browsers supporting the FIDO U2F technology. Currently cred-manager does not support adding U2F devices from mobile browsers.
 * Ensure plugging the security key before pressing the "ready" button: the enrolling process has a timeout period. Ensure you are pressing the key's button when your browser indicates to do so or when the key's button is blinking.
 
