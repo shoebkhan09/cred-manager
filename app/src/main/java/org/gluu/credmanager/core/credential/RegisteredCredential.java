@@ -22,10 +22,8 @@ public class RegisteredCredential  implements Serializable {
     private String dn;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @LdapAttribute(name = "displayName")
     private String nickName;
-
-    @JsonIgnore
-    private CredentialType type;
 
     public String getDn() {
         return dn;
@@ -33,14 +31,6 @@ public class RegisteredCredential  implements Serializable {
 
     public void setDn(String dn) {
         this.dn = dn;
-    }
-
-    public CredentialType getType() {
-        return type;
-    }
-
-    public void setType(CredentialType type) {
-        this.type = type;
     }
 
     public String getNickName() {

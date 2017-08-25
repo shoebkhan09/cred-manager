@@ -1,8 +1,10 @@
 package org.gluu.credmanager.conf.jsonized;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.gluu.credmanager.conf.OTPConfig;
+import org.gluu.credmanager.conf.TwilioConfig;
 
 /**
  * Created by jgomer on 2017-07-06.
@@ -15,13 +17,9 @@ public class Configs {
     private LdapSettings ldapSettings;
     private TwilioConfig twilioConfig;
     private OTPConfig otpConfig;
+    private U2fSettings u2fSettings;
     private String[] enabledMethods;
     private String gluuVersion;
-    private String u2fRelativeMetadataUri;
-
-    public String getU2fRelativeMetadataUri() {
-        return u2fRelativeMetadataUri;
-    }
 
     public LdapSettings getLdapSettings() {
         return ldapSettings;
@@ -39,7 +37,12 @@ public class Configs {
         return enabledMethods;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnore
+    public OTPConfig getOtpConfig() {
+        return otpConfig;
+    }
+
+    @JsonIgnore
     public TwilioConfig getTwilioConfig() {
         return twilioConfig;
     }
@@ -49,8 +52,14 @@ public class Configs {
         return gluuVersion;
     }
 
-    public OTPConfig getOtpConfig() {
-        return otpConfig;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public U2fSettings getU2fSettings() {
+        return u2fSettings;
+    }
+
+    @JsonProperty("u2f_settings")
+    public void setU2fSettings(U2fSettings u2fSettings) {
+        this.u2fSettings = u2fSettings;
     }
 
     @JsonProperty("ldap_settings")
@@ -81,11 +90,6 @@ public class Configs {
     @JsonProperty("twilio_settings")
     public void setTwilioConfig(TwilioConfig twilioConfig) {
         this.twilioConfig = twilioConfig;
-    }
-
-    @JsonProperty("u2f_relative_uri")
-    public void setU2fRelativeMetadataUri(String u2fRelativeMetadataUri) {
-        this.u2fRelativeMetadataUri = u2fRelativeMetadataUri;
     }
 
     public void setOtpConfig(OTPConfig otpConfig) {

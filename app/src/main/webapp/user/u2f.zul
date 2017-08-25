@@ -1,15 +1,34 @@
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:n="native"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
     <panel title="${labels.usr.u2f_title}" sclass="padded" border="normal">
         <panelchildren sclass="padded">
             <vlayout>
                 <label value="${labels.usr.u2f_text}"/>
+
+                <zk if="${not empty vm.devices2['SECURITY_KEY']}">
+                    <separator />
+                    <label value="${labels.usr.you_added}" />
+
+                    <vlayout style="padding-left:40px" children="@load(vm.devices2['SECURITY_KEY'])">
+                        <template name="children">
+                            <hlayout sclass="de_emphasized">
+                                <label sclass="bold" value="@load(each.nickName)" />
+                                <zk if="${each.creationDate ne null}">
+                                    <label value=" -" />
+                                    <label value="@load(c:toLowerCase(c:l('general.added_on')))" />
+                                    <label value="@load(each.creationDate) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d yyyy')" />
+                                </zk>
+                            </hlayout>
+                        </template>
+                    </vlayout>
+                </zk>
+
                 <div sclass="padded" align="center">
                     <vlayout>
-                        <!-- u2f summary-->
                         <button label="${labels.usr.u2f_changeadd}" sclass="btn-success" href="user/u2f-detail.zul"/>
-                        <label value="${labels.usr.u2f_buy_title}" /><!-- use native? -->
+                        <n:span class="de_emphasized">${labels.usr.u2f_buy_title}</n:span>
                     </vlayout>
                 </div>
             </vlayout>

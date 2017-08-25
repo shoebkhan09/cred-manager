@@ -18,19 +18,11 @@ public class GluuPerson extends Entry {
     @LdapAttribute(name="mobile")
     private List<String> mobileNumbers;
 
-    public List<String> getMobileNumbers() {
-        return mobileNumbers;
-    }
-
-    public void setMobileNumbers(List<String> mobileNumbers) {
-        this.mobileNumbers = mobileNumbers;
-    }
-
     @LdapAttribute(name = "oxExternalUid")
     private List<String> externalUids;
 
     //TODO: use another LDAP attributes
-    @LdapAttribute(name = "preferredDeliveryMethod")
+    @LdapAttribute(name = "description")
     private String preferredAuthMethod;
 
     @LdapAttribute(name = "persistentId")
@@ -39,12 +31,31 @@ public class GluuPerson extends Entry {
     @LdapAttribute(name = "transientId")
     private String verifiedPhonesJson;
 
+    @LdapAttribute(name = "userPassword")
+    private String pass;
+
+    public String getPass() {
+        return pass;
+    }
+
+    public void setPass(String pass) {
+        this.pass = pass;
+    }
+
     public String getPreferredAuthMethod() {
         return preferredAuthMethod;
     }
 
     public void setPreferredAuthMethod(String preferredAuthMethod) {
         this.preferredAuthMethod = preferredAuthMethod;
+    }
+
+    public List<String> getMobileNumbers() {
+        return mobileNumbers;
+    }
+
+    public void setMobileNumbers(List<String> mobileNumbers) {
+        this.mobileNumbers = mobileNumbers;
     }
 
     public String getVerifiedPhonesJson() {
@@ -64,7 +75,7 @@ public class GluuPerson extends Entry {
     }
 
     public List<String> getExternalUids() {
-        return (externalUids==null) ? Collections.emptyList() : externalUids;
+        return externalUids;
     }
 
     public void setExternalUids(List<String> externalUids) {

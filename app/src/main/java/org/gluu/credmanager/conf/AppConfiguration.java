@@ -7,12 +7,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.Configs;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
+import org.gluu.credmanager.conf.jsonized.U2fSettings;
 import org.gluu.credmanager.misc.Utils;
-import org.gluu.credmanager.services.OTPService;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.OxdService;
 import org.zkoss.util.resource.Labels;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.*;
@@ -30,7 +31,7 @@ import java.util.zip.ZipFile;
  * Created by jgomer on 2017-07-04.
  */
 @ApplicationScoped
-public class AppConfiguration {
+public class AppConfiguration{
 
     private final String DEFAULT_GLUU_BASE="/etc/gluu";
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
@@ -43,7 +44,7 @@ public class AppConfiguration {
     private Configs configSettings;
     private boolean inOperableState=false;  //Use pesimistic approach (assume it's likelier to fail than to succeed)
     private String orgName;
-    private String u2fMetadataUri;
+    private String issuerUrl;
 
     //The following override those properties inside found inside configSettings
     private Set<CredentialType> enabledMethods;
@@ -62,9 +63,6 @@ public class AppConfiguration {
     @Inject
     private OxdService oxdService;
 
-    @Inject
-    private OTPService OtpService;
-
     public String getOrgName() {
         return orgName;
     }
@@ -81,16 +79,16 @@ public class AppConfiguration {
         return enabledMethods;
     }
 
-    public String getU2fMetadataUri() {
-        return u2fMetadataUri;
-    }
-
     public boolean isInOperableState() {
         return inOperableState;
     }
 
     public Configs getConfigSettings() {
         return configSettings;
+    }
+
+    public String getIssuerUrl() {
+        return issuerUrl;
     }
 
     private void setGluuBase(String candidateGluuBase) {
@@ -110,11 +108,10 @@ public class AppConfiguration {
         return Files.exists(path) ? path.toFile() : null;
     }
 
-    public AppConfiguration() {
-    }
+    public AppConfiguration() {}
 
+    @PostConstruct
     public void setup(){
-
         setGluuBase(System.getProperty("gluu.base"));
 
         if (gluuBase!=null){
@@ -126,21 +123,22 @@ public class AppConfiguration {
                     configSettings=mapper.readValue(src, Configs.class);
                 }
                 catch (IOException e){
+                    inOperableState=false;
                     String params[]=new String[]{CONF_FILE_RELATIVE_PATH, e.getMessage()};
                     logger.error(Labels.getLabel("app.conf_file_not_parsable"), params);
                     logger.error(e.getMessage(),e);
                 }
                 finally {
-                        if (computeSettings(configSettings))
-                            try {
-                                //update file to disk
-                                mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                                mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-                                mapper.writeValue(src, configSettings);
-                            }
-                            catch (Exception e) {
-                                logger.error(Labels.getLabel("app.conf_update_error"), e);
-                            }
+                    if (computeSettings(configSettings))
+                        try {
+                            //update file to disk
+                            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+                            mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+                            mapper.writeValue(src, configSettings);
+                        }
+                        catch (Exception e) {
+                            logger.error(Labels.getLabel("app.conf_update_error"), e);
+                        }
                 }
         }
 
@@ -169,11 +167,13 @@ public class AppConfiguration {
                 if (ldapService!=null) {
                     try {
                         orgName = ldapService.getOrganizationName();
+                        issuerUrl=ldapService.getIssuerUrl();
                         computeGluuVersion(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
-                        computeAuxiliaryUris(settings); //Call this after computeEnabledMethods and computeGluuVersion only
+                        computeU2fSettings(settings); //Call this after computeEnabledMethods and computeGluuVersion only
                         computeOTPSettings(settings);//Call this after computeEnabledMethods only
+                        computeTwilioSettings(settings);//Call this after computeEnabledMethods only
 
                         OxdConfig oxdConfig = settings.getOxdConfig();
                         if (oxdConfig==null)
@@ -243,41 +243,52 @@ public class AppConfiguration {
     }
 
     private void computeOTPSettings(Configs settings) throws Exception{
-
         if (enabledMethods.contains(CredentialType.OTP))
-            settings.setOtpConfig(OtpService.getConfig(ldapService.getOTPScriptInfo()));
-
+            settings.setOtpConfig(OTPConfig.get(ldapService.getOTPScriptInfo()));
     }
 
-    private void computeAuxiliaryUris(Configs settings) throws Exception{
+    private void computeTwilioSettings(Configs settings) throws Exception{
+        if (enabledMethods.contains(CredentialType.VERIFIED_PHONE))
+            settings.setTwilioConfig(TwilioConfig.get(ldapService.getSmsScriptInfo()));
+    }
 
-        Optional<String> issuer=Utils.stringOptional(ldapService.getIssuerUrl());
-        if (issuer.isPresent()){
-            if (enabledMethods.contains(CredentialType.SECURITY_KEY)) {
+    private void computeU2fSettings(Configs settings) throws Exception{
 
-                String u2fRelativeMetadataUri = settings.getU2fRelativeMetadataUri();
-                Optional<String> u2fOpt = Optional.ofNullable(u2fRelativeMetadataUri);
+        if (enabledMethods.contains(CredentialType.SECURITY_KEY)) {
 
-                if (!u2fOpt.isPresent()) {
-                    //TODO: fix this switch
-                    switch (gluuVersion) {
-                        case "3.1.0":
-                        case "3.0.1":
-                        case "3.0.2":
-                            u2fRelativeMetadataUri = "restv1/fido-u2f-configuration";
-                            break;
-                        default:
-                            u2fRelativeMetadataUri = "restv1/fido-u2f-configuration";
-                    }
-                    logger.warn(Labels.getLabel("app.metadata_guessed"), CredentialType.SECURITY_KEY.getName(), u2fRelativeMetadataUri);
-                }
-                u2fMetadataUri = String.format("%s/%s", ldapService.getIssuerUrl(), u2fRelativeMetadataUri);
+            U2fSettings u2fCfg = settings.getU2fSettings();
+            boolean nocfg= u2fCfg == null;
+            boolean guessAppId = nocfg || u2fCfg.getAppId() == null;
+            boolean guessUri = nocfg || u2fCfg.getRelativeMetadataUri() == null;
+
+            if (nocfg)
+                u2fCfg = new U2fSettings();
+
+            if (guessAppId) {
+                u2fCfg.setAppId(issuerUrl);
+                logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F app ID", issuerUrl);
             }
 
-        }
-        else
-            throw new Exception(Labels.getLabel("app.invalid_issuer"));
+            String endpointUrl=u2fCfg.getRelativeMetadataUri();
+            if (guessUri) {
 
+                switch (gluuVersion) {
+                    case "3.0.1":
+                    case "3.0.2":
+                        endpointUrl = ".well-known/fido-u2f-configuration";
+                        break;
+                    default:
+                        endpointUrl = "restv1/fido-u2f-configuration";
+                }
+
+                u2fCfg.setRelativeMetadataUri(endpointUrl);
+                logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F relative endpoint URL", endpointUrl);
+            }
+            u2fCfg.setEndpointUrl(String.format("%s/%s", issuerUrl, endpointUrl));
+
+            settings.setU2fSettings(u2fCfg);
+            logger.info(Labels.getLabel("app.u2f_settings"), mapper.writeValueAsString(u2fCfg));
+        }
     }
 
     private void computeEnabledMethods(Configs settings) throws Exception{

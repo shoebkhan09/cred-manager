@@ -5,6 +5,25 @@
         <panelchildren sclass="padded">
             <vlayout>
                 <label value="${labels.usr.gauth_text}"/>
+
+                <zk if="${not empty vm.devices2['OTP']}">
+                    <separator />
+                    <label value="${labels.usr.you_added}" />
+
+                    <vlayout style="padding-left:40px" children="@load(vm.devices2['OTP'])">
+                        <template name="children">
+                            <hlayout sclass="de_emphasized">
+                                <label sclass="bold" value="@load(each.nickName)" />
+                                <zk  if="${each.addedOn>0}">
+                                    <label value=" -" />
+                                    <label value="@load(c:toLowerCase(c:l('general.added_on')))" />
+                                    <label value="@load(each.addedOn) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d yyyy')" />
+                                </zk>
+                            </hlayout>
+                        </template>
+                    </vlayout>
+                </zk>
+
                 <div sclass="padded" align="center">
                     <vlayout>
                         <!-- otp summary-->

@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.services.ServiceMashup;
 import javax.inject.Inject;
+import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
@@ -13,6 +14,7 @@ import static org.gluu.credmanager.core.WebUtils.SERVICES_ATTRIBUTE;
 /**
  * Created by jgomer on 2017-07-08.
  */
+@WebListener
 public class SessionListener implements HttpSessionListener {
 
     @Inject
@@ -22,7 +24,7 @@ public class SessionListener implements HttpSessionListener {
 
     public void sessionCreated(HttpSessionEvent hse){
         HttpSession session= hse.getSession();
-        logger.info("Session created {} ", hse.getSession().getId());
+        logger.info("Session created {}", hse.getSession().getId());
         session.setAttribute(SERVICES_ATTRIBUTE, services);
     }
 

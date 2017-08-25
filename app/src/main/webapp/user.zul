@@ -1,17 +1,70 @@
-<?init class="org.zkoss.zk.ui.util.Composition" arg0="general.zul"?>
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/basic.zul"?>
+<?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.title}"?>
+<?link rel="icon" type="image/x-icon" href="/images/favicon.ico" ?>
+<?style src="${pageScope.onMobile ? '/styles/mobile.css' : '/styles/desktop.css'}"?>
 <?script src="/scripts/zxcvbn.js"?>
+<?script src="/scripts/main-util.js"?>
 
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <!--button label="logout" onClick="@command('logoutFromAuthzServer')" if="${empty pageScope.error}" /-->
-    <!--include src="header.zul"/-->
-    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserMainViewModel')" self="@define(content)">
-        <include user="@load(vm.user)" src="@load('user/preferred.zul')" /><!--  src="@load(vm.secondFactorAllowed ? 'user/preferred.zul' : '')" -->
+    <vlayout viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserMainViewModel')" self="@define(content)" onCreate="@command('triggerGetOffset')">
+
+        <vlayout sclass="padded">
+            <div align="center" sclass="padded"><label value="${labels.usr.title}" sclass="titled" /></div>
+            <div sclass="dpadded">
+                <label value="@load(vm.introText)" />
+            </div>
+            <div sclass="callout padded">
+                <label value="${c:l(vm.secondFactorAllowed ? 'usr.warn_lock': 'usr.strong.unavailable')}" />
+            </div>
+        </vlayout>
+
+        <include src="user/preferred.zul" />
         <include src="@load(vm.credentialsVisibility['SECURITY_KEY'] ? 'user/u2f.zul' : '')" />
         <include src="@load(vm.credentialsVisibility['VERIFIED_PHONE'] ? 'user/phone.zul' : '')" />
         <include src="@load(vm.credentialsVisibility['OTP'] ? 'user/otp.zul' : '')" />
+
+        <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPanelOpened)">
+            <panelchildren sclass="padded">
+                <vlayout>
+                    <hlayout spacing="10px" valign="bottom">
+                        <div sclass="form_element s8"><label value="${labels.usr.passreset_current}"/></div>
+                        <textbox type="password" sclass="s8 form-control" value="@bind(vm.currentPassword)"/>
+                    </hlayout>
+                    <hlayout spacing="10px" valign="bottom">
+                        <div sclass="form_element s8"><label value="${labels.usr.passreset_newpass}"/></div>
+                        <textbox id="new_pass" type="password" sclass="s8 form-control" tooltip="tooltip_pass_hint, after_center"
+                                 w:onBlur="updateStrength(this)" value="@bind(vm.newPassword)"/>
+                    </hlayout>
+                    <hlayout spacing="3px" sclass="dpadded">
+                        <div sclass="s8"> </div>
+                        <label sclass="de_emphasized" visible="@load(not empty vm.strengthText)"
+                               style="padding-left:7px" value="${labels.usr.pass.strength.title}" />
+                        <label sclass="de_emphasized bold" value="@load(vm.strengthText)"/>
+                        <!--vlayout>
+                            <label value="${labels.usr.passreset_strength_hint}" sclass="de_emphasized"/>
+                            <label sclass="de_emphasized" value="@load(vm.strengthText)"/>
+                        </vlayout-->
+                    </hlayout>
+                    <hlayout spacing="10px" valign="bottom">
+                        <div sclass="form_element s8"><label value="${labels.usr.passreset_confirm}"/></div>
+                        <textbox type="password" sclass="s8 form-control" value="@bind(vm.newPasswordConfirm)" />
+                    </hlayout>
+                    <div align="center">
+                        <separator />
+                        <hlayout spacing="20px" valign="bottom" sclass="padded">
+                            <button label="&#160;${labels.usr.passreset_change}&#160;" sclass="btn-success"
+                                    onClick="@command('resetPass')" disabled="@load(empty vm.currentPassword or empty vm.newPassword)"/><!-- or empty vm.newPasswordConfirm -->
+                            <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancel')"/>
+                        </hlayout>
+                    </div>
+                </vlayout>
+            </panelchildren>
+        </panel>
+        <popup id="tooltip_pass_hint">${labels.usr.passreset_hint}</popup>
+
     </vlayout>
 
 </zk>

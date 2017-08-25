@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Created by jgomer on 2017-07-16.
  */
-public class HomeInitiator extends FailedPage implements Initiator {
+public class HomeInitiator extends CommonInitiator implements Initiator {
 
     private ServiceMashup services;
     private String code;
@@ -29,6 +29,7 @@ public class HomeInitiator extends FailedPage implements Initiator {
     public void doInit(Page page, Map <String, Object> map){
 
         //logger.info(Labels.getLabel("app.landed_home_from"), WebUtils.getRequestHeader("Referer"));
+        init(page);
         Session se=Sessions.getCurrent(true);
         RedirectStage stage=WebUtils.getRedirectStage(se);
 
@@ -53,7 +54,12 @@ public class HomeInitiator extends FailedPage implements Initiator {
                         User user=usrService.createUserFromClaims(claims);
                         WebUtils.setUser(se, user);
 
+                        //Update current user with credentials he has added so far:
+                        user.setCredentials(usrService.getPersonalMethods(user));
+
                         CredentialType credType=usrService.getPreferredMethod(user);
+                        user.setPreference(credType);
+
                         if (credType==null) {     //Preferred method not set, go straight to landing page
                             WebUtils.setRedirectStage(se, RedirectStage.BYPASS);
                             WebUtils.execRedirect(user.isAdmin() ? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);

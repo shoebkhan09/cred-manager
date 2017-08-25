@@ -1,7 +1,6 @@
 package org.gluu.credmanager.services.ldap.pojo;
 
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
-import org.gluu.site.ldap.persistence.annotation.LdapDN;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.xdi.ldap.model.Entry;
@@ -14,25 +13,25 @@ import org.xdi.ldap.model.Entry;
 public class OxTrustConfiguration extends Entry{
 
     @LdapAttribute(name="oxTrustConfCacheRefresh")
-    private String strConfCacheRefresh;
+    private String confCacheRefreshStr;
 
     @LdapAttribute(name="oxTrustConfApplication")
-    private String strConfApplication;
+    private String confApplicationStr;
 
-    public String getStrConfCacheRefresh() {
-        return strConfCacheRefresh;
+    public String getConfCacheRefreshStr() {
+        return confCacheRefreshStr;
     }
 
-    public void setStrConfCacheRefresh(String strConfCacheRefresh) {
-        this.strConfCacheRefresh = strConfCacheRefresh;
+    public void setConfCacheRefreshStr(String confCacheRefreshStr) {
+        this.confCacheRefreshStr = confCacheRefreshStr;
     }
 
-    public String getStrConfApplication() {
-        return strConfApplication;
+    public String getConfApplicationStr() {
+        return confApplicationStr;
     }
 
-    public void setStrConfApplication(String strConfApplication) {
-        this.strConfApplication = strConfApplication;
+    public void setConfApplicationStr(String confApplicationStr) {
+        this.confApplicationStr = confApplicationStr;
     }
 
 }

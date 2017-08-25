@@ -13,17 +13,17 @@ import java.util.Map;
 /**
  * Created by jgomer on 2017-07-20.
  */
-public class LogoutInitiator implements Initiator {
+public class LogoutInitiator extends CommonInitiator implements Initiator {
 
     private Logger logger = LogManager.getLogger(getClass());
 
     public void doInit(Page page, Map<String, Object> map){
+        init(page);
         //Do session clean up
         WebUtils.purgeSession(Sessions.getCurrent());
 
-        page.setAttribute("homeUrl", WebUtils.HOME_PAGE_URL);
-
-        logger.info("Session cleaned");
+        //page.setAttribute("homeUrl", WebUtils.HOME_PAGE_URL);
+        //logger.info("Session cleaned");
     }
 
 }

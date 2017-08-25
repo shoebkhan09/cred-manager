@@ -2,12 +2,11 @@ package org.gluu.credmanager.core.credential;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gluu.credmanager.conf.CredentialType;
 
 /**
  * Created by jgomer on 2017-07-25.
  */
-public class VerifiedPhone extends RegisteredCredential {
+public class VerifiedPhone extends RegisteredCredential implements Comparable<VerifiedPhone> {
 
     private String number;
 
@@ -23,12 +22,10 @@ public class VerifiedPhone extends RegisteredCredential {
     }
 
     public VerifiedPhone(){
-        setType(CredentialType.VERIFIED_PHONE);
     }
 
     public VerifiedPhone(String number){
         this.number=number;
-        setType(CredentialType.VERIFIED_PHONE);
     }
 
     public long getAddedOn() {
@@ -37,6 +34,12 @@ public class VerifiedPhone extends RegisteredCredential {
 
     public void setAddedOn(long addedOn) {
         this.addedOn = addedOn;
+    }
+
+    public int compareTo(VerifiedPhone ph){
+        long date1=getAddedOn();
+        long date2=ph.getAddedOn();
+        return (date1 < date2) ? -1 : ((date1 > date2) ? 1 : 0);
     }
 
     public String toString(){
@@ -48,4 +51,5 @@ public class VerifiedPhone extends RegisteredCredential {
             return e.getMessage();
         }
     }
+
 }

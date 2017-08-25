@@ -58,7 +58,6 @@ ul{
 .btn{
     font-size: 16px;
 }
-
 .btn-link{
     padding: 10px 0px 0px 0px;
 }
@@ -103,4 +102,26 @@ ul{
 }
 .dropdown-menu > li > a{
     padding:2px 20px;
+}
+.mainDiv{
+    margin:0 auto;
+    width:950px;
+    border:1px #00BE79 solid;
+}
+.selectorDiv{
+    margin:0 auto;
+    width:400px;
+    border:1px #00BE79 solid;
+}
+.z-notification-content{
+	font-size:15px;
+	min-height:80px;
+}
+.z-radio-content{
+    font-size: 14px;
+    margin-bottom:0px;
+    padding-left:8px;
+}
+input[type="radio"]{
+	margin:0px 0px 4px 0px;
 }

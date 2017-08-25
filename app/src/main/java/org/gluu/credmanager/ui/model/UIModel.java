@@ -24,4 +24,5 @@ public class UIModel {
     public static Pair<CredentialType, String> createPair(CredentialType cdtype){
         return new Pair(cdtype, cdtype.getUIName());
     }
+
 }

@@ -1,45 +1,35 @@
+<?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <panel title="${labels.usr.preferred_title}" sclass="padded" border="normal" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserPreferenceViewModel')">
-        <panelchildren sclass="padded">
-            <vlayout>
-                <label value="${labels.usr.preferred_text}"/>
-                <vlayout sclass="padded">
-                    <hlayout valign="bottom">
-                        <label value="@load(vm.currentPreferred)"/>
-                        <image visible="@load(vm.editable)" src="images/edit_24.png" tooltip="tooltip_delete, after_pointer" sclass="icon_edit" onClick="@command('prepareUpdateMethod')" />
-                        <image visible="@load(not vm.editable)" src="images/edit_24.png" sclass="icon_edit unactivated" />
-                    </hlayout>
-                    <!-- if image is "unactivated", next label is visible, and viceversa -->
-                    <label value="${labels.usr.preferred_disabled}" sclass="bold" visible="@load(not vm.editable)"/>
+    <div viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserPreferenceViewModel')">
+        <panel title="${labels.usr.preferred_title}" sclass="padded" border="normal">
+            <panelchildren sclass="padded">
+                <vlayout>
+                    <label value="${labels.usr.preferred_text}"/>
+                    <vlayout sclass="padded">
+                        <hlayout valign="bottom">
+                            <label sclass="bold" value="@load(vm.selectedMethodName)"/>
+                            <image visible="@load(vm.uiEditable)" src="images/edit_24.png" tooltip="tooltip_choose, after_pointer" sclass="icon_edit" onClick="@command('prepareUpdateMethod')" />
+                            <image visible="@load(not vm.uiEditable)" src="images/edit_24.png" sclass="icon_edit unactivated" />
+                        </hlayout>
+                        <!-- if image is "unactivated", next label is visible, and viceversa -->
+                        <label value="${c:l2('usr.preferred_disabled', c:split(vm.minimumCredsFor2FA,''))}" sclass="de_emphasized" visible="@load(vm.uiNotEnoughCredsFor2FA)"/>
+                    </vlayout>
                 </vlayout>
-            </vlayout>
-        </panelchildren>
-    </panel>
+            </panelchildren>
+        </panel>
 
-    <zk if="@load(vm.editable)">
         <popup id="tooltip_choose">${labels.usr.preferred_tooltip}</popup>
 
-        <window id="win" title="${labels.usr.preferred_title}" border="normal" closable="true" visible="@load(vm.editing)">
-            <vlayout sclass="padded">
-                <radiogroup id="methods" selectedIndex="@bind(vm.selectedMethodIndex)" />
-                <grid model="@load(vm.availMethods)">
-                    <template name="model">
-                        <row>
-                            <radio label="@load(each.y)" radiogroup="methods" />
-                        </row>
-                    </template>
-                </grid>
-            </vlayout>
-
+        <window id="win" title="${labels.usr.preferred_title}" border="normal" mode="modal" visible="@load(vm.uiEditing)" width="330px">
+            <include src="/user/selector.zul" />
             <div align="center">
-                <hlayout spacing="20px" sclass="padded">
-                    <button label="${labels.general.update}" sclass="btn-success" onClick="@command('updateMethod')" />
-                    <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancelMethod')" />
+                <hlayout spacing="30px" sclass="padded">
+                    <button label="${labels.general.update}" sclass="btn-success" onClick="@command('update')" />
+                    <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancel')" />
                 </hlayout>
             </div>
         </window>
-    </zk>
-
+    </div>
 </zk>

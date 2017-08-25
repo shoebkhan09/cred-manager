@@ -1,23 +1,23 @@
-<!--
-<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
--->
 <?page title="${applicationScope['appName']}"?>
 <?init class="org.gluu.credmanager.core.navigation.HomeInitiator"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
-    <div if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.HomeViewModel')" onCreate="@command('onViewCreated')">
-        <label value="@load(vm.hint)" />
 
-        <radiogroup id="methods" selectedIndex="@bind(vm.selectedMethodIndex)" />
-        <grid model="@load(vm.availMethods)">
-            <template name="model">
-                <row>
-                    <radio label="@load(each.y)" radiogroup="methods" />
-                </row>
-            </template>
-        </grid>
-        <button label="${labels.general.proceed}" onClick="@command('reauthenticate')" />
-    </div>
+    <vlayout viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.HomeViewModel')" if="${empty pageScope.error}" sclass="padded">
+        <style src="${pageScope.onMobile ? '/styles/mobile.css' : '/styles/desktop.css'}">
+
+        </style>
+
+        <div align="center" sclass="selectorDiv padded">
+            <label sclass="bold" value="@load(vm.hint)" />
+
+            <div visible="@load(not vm.immediateRedir)">
+                <include src="/user/selector.zul" />
+                <separator />
+                <button sclass="btn-success" label="${labels.general.proceed}" onClick="@command('reauthenticate')" />
+            </div>
+        </div>
+    </vlayout>
 
     <vlayout if="${not empty pageScope.error}">
         <label value="${pageScope.error}" />

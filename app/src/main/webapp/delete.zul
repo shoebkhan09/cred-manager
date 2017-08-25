@@ -1,0 +1,31 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <script>
+        function pana(){
+        setTimeout(pana2,1000);
+        }
+        function pana2(){
+        var offset=new Date().getTimezoneOffset()*60000;
+        zAu.send(new zk.Event(null, "onFoo", {offset: -offset}, {toServer:true}));
+        alert(offset);
+        }
+    </script>
+
+    <zscript>
+        import org.zkoss.zk.au.out.AuInvoke;
+        import org.zkoss.zk.ui.util.Clients;
+
+        void _do(obj){
+        //alert(obj);
+        Clients.response(new AuInvoke("pana",null));
+        }
+
+
+    </zscript>
+    <vlayout  onCreate="_do(this)">
+        <button label="1" id="mybutton"  />
+    </vlayout>
+
+</zk>
+

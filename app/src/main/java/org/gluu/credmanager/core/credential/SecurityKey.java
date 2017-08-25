@@ -1,74 +1,64 @@
 package org.gluu.credmanager.core.credential;
 
-import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 
+import java.util.Date;
+
 /**
  * Created by jgomer on 2017-07-25.
+ * Similar to org.xdi.oxauth.model.fido.u2f.DeviceRegistration with much lower pretensions
  */
 @LdapEntry
 @LdapObjectClass(values = {"top", "oxDeviceRegistration"})
-public class SecurityKey extends RegisteredCredential {
+public class SecurityKey extends RegisteredCredential implements Comparable<SecurityKey> {
 
     public SecurityKey(){
-        setType(CredentialType.SECURITY_KEY);
     }
 
-    /*
+    public SecurityKey(String id){
+        this.id=id;
+    }
 
-    @LdapAttribute(name = "oxId", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "creationDate")
+    private Date creationDate;
+
+    @LdapAttribute(name = "oxId")
     private String id;
 
-    @LdapAttribute(name = "creationDate", ignoreDuringUpdate = true)
-    private String creationDate;
-
-    @LdapAttribute(name = "oxApplication", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "oxApplication")
     private String application;
 
-    @LdapAttribute(name = "oxCounter", ignoreDuringUpdate = true)
-    private String counter;
+    @LdapAttribute(name = "oxCounter")
+    private long counter;
 
-    @LdapAttribute(name = "oxDeviceData", ignoreDuringUpdate = true)
-    private String deviceData;
+    @LdapAttribute(name = "oxDeviceHashCode")
+    private int deviceHashCode;
 
-    @LdapAttribute(name = "oxDeviceHashCode", ignoreDuringUpdate = true)
-    private String deviceHashCode;
-
-    @LdapAttribute(name = "oxDeviceKeyHandle", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "oxDeviceKeyHandle")
     private String deviceKeyHandle;
 
-    @LdapAttribute(name = "oxDeviceRegistrationConf", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "oxDeviceRegistrationConf")
     private String deviceRegistrationConf;
 
-    @LdapAttribute(name = "oxLastAccessTime", ignoreDuringUpdate = true)
-    private String lastAccessTime;
-
-    @LdapAttribute(name = "oxStatus", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "oxStatus")
     private String status;
 
-    @LdapAttribute(name = "displayName")
-    private String displayName;
-
-    @LdapAttribute(name = "description")
-    private String description;
-
-    @LdapAttribute(name = "oxTrustMetaLastModified")
-    private String metaLastModified;
-
-    @LdapAttribute(name = "oxTrustMetaLocation")
-    private String metaLocation;
-
-    @LdapAttribute(name = "oxTrustMetaVersion")
-    private String metaVersion;
-
-    public String getCreationDate() {
+    public Date getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(String creationDate) {
+    public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getApplication() {
@@ -79,27 +69,19 @@ public class SecurityKey extends RegisteredCredential {
         this.application = application;
     }
 
-    public String getCounter() {
+    public long getCounter() {
         return counter;
     }
 
-    public void setCounter(String counter) {
+    public void setCounter(long counter) {
         this.counter = counter;
     }
 
-    public String getDeviceData() {
-        return deviceData;
-    }
-
-    public void setDeviceData(String deviceData) {
-        this.deviceData = deviceData;
-    }
-
-    public String getDeviceHashCode() {
+    public int getDeviceHashCode() {
         return deviceHashCode;
     }
 
-    public void setDeviceHashCode(String deviceHashCode) {
+    public void setDeviceHashCode(int deviceHashCode) {
         this.deviceHashCode = deviceHashCode;
     }
 
@@ -119,14 +101,6 @@ public class SecurityKey extends RegisteredCredential {
         this.deviceRegistrationConf = deviceRegistrationConf;
     }
 
-    public String getLastAccessTime() {
-        return lastAccessTime;
-    }
-
-    public void setLastAccessTime(String lastAccessTime) {
-        this.lastAccessTime = lastAccessTime;
-    }
-
     public String getStatus() {
         return status;
     }
@@ -135,45 +109,31 @@ public class SecurityKey extends RegisteredCredential {
         this.status = status;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public int compareTo(SecurityKey k){
+        long date1=getCreationDate().getTime();
+        long date2=k.getCreationDate().getTime();
+        return (date1 < date2) ? -1 : ((date1 > date2) ? 1 : 0);
     }
+/*
 
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
+    @LdapAttribute(name = "oxDeviceData")
+    private String deviceData;
 
-    public String getDescription() {
-        return description;
-    }
+    @LdapAttribute(name = "oxLastAccessTime")
+    private String lastAccessTime;
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    @LdapAttribute(name = "description")
+    private String description;
 
-    public String getMetaLastModified() {
-        return metaLastModified;
-    }
+    @LdapAttribute(name = "oxTrustMetaLastModified")
+    private String metaLastModified;
 
-    public void setMetaLastModified(String metaLastModified) {
-        this.metaLastModified = metaLastModified;
-    }
+    @LdapAttribute(name = "oxTrustMetaLocation")
+    private String metaLocation;
 
-    public String getMetaLocation() {
-        return metaLocation;
-    }
+    @LdapAttribute(name = "oxTrustMetaVersion")
+    private String metaVersion;
 
-    public void setMetaLocation(String metaLocation) {
-        this.metaLocation = metaLocation;
-    }
-
-    public String getMetaVersion() {
-        return metaVersion;
-    }
-
-    public void setMetaVersion(String metaVersion) {
-        this.metaVersion = metaVersion;
-    }
 */
 
 }

@@ -32,7 +32,10 @@
         <tooltip-delay>70</tooltip-delay>
     </client-config>
     <listener>
-        <listener-class>org.gluu.credmanager.core.init.AppInitializer</listener-class>
+        <listener-class>org.gluu.credmanager.core.init.ZKInitializer</listener-class>
+    </listener>
+    <listener>
+        <listener-class>org.gluu.credmanager.core.init.DesktopInitializer</listener-class>
     </listener>
     <system-config>
         <label-location>/WEB-INF/labels/application.properties</label-location>

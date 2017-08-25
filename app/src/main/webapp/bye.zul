@@ -1,9 +1,20 @@
 <?page title="${applicationScope['appName']} - ${labels.usr.logout.title}"?>
 <?init class="org.gluu.credmanager.core.navigation.LogoutInitiator"?>
+<?link rel="icon" type="image/x-icon" href="/images/favicon.ico" ?>
+<?style src="${pageScope.onMobile ? '/styles/mobile.css' : '/styles/desktop.css'}"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <label value="${labels.usr.logout.title}" />
-    <button label="${labels.usr.logout.back_home}" href="${pageScope.homeUrl}" />
+    <div align="center">
+        <vlayout sclass="mainDiv">
+            <hlayout height="250px" sclass="padded">
+                <vlayout sclass="padded">
+                    <label value="${labels.usr.logout.title}" sclass="titled padded" />
+                    <separator />
+                    <button label="${labels.usr.logout.back_home}" sclass="btn-success" href="/" />
+                </vlayout>
+            </hlayout>
+        </vlayout>
+    </div>
 
 </zk>

@@ -1,0 +1,84 @@
+package org.gluu.credmanager.conf;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.misc.Utils;
+import org.gluu.credmanager.services.ldap.pojo.CustomScript;
+import org.xdi.model.SimpleCustomProperty;
+import org.zkoss.util.resource.Labels;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Created by jgomer on 2017-07-22.
+ */
+public class TwilioConfig {
+
+    private static ObjectMapper mapper=new ObjectMapper();
+    private static Logger logger = LogManager.getLogger(TwilioConfig.class);
+
+    private String accountSID;
+    private String authToken;
+    private String fromNumber;
+
+    public TwilioConfig(){ }
+
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    public String getFromNumber() {
+        return fromNumber;
+    }
+
+    public String getAccountSID() {
+        return accountSID;
+    }
+
+    public void setAccountSID(String accountSID) {
+        this.accountSID = accountSID;
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    public void setFromNumber(String fromNumber) {
+        this.fromNumber = fromNumber;
+    }
+
+    public static TwilioConfig get(CustomScript smsScript) throws Exception{
+
+        TwilioConfig tc=new TwilioConfig();
+
+        for (SimpleCustomProperty p : smsScript.getProperties()) {
+            String val=p.getValue2();
+            switch (p.getValue1()) {
+                case "twilio_sid":
+                    tc.setAccountSID(val);
+                    break;
+                case "twilio_token":
+                    tc.setAuthToken(val);
+                    break;
+                case "from_number":
+                    tc.setFromNumber(val);
+                    break;
+            }
+        }
+        List<String> values= Arrays.asList(tc.getAccountSID(), tc.getAuthToken(), tc.getFromNumber());
+        if (values.stream().map(Utils::stringOptional).allMatch(Optional::isPresent)) {
+            logger.info(Labels.getLabel("app.sms_settings"), mapper.writeValueAsString(tc));
+            return tc;
+        }
+        else {
+            String error=Labels.getLabel("app.sms_settings_error");
+            logger.error(error);
+            throw new Exception(error);
+        }
+
+    }
+
+}

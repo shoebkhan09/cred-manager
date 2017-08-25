@@ -4,6 +4,7 @@ import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.core.credential.RegisteredCredential;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by jgomer on 2017-07-16.
@@ -16,7 +17,7 @@ public class User {
     private CredentialType preference;
     private boolean admin;
 
-    private List<RegisteredCredential> credentials;
+    private Map<CredentialType, List<RegisteredCredential>> credentials;
 
     public User(){
     }
@@ -41,7 +42,7 @@ public class User {
         this.preference = preference;
     }
 
-    public void setCredentials(List<RegisteredCredential> credentials) {
+    public void setCredentials(Map<CredentialType, List<RegisteredCredential>> credentials) {
         this.credentials = credentials;
     }
 
@@ -69,7 +70,7 @@ public class User {
         return preference;
     }
 
-    public List<RegisteredCredential> getCredentials() {
+    public Map<CredentialType, List<RegisteredCredential>> getCredentials() {
         return credentials;
     }
 

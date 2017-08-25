@@ -5,10 +5,7 @@
     <zk choose="">
         <zk when="${empty pageScope.error}">
             <vlayout sclass="mainDiv">
-                <style src="${pageScope.onMobile ? '/styles/mobile.css' : '/styles/desktop.css'}">
-                </style>
                 <include src="/header.zul"/>
-                <div self="@insert(nav)" />
                 <div self="@insert(content)" />
             </vlayout>
         </zk>

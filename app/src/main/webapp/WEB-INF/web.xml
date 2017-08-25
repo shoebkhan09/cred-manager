@@ -7,13 +7,6 @@
 	<description>credential manager</description>
 	<display-name>cred-manager</display-name>
 
-    <listener>
-        <listener-class>org.gluu.credmanager.core.init.ContextListener</listener-class>
-    </listener>
-    <listener>
-        <listener-class>org.gluu.credmanager.core.init.SessionListener</listener-class>
-    </listener>
-
 	<!-- WELD's settings -->
     <!--
 	<context-param>

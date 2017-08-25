@@ -17,16 +17,22 @@ import java.io.Serializable;
 public class ServiceMashup implements Serializable {
 
     @Inject
-    private OxdService oxdService;
+    private AppConfiguration appConfiguration;
 
     @Inject
     private UserService userService;
 
     @Inject
-    private AppConfiguration appConfiguration;
+    private OxdService oxdService;
 
     @Inject
     private OTPService otpService;
+
+    @Inject
+    private SmsService smsService;
+
+    @Inject
+    private U2fService u2fService;
 
     public AppConfiguration getAppConfig() {
         return appConfiguration;
@@ -44,4 +50,11 @@ public class ServiceMashup implements Serializable {
         return otpService;
     }
 
+    public SmsService getSmsService() {
+        return smsService;
+    }
+
+    public U2fService getU2fService() {
+        return u2fService;
+    }
 }

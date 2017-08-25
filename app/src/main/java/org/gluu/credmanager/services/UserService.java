@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.credential.OTPDevice;
 import org.gluu.credmanager.core.credential.SecurityKey;
@@ -13,13 +12,14 @@ import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.ldap.pojo.GluuPerson;
 import org.gluu.credmanager.core.credential.RegisteredCredential;
+import org.gluu.credmanager.conf.CredentialType;
+import static org.gluu.credmanager.conf.CredentialType.OTP;
+import static org.gluu.credmanager.conf.CredentialType.VERIFIED_PHONE;
+import static org.gluu.credmanager.conf.CredentialType.SECURITY_KEY;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,14 +77,50 @@ public class UserService {
 
     public CredentialType getPreferredMethod(User user){
 
+        CredentialType cred=null;
         try {
-            GluuPerson person = ldapService.getGluuPerson(user.getRdn());
-            return CredentialType.get(person.getPreferredAuthMethod());
+            String pref= ldapService.getGluuPerson(user.getRdn()).getPreferredAuthMethod();
+            cred=(pref==null) ? null : CredentialType.valueOf(pref);
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
-            return null;
         }
+        return cred;
+
+    }
+
+    public boolean setPreferredMethod(User user, CredentialType cred){
+
+        boolean success=false;
+        try {
+            ldapService.updatePreferredMethod(user.getRdn(), (cred==null) ? null : cred.toString());
+            user.setPreference(cred);
+            success=true;
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return success;
+
+    }
+
+    public boolean currentPasswordMatch(User user, String password) throws Exception{
+        return ldapService.authenticate(user.getUserName(), password);
+    }
+
+    public boolean changePassword(User user, String newPassword){
+
+        boolean success=false;
+        try {
+            if (Utils.stringOptional(newPassword).isPresent()) {
+                ldapService.changePassword(user.getRdn(), newPassword);
+                success = true;
+            }
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return success;
 
     }
 
@@ -99,13 +135,8 @@ public class UserService {
     private OTPDevice getExtraOTPInfo(String uid, List<OTPDevice> list){
         //Complements current otp device with extra info in the list if any
 
-        uid=uid.replaceFirst("hotp:","").replaceFirst("totp:","");
-        int idx=uid.indexOf(";");
-        if (idx>0)
-            uid=uid.substring(0,idx);
-        int hash=uid.hashCode();
-
-        OTPDevice device=new OTPDevice(hash);
+        OTPDevice device=new OTPDevice(uid);
+        int hash=device.getId();
 logger.debug("Hashed id {}", hash);
 
         Optional<OTPDevice> extraInfoOTP=list.stream().filter(dev -> dev.getId()==hash).findFirst();
@@ -186,6 +217,7 @@ logger.debug("Phones from ldap2: {}", vphones);
     private List<SecurityKey> getSecurityKeys(String rdn){
 
         try{
+            ldapService.createFidoBranch(rdn);
             return ldapService.getFidoDevices(rdn);
         }
         catch (Exception e){
@@ -194,18 +226,17 @@ logger.debug("Phones from ldap2: {}", vphones);
         }
     }
 
-    //TODO: implement otp & supergluu
-    public List<RegisteredCredential> getPersonalMethods(User user){
+    public Map<CredentialType, List<RegisteredCredential>> getPersonalMethods(User user){
 
         try {
             String rdn = user.getRdn();
             GluuPerson person=ldapService.getGluuPerson(rdn);
+            Utils.emptyNullLists(person, ArrayList::new);
 
-            List<RegisteredCredential> allCreds=new ArrayList<>();
-            allCreds.addAll(getVerifiedPhones(person));
-            allCreds.addAll(getSecurityKeys(rdn));
-            allCreds.addAll(getOtpDevices(person));
-
+            Map<CredentialType, List<RegisteredCredential>> allCreds=new HashMap<>();
+            allCreds.put(VERIFIED_PHONE, Utils.mapSortCollectList(getVerifiedPhones(person), RegisteredCredential.class::cast));
+            allCreds.put(SECURITY_KEY, Utils.mapSortCollectList(getSecurityKeys(rdn), RegisteredCredential.class::cast));
+            allCreds.put(OTP, Utils.mapSortCollectList(getOtpDevices(person), RegisteredCredential.class::cast));
             return allCreds;
         }
         catch (Exception e){
@@ -214,18 +245,62 @@ logger.debug("Phones from ldap2: {}", vphones);
         }
     }
 
-    public void updateMobilePhones(User user, List<VerifiedPhone> mobiles, VerifiedPhone newPhone) throws Exception{
+    public Set<CredentialType> getEffectiveMethods(User user, Set<CredentialType> enabledMethods){
+        //Get those credentials types that have associated at least one item associated
+        Stream<Map.Entry<CredentialType, List<RegisteredCredential>>> stream=user.getCredentials().entrySet().stream();
+        Set<CredentialType> set=stream.filter(e -> e.getValue().size()>0).map(e -> e.getKey()).collect(Collectors.toCollection(HashSet::new));
+        set.retainAll(enabledMethods);
+        return set;
+    }
+
+    public void updateMobilePhonesAdd(User user, List<RegisteredCredential> mobiles, VerifiedPhone newPhone) throws Exception{
 
         //See getVerifiedPhones() above
-        List<VerifiedPhone> vphones=new ArrayList<>(mobiles);
-        vphones.add(newPhone);
+        List<VerifiedPhone> vphones=new ArrayList<>(Utils.mapCollectList(mobiles, VerifiedPhone.class::cast));
+        if (newPhone!=null)
+            vphones.add(newPhone);
 
-        String json=String.format("{%sphones%s: %s}", "\"", "\"", mapper.writeValueAsString(vphones));
+        String json=null;
+        List<String> strPhones=vphones.stream().map(VerifiedPhone::getNumber).collect(Collectors.toList());
+        if (strPhones.size()>0)
+            json=String.format("{%sphones%s: %s}", "\"", "\"", mapper.writeValueAsString(vphones));
 
-        ldapService.updateMobilePhones(user.getRdn(), mobiles, newPhone, json);
-        //modify list only if LDAP update took place
-        mobiles.add(newPhone);
+        ldapService.updateMobilePhones(user.getRdn(), strPhones, json);
+        if (newPhone!=null)
+            //modify list only if LDAP update took place
+            mobiles.add(newPhone);
 
+    }
+
+    public void updateOTPDevicesAdd(User user, List<RegisteredCredential> devs, OTPDevice newDevice) throws Exception{
+
+        //See getOTPDDevices() above
+        List<OTPDevice> vdevices=new ArrayList<>(Utils.mapCollectList(devs, OTPDevice.class::cast));
+        if (newDevice!=null)
+            vdevices.add(newDevice);
+
+        String json=null;
+        List<String> strDevs=vdevices.stream().map(OTPDevice::getUid).collect(Collectors.toList());
+        if (strDevs.size()>0)
+            json=String.format("{%sdevices%s: %s}", "\"", "\"", mapper.writeValueAsString(vdevices));
+
+        ldapService.updateOTPDevices(user.getRdn(), strDevs, json);
+        if (newDevice!=null)
+            //modify list only if LDAP update took place
+            devs.add(newDevice);
+
+    }
+
+    public SecurityKey relocateFidoDevice(User user, long time) throws Exception{
+        return ldapService.relocateFidoDevice(user.getRdn(), time);
+    }
+
+    public void updateU2fDevice(SecurityKey key) throws Exception{
+        ldapService.updateU2fDevice(key);
+    }
+
+    public void removeU2fDevice(SecurityKey key) throws Exception{
+        ldapService.removeU2fDevice(key);
     }
 
 }
