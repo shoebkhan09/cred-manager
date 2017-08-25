@@ -52,7 +52,7 @@ Most important methods are already documented following the javadoc syntax.
 
 ## UI Framework
 
-Given the project's requirements regarding to usability, mobile-friendliness, responsiveness, and so on, the [ZK](https://www.zkoss.org) framework was chosen. Advantages to highlight from it: it's open source, widely adopted, and has plenty of documentation. Additionally, it shows a good compatibility level with the toolset already used by Gluu developers and have also deserved good reviews from authoritative sources.
+Given the project's requirements regarding to usability, mobile-friendliness, responsiveness, and so on, the [ZK Community Edition](https://www.zkoss.org) framework was chosen. Advantages to highlight from it: it's open source, widely adopted, and has plenty of documentation. Additionally, it shows a good compatibility level with the toolset already used by Gluu developers and have also deserved good reviews from authoritative sources.
 
 Pages built with ZK are lightweight, still preserving a Java backend binding typical of JSF interfaces. The lifecycle of ZK pages and components is simpler than its counterpart (JSF) but still resembles many aspects of JSF such as interfaces defined in terms of XML tags and usage of EL expressions. So it's basically less overhead and complexity using similar dialects.
 
@@ -75,6 +75,10 @@ Despite ZK does a lot of Ajax without requiring developers to know about Javascr
 Cred-manager uses weld for CDI. The single-jar approach (weld-servlet-shaded) was embraced for simplicity. In weld jargon this application is an implicit bean archive (see file `beans.xml` in WEB-INF folder). 
 
 Most of POJOs in the package `org.gluu.credmanager.services` are managed beans and encapsulate a lot of business logic. To expose them to other application's classes a mashup of services was created as a session-scoped bean, see `org.gluu.credmanager.services.ServiceMashup` so most injections are there.
+
+The following image from the `weld-probe` app shows the most important managed beans in cred-manager and their associated dependencies:
+
+![dependency graph](../imgs/weld_graph_20170825.png)
 
 ## Objects stored in user's session
 
