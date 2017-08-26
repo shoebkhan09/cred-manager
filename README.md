@@ -3,4 +3,4 @@ Application for a person to manage their trusted credentials for use with the Gl
 
 * *imgs* directory hosts images already used in wiki.
 * *prototype* directory is a maven project with sources of prototype built in earlier stages of project
-* *app* contains the real code of the project. Please see the [Readme](https://github.com/GluuFederation/cred-manager/tree/master/app) file
+* *app* contains the actual code of project. The [Readme](https://github.com/GluuFederation/cred-manager/blob/master/app/README.md) file and [developer notes](https://github.com/GluuFederation/cred-manager/blob/master/app/developer-notes.md) have detailed tech-docs
