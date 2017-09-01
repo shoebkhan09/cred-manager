@@ -8,14 +8,14 @@ import java.util.Date;
 
 /**
  * Created by jgomer on 2017-07-25.
- * Similar to org.xdi.oxauth.model.fido.u2f.DeviceRegistration with much lower pretensions
+ * Represents a registered credential of u2f type. It's similar to org.xdi.oxauth.model.fido.u2f.DeviceRegistration but
+ * simpler
  */
 @LdapEntry
 @LdapObjectClass(values = {"top", "oxDeviceRegistration"})
 public class SecurityKey extends RegisteredCredential implements Comparable<SecurityKey> {
 
-    public SecurityKey(){
-    }
+    public SecurityKey(){}
 
     public SecurityKey(String id){
         this.id=id;

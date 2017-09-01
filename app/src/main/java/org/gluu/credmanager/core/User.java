@@ -8,6 +8,8 @@ import java.util.Map;
 
 /**
  * Created by jgomer on 2017-07-16.
+ * An object of this class represents an end-user, contains the most important things such as username, preferred authn
+ * method, and set of enrolled credentials. This class is NOT being serialized or annotated to make it persist to LDAP
  */
 public class User {
     private String userName;
@@ -78,25 +80,4 @@ public class User {
         return admin;
     }
 
-    /*
-    private List<String> mobilePhones;
-
-    public void setMobilePhones(List<String> mobilePhones) {
-        this.mobilePhones = mobilePhones;
-    }
-
-    public List<String> getMobilePhones() {
-        return mobilePhones;
-    }
-
-    private String phone;
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-     */
 }

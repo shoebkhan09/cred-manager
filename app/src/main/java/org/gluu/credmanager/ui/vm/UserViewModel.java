@@ -22,6 +22,7 @@ import java.util.List;
 
 /**
  * Created by jgomer on 2017-08-04.
+ * This is the superclass of all ViewModels associated to zul pages used by regular users of the application
  */
 public class UserViewModel {
 
@@ -51,7 +52,7 @@ public class UserViewModel {
 
     @Command
     public void logoutFromAuthzServer(){
-
+logger.debug("loging out");
         try {
             Executions.sendRedirect(services.getOxdService().getLogoutUrl());
         }

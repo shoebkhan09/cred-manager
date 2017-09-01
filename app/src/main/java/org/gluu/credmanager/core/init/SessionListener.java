@@ -13,6 +13,7 @@ import static org.gluu.credmanager.core.WebUtils.SERVICES_ATTRIBUTE;
 
 /**
  * Created by jgomer on 2017-07-08.
+ * This class listens whenever a session is created or destroyed. In creation, it stores an instance of ServiceMashup on it
  */
 @WebListener
 public class SessionListener implements HttpSessionListener {

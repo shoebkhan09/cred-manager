@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Read the ZK 8 Configuration Reference manual to learn about tags here -->
 <zk>
     <preference>
         <name>org.zkoss.zk.ui.WebApp.name</name>
@@ -8,6 +9,8 @@
         <name>org.zkoss.zul.image.preload</name>
         <value>true</value>
     </library-property>
+
+    <!-- bootstrap settings -->
     <library-property>
         <name>org.zkoss.zul.Button.mold</name>
         <value>bs</value>
@@ -20,6 +23,8 @@
         <name>org.zkoss.zul.Panel.mold</name>
         <value>bs</value>
     </library-property-->
+
+    <!-- locale, resource bundle and character encoding settings -->
     <library-property>
         <name>org.zkoss.web.preferred.locale</name>
         <value>en</value>
@@ -28,18 +33,22 @@
         <name>org.zkoss.util.label.web.charset</name>
         <value>ISO-8859-1</value>
     </library-property>
+    <system-config>
+        <label-location>/WEB-INF/labels/application.properties</label-location>
+        <label-location>/WEB-INF/labels/general.properties</label-location>
+        <label-location>/WEB-INF/labels/user.properties</label-location>
+    </system-config>
+
+    <!-- tooltip settings -->
     <client-config>
         <tooltip-delay>70</tooltip-delay>
     </client-config>
+
+    <!-- important listeners -->
     <listener>
         <listener-class>org.gluu.credmanager.core.init.ZKInitializer</listener-class>
     </listener>
     <listener>
         <listener-class>org.gluu.credmanager.core.init.DesktopInitializer</listener-class>
     </listener>
-    <system-config>
-        <label-location>/WEB-INF/labels/application.properties</label-location>
-        <label-location>/WEB-INF/labels/general.properties</label-location>
-        <label-location>/WEB-INF/labels/user.properties</label-location>
-    </system-config>
 </zk>

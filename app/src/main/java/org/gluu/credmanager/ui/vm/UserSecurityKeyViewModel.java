@@ -27,6 +27,7 @@ import java.util.*;
 
 /**
  * Created by jgomer on 2017-07-23.
+ * This is the ViewModel of page u2f-detail.zul. It controls the CRUD of security keys
  */
 public class UserSecurityKeyViewModel extends UserViewModel{
 
@@ -97,6 +98,12 @@ public class UserSecurityKeyViewModel extends UserViewModel{
             uiAwaiting =true;
             BindUtils.postNotifyChange(null,	null, this, "uiAwaiting");
 
+            /*
+             Passing username and session_state values does not work fine (oxAuth says session_state does not match the
+             grant...). So to make it work I just pass null. The bad is that once the registration is finished, the LDAP
+             entry is created under ou=u2f branch, not under the user's ou=fido branch... that's why the entry is moved
+             to its proper place later (see method notified)
+             */
             //String JsonRequest=u2fService.getJsonRegisterMessage(user.getUserName(), sessionState);
             String JsonRequest=u2fService.generateJsonRegisterMessage(null, null);
 
@@ -119,6 +126,11 @@ public class UserSecurityKeyViewModel extends UserViewModel{
         if(error==null){
             try {
                 u2fService.finishRegistration(null, JsonStr);
+                /*
+                  Move the entry to the appropriate location (see comments in method triggerU2fRegisterRequest). To know
+                  exactly which entry to choose, we pass the current timestamp so we can pick the most suitable entry by
+                  inspecting the creationDate attribute among all existing entries
+                 */
                 newDevice=usrService.relocateFidoDevice(user, new Date().getTime());
 
                 uiEnrolled=true;
@@ -166,7 +178,11 @@ logger.debug("device {}", newDevice.getNickName());
     public void cancel(){
 
         try {
-            //remove recently enrolled key
+            /*
+             Remove the recently enrolled key. This is so because once the user touches his key button, oxAuth creates the
+             corresponding entry in LDAP, and if the user regrets of adding the current key by not supplying a nickname
+             (thus pressing cancel), we need to be obliterate the entry
+             */
             usrService.removeU2fDevice(newDevice);
         }
         catch (Exception e){

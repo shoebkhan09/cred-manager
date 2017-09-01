@@ -11,6 +11,9 @@ import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-22.
+ * Utility class for creating specific models if they are needed ("models" in the MVVM pattern). Every public static
+ * method here should account for a model. Often in ZK MVVM a list of objects suffices for use as a model so here there
+ * is just a few
  */
 public class UIModel {
 
@@ -21,7 +24,7 @@ public class UIModel {
         return new ListModelSet<>(list);
     }
 
-    public static Pair<CredentialType, String> createPair(CredentialType cdtype){
+    private static Pair<CredentialType, String> createPair(CredentialType cdtype){
         return new Pair(cdtype, cdtype.getUIName());
     }
 

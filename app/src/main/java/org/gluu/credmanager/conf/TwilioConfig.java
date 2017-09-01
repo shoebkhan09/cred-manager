@@ -14,6 +14,7 @@ import java.util.Optional;
 
 /**
  * Created by jgomer on 2017-07-22.
+ * POJO storing values required for interacting with the Twilio service
  */
 public class TwilioConfig {
 

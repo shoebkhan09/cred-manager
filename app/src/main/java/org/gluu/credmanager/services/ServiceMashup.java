@@ -9,8 +9,9 @@ import java.io.Serializable;
 /**
  * Created by jgomer on 2017-07-08.
  * A conglomerate of beans that expose all important business logic to the application. Users of this class are mainly
- * view-model classes of the UI.
- * Every bean inside may have a LdapService bean injected if requires reading or writing to LDAP, so UI is "distant" to
+ * view-model classes of the UI. See https://github.com/GluuFederation/cred-manager/blob/master/app/developer-notes.md#objects-stored-in-user-session
+ * This bean has only getter methods.
+ * Every member may have a LdapService bean injected if it requires reading or writing to LDAP, so UI is "distant" to
  * storage
  */
 @SessionScoped

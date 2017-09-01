@@ -7,13 +7,17 @@ import java.util.List;
 
 /**
  * Created by jgomer on 2017-07-10.
+ * This enum represents the different types of credentials that can be added, namely, the authentication methods (except
+ * for password). Thus, a user may add a super gluu device, a u2f security key, an app supporting HOTP/TOTP (e.g. Google
+ * Authenticator), and a verified phone number to receive OTPs (one-time passcodes)
  */
 public enum CredentialType {
     SUPER_GLUU      ("super_gluu", null),
     SECURITY_KEY    ("u2f", null),
     OTP             ("otp", null),
-    VERIFIED_PHONE  ("twilio_sms", "twilio");
+    VERIFIED_PHONE  ("twilio_sms", "twilio");   //Certain Gluu servers identify this method as twilio_sms or simply twilio
 
+    //This is the acr value corresponding to this method (the name field of the associated interception script). It must be NON-NULL
     private String name;
     private String alternativeName;
 
@@ -41,12 +45,17 @@ public enum CredentialType {
         return alternativeName;
     }
 
-
     CredentialType(String name, String altername){
         this.name=name;
         alternativeName=altername;
     }
 
+    /**
+     * Gets an instance of a CredentialType based on name
+     * @param name String representing a CredentialType. If name does not match current CredentialType's names, the
+     *             alternativeName is also looked up
+     * @return A member of the enum or null if a match was not found
+     */
     public static CredentialType get(String name){
         CredentialType type=null;
 

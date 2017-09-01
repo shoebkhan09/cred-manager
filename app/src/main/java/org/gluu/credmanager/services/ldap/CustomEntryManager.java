@@ -6,6 +6,7 @@ import org.gluu.site.ldap.persistence.LdapEntryManager;
 
 /**
  * Created by jgomer on 2017-08-10.
+ * A subclass of org.gluu.site.ldap.persistence.LdapEntryManager that modifies entities before merging. See method merge
  */
 public class CustomEntryManager extends LdapEntryManager {
 

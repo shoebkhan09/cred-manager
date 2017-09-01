@@ -29,6 +29,13 @@ import java.util.zip.ZipFile;
 
 /**
  * Created by jgomer on 2017-07-04.
+ * This managed bean is in charge of reading/parsing all necessary settings the application needs for working.
+ * All configurations are taken primarly from the app's Json config file, and from LDAP as described here:
+ * https://github.com/GluuFederation/cred-manager/blob/master/app/README.md#application-initialization
+ * The method setup (annotated with @PostConstruct) triggers all parsing. This class does its best to infer certain
+ * parameters when they are not provided and warns whenever a vital parameter is wrong, missing or inconsistent (see
+ * member inOperableState).
+ * Most configurations are saved in the configSettings member.
  */
 @ApplicationScoped
 public class AppConfiguration{
@@ -36,8 +43,19 @@ public class AppConfiguration{
     private final String DEFAULT_GLUU_BASE="/etc/gluu";
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
     private final String OXAUTH_WAR_LOCATION= "/opt/gluu/jetty/oxauth/webapps/oxauth.war";
-    private final String DEFAULT_GLUU_VERSION="3.0.1";
-    public static final int ACTIVATE2AF_CREDS_GTE=2;
+    private final String DEFAULT_GLUU_VERSION="3.0.2";      //This app version is mainly targeted at this version of Gluu Server
+    public static final int ACTIVATE2AF_CREDS_GTE=2;    //Second factor authentication will be available to users having at least this number of enrolled creds
+
+    /*
+     ACR value for the routing authentication script. WARNING!: this script has to be enabled in your Gluu server with
+     the same or lower level than SIMPLE_AUTH_ACR
+     */
+    private static final String ROUTING_ACR="router";
+    /*
+     ACR value for user+password auth only. It is not necessarily equivalent to Gluu's default authn method which is found
+     in the oxAuthenticationMode attribute of the appliance. Anyway, SIMPLE_AUTH_ACR should be part of server's acr_supported_values
+     */
+    private static final String SIMPLE_AUTH_ACR ="auth_ldap_server";
 
     //========== Properties exposed by this service ==========
 
@@ -62,6 +80,10 @@ public class AppConfiguration{
 
     @Inject
     private OxdService oxdService;
+
+    public String getRoutingAcr(){
+        return ROUTING_ACR;
+    }
 
     public String getOrgName() {
         return orgName;
@@ -303,26 +325,34 @@ public class AppConfiguration{
         //Store server's supported acr values in a set
         Set<String> supportedSet=new HashSet<>();
         values.forEach(node -> supportedSet.add(node.asText()));
-        //Add them all to oxd configuration object. These will be a superset of methods used in practice...
-        settings.getOxdConfig().setAcrValues(new HashSet(supportedSet));
-        //Now, keep the interesting ones. This will filter things like "basic", "auth_ldap_server", etc.
-        supportedSet.retainAll(possibleMethods);
 
-        Optional<String[]> methods=Utils.arrayOptional(settings.getEnabledMethods());
-        //If there are no enabled methods in config file, assume we want all of them
-        String tmp[]=(methods.isPresent()) ? methods.get() : possibleMethods.toArray(strArr);
+        //Verify default and routing acr are there
+        List<String> acrList=Arrays.asList(SIMPLE_AUTH_ACR, ROUTING_ACR);
+        if (supportedSet.containsAll(acrList)) {
 
-        //From enabled methods in config file, keep only those really supported by server
-        Set<String> enabledSet=new HashSet<>(Arrays.asList(tmp));
-        enabledSet.retainAll(supportedSet);
+            //Add them all to oxd configuration object. These will be a superset of methods used in practice...
+            settings.getOxdConfig().setAcrValues(new HashSet(supportedSet));
+            //Now, keep the interesting ones. This will filter things like "basic", "auth_ldap_server", etc.
+            supportedSet.retainAll(possibleMethods);
 
-        //log result so far
-        strArr=enabledSet.toArray(strArr);
-        logger.warn(Labels.getLabel("app.effective_acrs"), Arrays.asList(strArr).toString(), strArr.length);
+            Optional<String[]> methods = Utils.arrayOptional(settings.getEnabledMethods());
+            //If there are no enabled methods in config file, assume we want all of them
+            String tmp[] = (methods.isPresent()) ? methods.get() : possibleMethods.toArray(strArr);
 
-        //Put it on this bean...
-        Stream<CredentialType> stream=enabledSet.stream().map(CredentialType::get);
-        enabledMethods=stream.collect(Collectors.toCollection(HashSet::new));
+            //From enabled methods in config file, keep only those really supported by server
+            Set<String> enabledSet = new HashSet<>(Arrays.asList(tmp));
+            enabledSet.retainAll(supportedSet);
+
+            //log result so far
+            strArr = enabledSet.toArray(strArr);
+            logger.warn(Labels.getLabel("app.effective_acrs"), Arrays.asList(strArr).toString(), strArr.length);
+
+            //Put it on this bean...
+            Stream<CredentialType> stream = enabledSet.stream().map(CredentialType::get);
+            enabledMethods = stream.collect(Collectors.toCollection(HashSet::new));
+        }
+        else
+            throw new Exception(Labels.getLabel("app.missing_acr_value", new String[]{acrList.toString()}));
 
     }
 
@@ -334,8 +364,10 @@ public class AppConfiguration{
                 (JarFile war=new JarFile(new File(OXAUTH_WAR_LOCATION), false, ZipFile.OPEN_READ))
         {
             version=war.getManifest().getMainAttributes().getValue("Implementation-Version");
-            if (version!=null)
-                version.toLowerCase().replaceFirst("-snapshot","");
+            if (version!=null) {
+                version.toLowerCase().replaceFirst("-snapshot", "");
+                logger.info(Labels.getLabel("app.gluu_version_guessed"), version);
+            }
         }
         catch (Exception e){
             logger.warn(Labels.getLabel("app.gluu_version_not_guessable"), e.getMessage());

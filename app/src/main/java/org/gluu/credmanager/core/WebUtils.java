@@ -22,18 +22,19 @@ import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-16.
+ * Web utility class. It contains methos to be able to: get session attributes, query headers, apply URL redirects, etc.
  */
 public class WebUtils {
 
-    public enum RedirectStage {NONE, INITIAL, REAUTHENTICATE, FINAL, BYPASS};
+    public enum RedirectStage {NONE, INITIAL, BYPASS};
     public static final String USER_PAGE_URL ="user.zul";
     public static final String ADMIN_PAGE_URL ="admin.zul";
     //public static final String HOME_PAGE_URL ="index.zul";
 
     public static final String SERVICES_ATTRIBUTE="SRV";
     public static final String USER_ATTRIBUTE="USR";
-    public static final String OFFSET_ATTRIBUTE ="TZ";
     public static final String REDIRECT_STAGE_ATTRIBUTE="REDIR_ST";
+    private static final String OFFSET_ATTRIBUTE ="TZ";
 
     private static Logger logger = LogManager.getLogger(WebUtils.class);
 
@@ -47,6 +48,10 @@ public class WebUtils {
 
     public static ZoneOffset getUserOffset(Session session){
         return (ZoneOffset) session.getAttribute(OFFSET_ATTRIBUTE);
+    }
+
+    public static void setUserOffset(Session session, ZoneOffset zone){
+        session.setAttribute(OFFSET_ATTRIBUTE, zone);
     }
 
     public static RedirectStage getRedirectStage(Session session){
@@ -113,12 +118,12 @@ public class WebUtils {
     public static void purgeSession(Session session){
         session.removeAttribute(USER_ATTRIBUTE);
         session.removeAttribute(REDIRECT_STAGE_ATTRIBUTE);
-
+        //No need to remove OFFSET_ATTRIBUTE
     }
 
     /**
      * zk implicit object (see ZUML Reference PDF) is not suitable for browser detection as the word "Chrome" is present
-     * in the majority of user agent strings that are not Chrome
+     * in the majority of user agent strings that are not Chrome nowadays
      * @param userAgent
      * @return
      */

@@ -34,7 +34,7 @@ public class U2fService {
     @Inject
     AppConfiguration appConfig;
 
-    private Logger logger= LogManager.getLogger(getClass());
+    private Logger logger=LogManager.getLogger(getClass());
 
     private U2fSettings conf;
     private RegistrationRequestService registrationRequestService;
@@ -42,6 +42,13 @@ public class U2fService {
 
     public U2fService(){}
 
+    /**
+     * Triggers a registration request to a U2F endpoint and outputs the request message returned by the service in form of JSON
+     * @param userName As required per org.xdi.oxauth.client.fido.u2f.RegistrationRequestService#startRegistration
+     * @param sessionState As required per org.xdi.oxauth.client.fido.u2f.RegistrationRequestService#startRegistration
+     * @return Json string representation
+     * @throws Exception
+     */
     public String generateJsonRegisterMessage(String userName, String sessionState) throws Exception{
 
         U2fConfigurationService u2fCfgServ = FidoU2fClientFactory.instance().createMetaDataConfigurationService(conf.getEndpointUrl());
@@ -56,6 +63,12 @@ public class U2fService {
 
     }
 
+    /**
+     * Executes the finish registration step of the U2F service
+     * @param userName As required per org.xdi.oxauth.client.fido.u2f.RegistrationRequestService#finishRegistration
+     * @param response This is the Json response obtained in the web browser after calling the u2f.register function in Javascript
+     * @throws Exception
+     */
     public void finishRegistration(String userName, String response) throws Exception{
         //first parameter is not used in current implementation, see: org.xdi.oxauth.ws.rs.fido.u2f.U2fRegistrationWS#finishRegistration
         RegisterStatus status=registrationRequestService.finishRegistration(userName, response);
@@ -77,6 +90,7 @@ public class U2fService {
         return mapper.writeValueAsString(req);
 
     }
+
 
     public String getRegistrationResult(String jsonString) throws Exception{
 

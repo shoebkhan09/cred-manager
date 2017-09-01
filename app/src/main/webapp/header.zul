@@ -29,13 +29,14 @@
             <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
                     iconSclass="caret" image="/images/shadowed_man.png" label="@load(c:cat3(c:l('general.welcome'),' ', vm.user.givenName))" />
         </div>
+
+        <menupopup id="pop">
+            <!-- LANGUAGE SELECTOR>
+            <menuitem label="${labels.general.change_lang}"/ -->
+            <menuitem label="${labels.general.help}" href="http://gluu.org/docs/" target="_blank"/>
+            <menuseparator/>
+            <menuitem label="${labels.general.logout}" onClick="@command('logoutFromAuthzServer')"/>
+        </menupopup>
     </hlayout>
-    <menupopup id="pop">
-        <!-- LANGUAGE SELECTOR>
-        <menuitem label="${labels.general.change_lang}"/ -->
-        <menuitem label="${labels.general.help}" href="http://gluu.org/docs/" target="_blank"/>
-        <menuseparator/>
-        <menuitem label="${labels.general.logout}" onClick="@command('logoutFromAuthzServer')"/>
-    </menupopup>
 
 </zk>

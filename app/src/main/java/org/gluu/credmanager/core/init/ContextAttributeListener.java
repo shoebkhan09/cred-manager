@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebListener;
 
 /**
  * Created by jgomer on 2017-08-19.
+ * This class listens whenever an attribute is added to the current servlet context
  */
 @WebListener
 public class ContextAttributeListener implements ServletContextAttributeListener {
@@ -31,13 +32,9 @@ public class ContextAttributeListener implements ServletContextAttributeListener
         }
     }
 
-    public void attributeRemoved(ServletContextAttributeEvent event){
+    public void attributeRemoved(ServletContextAttributeEvent event){}
 
-    }
-
-    public void attributeReplaced(ServletContextAttributeEvent event){
-
-    }
+    public void attributeReplaced(ServletContextAttributeEvent event){}
 
     public void proceed(){
         if (appConfiguration.isInOperableState())

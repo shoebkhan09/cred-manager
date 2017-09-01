@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Created by jgomer on 2017-07-25.
+ * Represents a registered credential corresponding to a verified mobile number
  */
 public class VerifiedPhone extends RegisteredCredential implements Comparable<VerifiedPhone> {
 

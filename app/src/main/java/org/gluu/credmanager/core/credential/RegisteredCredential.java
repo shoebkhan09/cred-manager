@@ -1,21 +1,16 @@
 package org.gluu.credmanager.core.credential;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapDN;
-import org.gluu.site.ldap.persistence.annotation.LdapEntry;
-import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
-import org.xdi.ldap.model.Entry;
 
 import java.io.Serializable;
 
 /**
  * Created by jgomer on 2017-07-22.
- * Similar but not equal to org.xdi.oxauth.model.fido.u2f.DeviceRegistration and org.gluu.oxtrust.model.fido.GluuCustomFidoDevice
+ * The superclass for all type of credentials
  */
-public class RegisteredCredential  implements Serializable {
+public class RegisteredCredential implements Serializable {
 
     @LdapDN
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

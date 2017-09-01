@@ -24,6 +24,7 @@ import java.util.*;
 
 /**
  * Created by jgomer on 2017-07-25.
+ * This is the ViewModel of page phone-detail.zul. It controls the CRUD of verified phones
  */
 public class UserVerifiedPhoneViewModel extends UserViewModel{
 
@@ -106,7 +107,8 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
     @Command
     public void sendCode(){
 
-        if (Utils.stringOptional(newPhone.getNumber()).isPresent()) {
+        if (Utils.stringOptional(newPhone.getNumber()).isPresent()) {   //Did user fill out the phone text box?
+            //Find the index in the list for a match of phone entered and existing phones. Only new numbers are accepted
             int i=Utils.firstTrue(phones, VerifiedPhone.class::cast, p -> p.getNumber().equals(newPhone.getNumber()));
             if (i>=0)
                 Messagebox.show(Labels.getLabel("usr.mobile_already_exists"), Labels.getLabel("general.warning"), Messagebox.OK, Messagebox.INFORMATION);
@@ -117,12 +119,13 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
 
                     //Generate random in [100000, 999999]
                     realCode = Integer.toString(new Double(100000 + Math.random() * 899999).intValue());
+                    //Compose SMS body
                     String body = services.getAppConfig().getOrgName();
                     body = Labels.getLabel("usr.mobile_sms_body", new String[]{body, realCode});
 logger.debug("CODE={}", realCode);
 
+                    //Send message (service bean already knows all settings to perform this step)
                     services.getSmsService().sendSMS(newPhone.getNumber(), body);
-
                 }
                 catch (Exception e) {
                     showMessageUI(false);

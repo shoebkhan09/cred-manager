@@ -1,12 +1,4 @@
-li{
-    line-height:18px;
-}
-p{
-    line-height:18px;
-}
-ul{
-    padding-left:18px;
-}
+/* Styles for desktop devices only */
 .bold{
     font-weight:bold;
 }

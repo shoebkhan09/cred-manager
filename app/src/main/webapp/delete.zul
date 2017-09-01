@@ -10,6 +10,10 @@
         zAu.send(new zk.Event(null, "onFoo", {offset: -offset}, {toServer:true}));
         alert(offset);
         }
+        function change(w){
+        alert(w);
+        alert(zk.Desktop.widgetName);
+        }
     </script>
 
     <zscript>
@@ -21,11 +25,9 @@
         Clients.response(new AuInvoke("pana",null));
         }
 
-
     </zscript>
-    <vlayout  onCreate="_do(this)">
-        <button label="1" id="mybutton"  />
+    <vlayout onCreate='mybutton.visible=true;'>
+        <textbox w:onClick="change(this)" value="1" id="mybutton" />
     </vlayout>
 
 </zk>
-

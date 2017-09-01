@@ -19,6 +19,7 @@ import java.util.List;
 
 /**
  * Created by jgomer on 2017-08-18.
+ * An app. scoped bean to serve the purpose of sending SMS using the Twilio service
  */
 @ApplicationScoped
 public class SmsService {

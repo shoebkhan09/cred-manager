@@ -233,4 +233,5 @@ public class LdapService {
     public void removeU2fDevice(SecurityKey key) throws Exception{
         ldapEntryManager.remove(key);
     }
+
 }

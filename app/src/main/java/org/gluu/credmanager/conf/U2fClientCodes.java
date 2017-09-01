@@ -2,6 +2,7 @@ package org.gluu.credmanager.conf;
 
 /**
  * Created by jgomer on 2017-07-24.
+ * An enumeration that holds the response codes that a u2f device registration request may output
  */
 public enum U2fClientCodes {
     OTHER_ERROR, BAD_REQUEST, CONFIGURATION_UNSUPPORTED, DEVICE_INELIGIBLE, TIMEOUT;

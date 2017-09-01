@@ -5,7 +5,8 @@ import org.zkoss.zk.ui.util.WebAppInit;
 
 /**
  * Created by jgomer on 2017-07-04.
- *
+ * This class listens when the ZK application is ready. This happens some time after the web application is initialized,
+ * that is, after the contextInitialized Java EE event occurs
  */
 public class ZKInitializer implements WebAppInit {
 

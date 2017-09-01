@@ -10,10 +10,7 @@
             </vlayout>
         </zk>
         <zk>
-            <vlayout>
-                <label value="${pageScope.error}" />
-                <label value="${pageScope.description}" />
-            </vlayout>
+            <include src="/error.zul" />
         </zk>
     </zk>
 

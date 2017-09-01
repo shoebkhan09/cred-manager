@@ -16,6 +16,8 @@ import java.util.Set;
 
 /**
  * Created by jgomer on 2017-07-22.
+ * This is the ViewModel of page fragment preferred.zul (and the fragments included by it). It controls the functionality
+ * for setting the user's preferred authentication method when second factor authentication is enabled
  */
 public class UserPreferenceViewModel extends UserViewModel {
 

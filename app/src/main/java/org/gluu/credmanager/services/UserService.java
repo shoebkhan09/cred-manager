@@ -80,7 +80,7 @@ public class UserService {
         CredentialType cred=null;
         try {
             String pref= ldapService.getGluuPerson(user.getRdn()).getPreferredAuthMethod();
-            cred=(pref==null) ? null : CredentialType.valueOf(pref);
+            cred=(pref==null) ? null : CredentialType.get(pref);
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -93,7 +93,7 @@ public class UserService {
 
         boolean success=false;
         try {
-            ldapService.updatePreferredMethod(user.getRdn(), (cred==null) ? null : cred.toString());
+            ldapService.updatePreferredMethod(user.getRdn(), (cred==null) ? null : cred.getName());
             user.setPreference(cred);
             success=true;
         }
@@ -245,14 +245,31 @@ logger.debug("Phones from ldap2: {}", vphones);
         }
     }
 
+    /**
+     * Returns a set of CredentialType such that every element in the set has at least one corresponding enrolled credential
+     * for this user. This set has to a subset of one conformed by all currently enabled credential types
+     * @param user The user for which the set will be generated
+     * @param enabledMethods Current set of enabled authentication methods
+     * @return The set referred above.
+     */
     public Set<CredentialType> getEffectiveMethods(User user, Set<CredentialType> enabledMethods){
-        //Get those credentials types that have associated at least one item associated
+        //Get those credentials types that have associated at least one item
         Stream<Map.Entry<CredentialType, List<RegisteredCredential>>> stream=user.getCredentials().entrySet().stream();
         Set<CredentialType> set=stream.filter(e -> e.getValue().size()>0).map(e -> e.getKey()).collect(Collectors.toCollection(HashSet::new));
         set.retainAll(enabledMethods);
         return set;
     }
 
+    /**
+     * Stores in LDAP the mobile phones passed as parameters for this user (the raw mobile numbers are stored in the
+     * proper multivalued LDAP attribute). This class builds a json representation with additional information associated
+     * to every raw phone number so it can also be saved
+     * @param user The user to whom the list of phones belongs to (mobiles parameter)
+     * @param mobiles A list of RegisteredCredential instances
+     * @param newPhone An additional RegisteredCredential that is also saved. If storing is successful this element is
+     *                 appended to the list mobiles
+     * @throws Exception
+     */
     public void updateMobilePhonesAdd(User user, List<RegisteredCredential> mobiles, VerifiedPhone newPhone) throws Exception{
 
         //See getVerifiedPhones() above
@@ -272,6 +289,16 @@ logger.debug("Phones from ldap2: {}", vphones);
 
     }
 
+    /**
+     * Stores in LDAP the HOTP/TOTP devices passed as parameters for this user (the oxExternalUIDs of these devices are
+     * saved in their corresponding multivalued LDAP attribute). This class builds a json representation with additional
+     * information associated to every oxExternalUID so it can also be saved
+     * @param user The user to whom the list of devices belongs to (devs parameter)
+     * @param devs A list of RegisteredCredential instances
+     * @param newDevice An additional RegisteredCredential that is also saved. If storing is successful this element is
+     *                 appended to the list devs
+     * @throws Exception
+     */
     public void updateOTPDevicesAdd(User user, List<RegisteredCredential> devs, OTPDevice newDevice) throws Exception{
 
         //See getOTPDDevices() above

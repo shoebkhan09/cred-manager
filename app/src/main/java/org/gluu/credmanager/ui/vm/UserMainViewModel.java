@@ -4,26 +4,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
-import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.core.credential.RegisteredCredential;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.UserService;
 import org.zkoss.bind.BindUtils;
 import org.zkoss.bind.annotation.*;
 import org.zkoss.util.resource.Labels;
-import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.Executions;
-import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.Listen;
-import org.zkoss.zk.ui.util.Clients;
 
 import java.util.*;
 
 /**
  * Created by jgomer on 2017-07-08.
+ * This is the ViewModel of page user.zul (the main page of this app).
+ * Main functionalities controlled here are: password reset if available and summary of users's enrolled devices by type
  */
 public class UserMainViewModel extends UserViewModel{
 
@@ -40,9 +37,14 @@ public class UserMainViewModel extends UserViewModel{
     private int strength;
 
     private boolean uiPanelOpened;
+    private boolean uiPassResetAvailable;
 
     public boolean isUiPanelOpened() {
         return uiPanelOpened;
+    }
+
+    public boolean isUiPassResetAvailable() {
+        return uiPassResetAvailable;
     }
 
     @DependsOn("strength")
@@ -105,6 +107,7 @@ public class UserMainViewModel extends UserViewModel{
         uiPanelOpened=true;
         strength=-1;
         AppConfiguration appConfig=services.getAppConfig();
+        uiPassResetAvailable=appConfig.isPassReseteable();
 
         if (user.getCredentials()!=null) {
             StringBuffer helper=new StringBuffer();
@@ -135,7 +138,6 @@ public class UserMainViewModel extends UserViewModel{
     public void afterCompose(@ContextParam(ContextType.VIEW) Component view){
         Selectors.wireEventListeners(view, this);
     }
-
 
     @Listen("onData=#new_pass")
     public void notified(Event event) throws Exception{
@@ -193,12 +195,6 @@ public class UserMainViewModel extends UserViewModel{
     @Command
     public void cancel(){
         resetPassSettings();
-    }
-
-    @Command
-    public void triggerGetOffset(){
-        if (WebUtils.getUserOffset(Sessions.getCurrent())==null)
-            Clients.response(new AuInvoke("getOffset"));
     }
 
 }

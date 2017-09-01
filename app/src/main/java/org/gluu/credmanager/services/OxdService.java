@@ -21,11 +21,6 @@ import java.util.*;
 @ApplicationScoped
 public class OxdService {
 
-    /*
-    ACR value for user+password auth only. It is not necessarily equivalent to Gluu's default authn method which is found
-    in the oxAuthenticationMode attribute of the appliance. Anyway, SIMPLE_AUTH_ACR should be part of acr_supported_values
-     */
-    private static final String SIMPLE_AUTH_ACR ="auth_ldap_server";
     private Logger logger = LogManager.getLogger(getClass());
 
     private OxdConfig config;
@@ -116,12 +111,8 @@ public class OxdService {
 
     }
 
-    public String getAuthzUrl(List<String> acrValues) throws Exception {
-        return getAuthzUrl(acrValues, null);
-    }
-
-    public String getDefaultAuthzUrl() throws Exception{
-        return getAuthzUrl(Collections.singletonList(SIMPLE_AUTH_ACR));
+    public String getAuthzUrl(String acrValues) throws Exception {
+        return getAuthzUrl(Collections.singletonList(acrValues), null);
     }
 
     public String getAccessToken(String code, String state) throws Exception{

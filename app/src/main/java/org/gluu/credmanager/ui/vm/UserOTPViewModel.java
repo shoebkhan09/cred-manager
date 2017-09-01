@@ -29,6 +29,7 @@ import java.util.List;
 
 /**
  * Created by jgomer on 2017-08-01.
+ * This is the ViewModel of page otp-detail.zul. It controls the CRUD of HOTP/TOTP devices
  */
 public class UserOTPViewModel extends UserViewModel{
 
@@ -93,6 +94,11 @@ public class UserOTPViewModel extends UserViewModel{
         uiPanelOpened=true;
     }
 
+    /**
+     * Creates a string for a Json representation of two values: size and mSize for QR code
+     * @param config General OTP settings object
+     * @return Json String
+     */
     private String getFormatedQROptions(OTPConfig config){
 
         List<String> list=new ArrayList<>();
@@ -122,6 +128,7 @@ public class UserOTPViewModel extends UserViewModel{
         String request=otpService.generateSecretKeyUri(secretKey, user.getGivenName());
         JavaScriptValue jvalue=new JavaScriptValue(getFormatedQROptions(otpConfig));
 
+        //Calls the startQR javascript function supplying suitable params
         Clients.response(new AuInvoke("startQR", request, otpConfig.getLabel(), jvalue, QR_SCAN_TIMEOUT));
     }
 
@@ -133,6 +140,7 @@ public class UserOTPViewModel extends UserViewModel{
     @Listen("onData=#readyButton")
     public void timedOut(Event event) throws Exception {
         if (uiQRShown) {
+            //Restore UI if user did not scan code
             uiQRShown = false;
             BindUtils.postNotifyChange(null, null, this, "uiQRShown");
         }
@@ -144,6 +152,7 @@ public class UserOTPViewModel extends UserViewModel{
 
         String uid=null;
         if (code!=null) {
+            //Determines if numeric code is valid with respect to QR's secret key
             switch (otpConfig.getType()){
                 case HOTP:
                     Pair<Boolean, Long> result = otpService.validateHOTPKey(secretKey, 1, code);
@@ -185,6 +194,7 @@ public class UserOTPViewModel extends UserViewModel{
 
         boolean success=false;
 
+        //Adds the new device if user typed a nickname in the text box
         if (Utils.stringOptional(newDevice.getNickName()).isPresent())
             try{
                 newDevice.setAddedOn(new Date().getTime());
@@ -230,10 +240,12 @@ public class UserOTPViewModel extends UserViewModel{
 
         String nick=newDevice.getNickName();
         if (nick!=null){
+            //Find the index of the current device in the device list
             int i=Utils.firstTrue(devices, OTPDevice.class::cast, dev -> dev.getId()==editingId);
             OTPDevice dev=(OTPDevice) devices.get(i);
+            //Updates its nickname
             dev.setNickName(nick);
-            cancelUpdate();
+            cancelUpdate();     //This doesn't undo anything we already did (just controls UI aspects)
 
             try {
                 services.getUserService().updateOTPDevicesAdd(user, devices, null);

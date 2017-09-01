@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Created by jgomer on 2017-08-01.
+ * Represents a registered credential of OTP type (verified phone is not considered OTP in this application)
  */
 public class OTPDevice extends RegisteredCredential implements Comparable<OTPDevice> {
 

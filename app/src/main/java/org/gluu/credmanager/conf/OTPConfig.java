@@ -19,6 +19,8 @@ import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-31.
+ * POJO storing values needed for HOTP/TOTP. Static methods of this class parse information belonging to the OTP custom
+ * script to be able to get an instance of this class
  */
 public class OTPConfig {
 

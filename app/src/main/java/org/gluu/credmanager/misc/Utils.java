@@ -35,6 +35,12 @@ public class Utils {
         return stringContains(string, value, false);
     }
 
+    /**
+     * This method takes an arbitrary object and using introspection (via commons-beanutils) detects fields whose type is
+     * list, and if found them empty, they are set to null. In other words, it replaces empty lists by nulled lists.
+     * This was coded to make org.gluu.site.ldap.persistence.LdapEntryManager happier
+     * @param object Object to process. Changes are effective in place
+     */
     public static void nullEmptyLists(Object object){
 
         BeanMap map=new BeanMap(object);
@@ -52,6 +58,14 @@ public class Utils {
 
     }
 
+    /**
+     * This method is the converse of nullEmptyLists: takes and object, and find members of it that are null lists and
+     * changes them to empty lists. To instatiate the empty lists, it uses a Supplier instance
+     * @param object Arbitrary object to change
+     * @param factory A supplier to instantiate empty lists
+     * @param <T>
+     * @param <C>
+     */
     public static <T, C extends Collection<T>> void emptyNullLists (Object object, Supplier<C> factory){
 
         BeanMap map=new BeanMap(object);
@@ -69,41 +83,19 @@ public class Utils {
         }
     }
 
+    //Takes a List, applies a map operation on it, then applies a second map turning elements into booleans, and returns the index of first true occurrence
     public static <R, T> int firstTrue(List<T> list, Function<? super T, ? extends R> map1, Function<? super R, ? extends Boolean> map2){
         return list.stream().map(map1).map(map2).collect(Collectors.toList()).indexOf(true);
     }
 
+    //Takes a List, applies a map operation on it, and then uses the default collector to return a new list
     public static <R, T> List<R> mapCollectList(List<T> list, Function<? super T, ? extends R> map){
         return list.stream().map(map).collect(Collectors.toList());
     }
 
+    //Takes a List, applies a map on it, and then sorts according to natural order of elements, and finally collects
     public static <R, T> List<R> mapSortCollectList(List<T> list, Function<? super T, ? extends R> map){
         return list.stream().map(map).sorted().collect(Collectors.toList());
     }
-/*
-    public Reader readerFromFile(String fileName, Charset cs) throws FileNotFoundException{
-        return new InputStreamReader(new FileInputStream(fileName), cs);
-    }
 
-    Properties tmpProp = new Properties();
-            tmpProp.load(new Utils().readerFromFile(oxLdapOpt.get(), DEFAULT_CHARSET));*/
-
-
-        /*
-
-        <!-- Network -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>4.4.6</version>
-        </dependency>
-        CloseableHttpClient httpclient =HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(OIDCEndpointURL);
-        HttpEntity entity=httpclient.execute(httpGet).getEntity();
-    */
 }
