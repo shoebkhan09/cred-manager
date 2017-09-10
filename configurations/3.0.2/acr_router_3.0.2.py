@@ -67,7 +67,7 @@ class PersonAuthentication(PersonAuthenticationType):
 	        #acr="otp" 
 	        #acr="twilio_sms" 
 	        if (acr == None):
-	            acr = "auth_ldap_server"
+	            acr = "basic"
             except:
                 print "ACR Router. Error looking up user or his preferred method"        
         else:
