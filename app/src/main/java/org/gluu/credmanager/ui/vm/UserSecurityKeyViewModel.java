@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.CredentialType;
+import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.core.credential.SecurityKey;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.U2fService;
@@ -20,8 +21,6 @@ import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Messagebox;
-
-import static org.gluu.credmanager.conf.CredentialType.SECURITY_KEY;
 
 import java.util.*;
 
@@ -40,10 +39,9 @@ public class UserSecurityKeyViewModel extends UserViewModel{
     private boolean uiEnrolled;
     private boolean uiPanelOpened;
 
-    //private String sessionState;
+    private String sessionState;
     private SecurityKey newDevice;
     private U2fService u2fService;
-    private UserService usrService;
 
     private String editingId;
 
@@ -77,14 +75,13 @@ public class UserSecurityKeyViewModel extends UserViewModel{
 
     @Init(superclass = true)
     public void childInit() throws Exception{
-        //sessionState=WebUtils.getCookie("session_state");
+        sessionState= WebUtils.getCookie("session_state");
         mapper=new ObjectMapper();
 
         devices=user.getCredentials().get(CredentialType.SECURITY_KEY);
         newDevice=new SecurityKey();
         uiPanelOpened=true;
         u2fService=services.getU2fService();
-        usrService = services.getUserService();
     }
 
     @AfterCompose
@@ -104,7 +101,7 @@ public class UserSecurityKeyViewModel extends UserViewModel{
              entry is created under ou=u2f branch, not under the user's ou=fido branch... that's why the entry is moved
              to its proper place later (see method notified)
              */
-            //String JsonRequest=u2fService.getJsonRegisterMessage(user.getUserName(), sessionState);
+            //String JsonRequest=u2fService.generateJsonRegisterMessage(user.getUserName(), sessionState);
             String JsonRequest=u2fService.generateJsonRegisterMessage(null, null);
 
             //Notify browser to exec proper function
@@ -131,7 +128,7 @@ public class UserSecurityKeyViewModel extends UserViewModel{
                   exactly which entry to choose, we pass the current timestamp so we can pick the most suitable entry by
                   inspecting the creationDate attribute among all existing entries
                  */
-                newDevice=usrService.relocateFidoDevice(user, new Date().getTime());
+                newDevice=userService.relocateFidoDevice(user, new Date().getTime());
 
                 uiEnrolled=true;
                 BindUtils.postNotifyChange(null,	null, this, "uiEnrolled");
@@ -153,17 +150,18 @@ public class UserSecurityKeyViewModel extends UserViewModel{
     @Command
     public void add(){
 
-        uiPanelOpened=false;
-        try {
-            usrService.updateU2fDevice(newDevice);
-logger.debug("device {}", newDevice.getNickName());
-            devices.add(newDevice);
+        if (Utils.stringOptional(newDevice.getNickName()).isPresent()) {
+            try {
+                userService.updateFidoDevice(newDevice);
+                devices.add(newDevice);
+                showMessageUI(true, Labels.getLabel("usr.enroll.success"));
+            }
+            catch (Exception e) {
+                showMessageUI(false, Labels.getLabel("usr.error_updating"));
+                logger.error(e.getMessage(), e);
+            }
+            uiPanelOpened = false;
             resetAddSettings();
-            showMessageUI(true, Labels.getLabel("usr.enroll.success"));
-        }
-        catch (Exception e){
-            showMessageUI(false, Labels.getLabel("usr.error_updating"));
-            logger.error(e.getMessage(), e);
         }
 
     }
@@ -180,10 +178,10 @@ logger.debug("device {}", newDevice.getNickName());
         try {
             /*
              Remove the recently enrolled key. This is so because once the user touches his key button, oxAuth creates the
-             corresponding entry in LDAP, and if the user regrets of adding the current key by not supplying a nickname
-             (thus pressing cancel), we need to be obliterate the entry
+             corresponding entry in LDAP, and if the user regrets adding the current key by not supplying a nickname
+             (and thus pressing cancel), we need to be obliterate the entry
              */
-            usrService.removeU2fDevice(newDevice);
+            userService.removeFidoDevice(newDevice);
         }
         catch (Exception e){
             showMessageUI(false);
@@ -214,14 +212,14 @@ logger.debug("device {}", newDevice.getNickName());
     public void update(){
 
         String nick=newDevice.getNickName();
-        if (nick!=null){
-            int i= Utils.firstTrue(devices, SecurityKey.class::cast, dev -> dev.getId().equals(editingId));
+        if (Utils.stringOptional(nick).isPresent()) {
+            int i=Utils.firstTrue(devices, SecurityKey.class::cast, dev -> dev.getId().equals(editingId));
             SecurityKey dev=(SecurityKey) devices.get(i);
             dev.setNickName(nick);
             cancelUpdate();
 
             try {
-                usrService.updateU2fDevice(dev);
+                userService.updateFidoDevice(dev);
                 showMessageUI(true);
             }
             catch (Exception e){
@@ -234,29 +232,7 @@ logger.debug("device {}", newDevice.getNickName());
 
     @Command
     public void delete(@BindingParam("device") SecurityKey device){
-
-        boolean flag=mayTriggerResetPreference(user.getPreference(), devices, SECURITY_KEY);
-        Pair<String, String> delMessages=getDelMessages(flag, SECURITY_KEY, device.getNickName());
-
-        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
-                event -> {
-                    if (Messagebox.ON_YES.equals(event.getName())) {
-                        try {
-                            if (devices.remove(device)) {
-                                if (flag)
-                                    usrService.setPreferredMethod(user,null);
-
-                                usrService.removeU2fDevice(device);
-                                //trigger refresh (this method is asynchronous...)
-                                BindUtils.postNotifyChange(null, null, UserSecurityKeyViewModel.this, "devices");
-                                showMessageUI(true);
-                            }
-                        } catch (Exception e) {
-                            showMessageUI(false);
-                            logger.error(e.getMessage(), e);
-                        }
-                    }
-                });
+        processFidoDeviceRemoval(device, this);
     }
 
 }

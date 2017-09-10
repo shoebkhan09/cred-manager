@@ -10,6 +10,7 @@ import org.zkoss.util.resource.Labels;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -53,32 +54,20 @@ public class TwilioConfig {
 
     public static TwilioConfig get(CustomScript smsScript) throws Exception{
 
-        TwilioConfig tc=new TwilioConfig();
+        Map<String, String> propsMap=Utils.getScriptProperties(smsScript.getProperties());
 
-        for (SimpleCustomProperty p : smsScript.getProperties()) {
-            String val=p.getValue2();
-            switch (p.getValue1()) {
-                case "twilio_sid":
-                    tc.setAccountSID(val);
-                    break;
-                case "twilio_token":
-                    tc.setAuthToken(val);
-                    break;
-                case "from_number":
-                    tc.setFromNumber(val);
-                    break;
-            }
-        }
+        TwilioConfig tc=new TwilioConfig();
+        tc.setAccountSID(propsMap.get("twilio_sid"));
+        tc.setAuthToken(propsMap.get("twilio_token"));
+        tc.setFromNumber(propsMap.get("from_number"));
+
         List<String> values= Arrays.asList(tc.getAccountSID(), tc.getAuthToken(), tc.getFromNumber());
         if (values.stream().map(Utils::stringOptional).allMatch(Optional::isPresent)) {
             logger.info(Labels.getLabel("app.sms_settings"), mapper.writeValueAsString(tc));
             return tc;
         }
-        else {
-            String error=Labels.getLabel("app.sms_settings_error");
-            logger.error(error);
-            throw new Exception(error);
-        }
+        else
+            return null;
 
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.gluu.credmanager.conf.OTPConfig;
+import org.gluu.credmanager.conf.SGConfig;
 import org.gluu.credmanager.conf.TwilioConfig;
 
 /**
@@ -17,6 +18,7 @@ public class Configs {
     private LdapSettings ldapSettings;
     private TwilioConfig twilioConfig;
     private OTPConfig otpConfig;
+    private SGConfig sgConfig;
     private U2fSettings u2fSettings;
     private String[] enabledMethods;
     private String gluuVersion;
@@ -35,6 +37,11 @@ public class Configs {
 
     public String[] getEnabledMethods() {
         return enabledMethods;
+    }
+
+    @JsonIgnore
+    public SGConfig getSgConfig() {
+        return sgConfig;
     }
 
     @JsonIgnore
@@ -94,6 +101,10 @@ public class Configs {
 
     public void setOtpConfig(OTPConfig otpConfig) {
         this.otpConfig = otpConfig;
+    }
+
+    public void setSgConfig(SGConfig sgConfig) {
+        this.sgConfig = sgConfig;
     }
 
 }

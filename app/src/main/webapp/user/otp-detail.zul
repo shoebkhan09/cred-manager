@@ -61,7 +61,10 @@
 
         <panel title="${labels.usr.gauth_add}" collapsible="true" border="normal" sclass="padded" open="@bind(vm.uiPanelOpened)">
             <panelchildren sclass="padded">
-                <label value="${labels.usr.gauth_install_ready}"/>
+                <hlayout valign="middle">
+                    <label value="${labels.usr.gauth_install_ready}"/>
+                    <image id="throbber" src="/images/throbber.gif" visible="false" />
+                </hlayout>
                 <div align="center">
                     <vlayout sclass="padded">
                         <button id="readyButton" label="&#160;${labels.general.ready}&#160;" sclass="btn-success"
@@ -75,7 +78,7 @@
                 <vlayout visible="@load(vm.uiQRShown)">
                     <div align="center">
                         <label value="${labels.usr.gauth_scan}"/>
-                        <n:div> <!-- these 2 have to be grouped in a div -->
+                        <n:div> <!-- these 2 must be grouped inside a div -->
                             <n:div id="container"></n:div>
                             <n:div id="progressbar" style="width:40%"></n:div>
                         </n:div>
@@ -88,6 +91,7 @@
                         </hlayout>
                     </vlayout>
                 </vlayout>
+
                 <vlayout sclass="padded" visible="@load(vm.uiCorrectCode)">
                     <label value="${labels.usr.mobile_nick}"/>
                     <textbox placeholder="${labels.general.nick}" sclass="s12 form-control" value="@bind(vm.newDevice.nickName)"/>

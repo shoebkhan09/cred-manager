@@ -100,6 +100,9 @@
     width:950px;
     border:1px #00BE79 solid;
 }
+.summary{
+    padding-left:40px;
+}
 .selectorDiv{
     margin:0 auto;
     width:400px;

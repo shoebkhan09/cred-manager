@@ -1,39 +1,19 @@
 <?page title="${applicationScope['appName']}"?>
 <?init class="org.gluu.credmanager.core.navigation.HomeInitiator"?>
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:n="native"
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <vlayout>
-        <zk choose="">
-            <zk when="${empty pageScope.error}">
-                <script>
-                    var times=2;    //Attempts made to send the offset to server
-                    var offset=new Date().getTimezoneOffset()*60;   //a value in seconds
-                    //offset=21600;     //Set a fixed value here for testing if dates are correctly displayed
-
-                    function sendOffset(){
-                        if (times==0)
-                            document.getElementById("reload").submit();
-                        else{
-                            //offset in Javascript is GMT - localtime, but the converse makes more sense
-                            zAu.send(new zk.Event(null, "onAfterLoad", {offset: -offset}, {toServer:true}));
-                            times--;
-                            setTimeout(sendOffset, 400);
-                        }
-                    }
-
-                    //Waits a little to start sending the user offset back to server
-                    setTimeout(sendOffset,50);
-                </script>
-                <n:form id="reload" action="index.zul">
-                </n:form>
-                <label value="${labels.general.wait}" />
-            </zk>
-            <zk>
+    <zk choose="">
+        <zk when="${empty pageScope.error}">
+            <label value="${labels.general.wait}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.HomeViewModel')"
+                   onClientInfo="@command('onClientInfo', evt=event)" />
+        </zk>
+        <zk>
+            <vlayout>
                 <label value="${pageScope.error}" />
                 <label value="${pageScope.description}" />
-            </zk>
+            </vlayout>
         </zk>
+    </zk>
 
-    </vlayout>
 </zk>

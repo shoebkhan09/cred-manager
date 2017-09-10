@@ -10,7 +10,7 @@ import org.zkoss.zk.ui.Page;
 public class CommonInitiator {
 
     public void init(Page page){
-        page.setAttribute("onMobile", Executions.getCurrent().getBrowser("mobile") != null);
+        page.setAttribute("onMobile", WebUtils.isCurrentBrowserMobile());
         page.setAttribute("u2fSupported", WebUtils.u2fSupportedBrowser(Executions.getCurrent().getUserAgent()));
         //WebUtils.u2fSupportedBrowser(WebUtils.getRequestHeader("User-Agent"))
     }

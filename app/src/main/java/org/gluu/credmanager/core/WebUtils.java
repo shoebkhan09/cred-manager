@@ -1,5 +1,13 @@
 package org.gluu.credmanager.core;
 
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.misc.Utils;
@@ -22,7 +30,7 @@ import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-16.
- * Web utility class. It contains methos to be able to: get session attributes, query headers, apply URL redirects, etc.
+ * Web utility class. It contains methods to be able to get session attributes, query headers, do URL redirections, etc.
  */
 public class WebUtils {
 
@@ -72,6 +80,10 @@ public class WebUtils {
         return values.isPresent() ? values.get()[0] : null;
     }
 
+    public static HttpServletRequest getServletRequest(){
+        return (HttpServletRequest)Executions.getCurrent().getNativeRequest();
+    }
+
     public static void execRedirect(String url){
         execRedirect(url, true);
     }
@@ -93,14 +105,37 @@ public class WebUtils {
 
     }
 
+    public static boolean isCurrentBrowserMobile(){
+        return Executions.getCurrent().getBrowser("mobile") != null;
+    }
+
+    public static int getPageWidth(){
+        return (int) Executions.getCurrent().getDesktop().getAttribute("pageWidth");
+    }
+
     public static String getRequestHeader(String headerName){
-        HttpServletRequest req= (HttpServletRequest)Executions.getCurrent().getNativeRequest();
-        return req.getHeader(headerName);
+        return getServletRequest().getHeader(headerName);
+    }
+
+    public static String getRemoteIP(){
+
+        String ip=getRequestHeader("X-Forwarded-For");
+        if (ip==null)
+            ip=getServletRequest().getRemoteAddr();
+        else{
+            String ips[]=ip.split(",\\s*");
+            if (Utils.arrayOptional(ips).isPresent())
+                ip=ips[0];
+            else
+                ip=null;
+        }
+        return ip;
+
     }
 
     public static String getCookie(String name){
         String val=null;
-        Cookie cookies[]= ((HttpServletRequest)Executions.getCurrent().getNativeRequest()).getCookies();
+        Cookie cookies[]= getServletRequest().getCookies();
 
         if (cookies!=null) {
             Stream<Cookie> cooks = Arrays.asList(cookies).stream();
@@ -118,7 +153,7 @@ public class WebUtils {
     public static void purgeSession(Session session){
         session.removeAttribute(USER_ATTRIBUTE);
         session.removeAttribute(REDIRECT_STAGE_ATTRIBUTE);
-        //No need to remove OFFSET_ATTRIBUTE
+        session.removeAttribute(OFFSET_ATTRIBUTE);
     }
 
     /**
@@ -151,4 +186,25 @@ public class WebUtils {
 
     }
 
+    public static String getUrlContents(String url, int timeout) throws Exception{
+
+        String contents=null;
+
+        DefaultHttpClient client = new DefaultHttpClient();
+        HttpParams params = client.getParams();
+        HttpConnectionParams.setConnectionTimeout(params, timeout);
+        HttpConnectionParams.setSoTimeout(params, timeout);
+
+        HttpGet httpGet = new HttpGet(url);
+        httpGet.setHeader("Accept", "application/json");
+        HttpResponse response = client.execute(httpGet);
+        HttpEntity entity = response.getEntity();
+
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
+            contents=EntityUtils.toString(entity);
+
+        EntityUtils.consume(entity);
+
+        return contents;
+    }
 }

@@ -24,11 +24,20 @@
         <hlayout hflex="1" valign="middle">
             <image sclass="logo" src="/images/logo.png"/>
         </hlayout>
-        <div width="185px">
-            <!--  -->
-            <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
-                    iconSclass="caret" image="/images/shadowed_man.png" label="@load(c:cat3(c:l('general.welcome'),' ', vm.user.givenName))" />
-        </div>
+        <zk choose="">
+            <zk when="${pageScope.onMobile}">
+                <div width="50px">
+                    <button sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
+                            style="padding-left:0px" image="/images/hamburger.png" label="" />
+                </div>
+            </zk>
+            <zk>
+                <div width="185px">
+                    <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
+                            iconSclass="caret" image="/images/shadowed_man.png" label="@load(c:cat3(c:l('general.welcome'),' ', vm.user.givenName))" />
+                </div>
+            </zk>
+        </zk>
 
         <menupopup id="pop">
             <!-- LANGUAGE SELECTOR>

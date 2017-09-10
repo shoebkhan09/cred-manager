@@ -9,6 +9,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.TwilioConfig;
+import org.gluu.credmanager.core.credential.VerifiedPhone;
+import org.gluu.credmanager.services.ldap.LdapService;
 import org.zkoss.util.resource.Labels;
 
 import javax.annotation.PostConstruct;
@@ -26,6 +28,9 @@ public class SmsService {
 
     @Inject
     AppConfiguration appConfig;
+
+    @Inject
+    LdapService ldapService;
 
     private Logger logger = LogManager.getLogger(getClass());
 
@@ -46,9 +51,19 @@ public class SmsService {
 
     }
 
+    //Removes formating characters from LDAP-formatted phone numbers
+    private static String rawNumber(String number){
+        return number.replaceAll("[-\\+\\s]","");
+    }
+
+    public boolean isPhoneNumberUnique(VerifiedPhone phone) throws Exception{
+        String rawPhone = rawNumber(phone.getNumber());
+        List<String> phones=ldapService.getPhoneNumbers();
+        return phones.stream().map(SmsService::rawNumber).filter(numb -> numb.equals(rawPhone)).count()==0;
+    }
+
     @PostConstruct
     private void setup(){
-logger.debug("SMSinit");
         TwilioConfig twilioCfg=appConfig.getConfigSettings().getTwilioConfig();
         TwilioRestClient client =new TwilioRestClient(twilioCfg.getAccountSID(), twilioCfg.getAuthToken());
 

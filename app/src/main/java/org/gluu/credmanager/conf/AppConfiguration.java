@@ -11,7 +11,13 @@ import org.gluu.credmanager.conf.jsonized.U2fSettings;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.OxdService;
+import org.gluu.credmanager.services.ldap.pojo.CustomScript;
 import org.zkoss.util.resource.Labels;
+
+import static org.gluu.credmanager.conf.CredentialType.OTP;
+import static org.gluu.credmanager.conf.CredentialType.VERIFIED_PHONE;
+import static org.gluu.credmanager.conf.CredentialType.SUPER_GLUU;
+import static org.gluu.credmanager.conf.CredentialType.SECURITY_KEY;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -55,7 +61,7 @@ public class AppConfiguration{
      ACR value for user+password auth only. It is not necessarily equivalent to Gluu's default authn method which is found
      in the oxAuthenticationMode attribute of the appliance. Anyway, SIMPLE_AUTH_ACR should be part of server's acr_supported_values
      */
-    private static final String SIMPLE_AUTH_ACR ="auth_ldap_server";
+    private static final String SIMPLE_AUTH_ACR ="basic";   //"auth_ldap_server";
 
     //========== Properties exposed by this service ==========
 
@@ -193,9 +199,11 @@ public class AppConfiguration{
                         computeGluuVersion(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
-                        computeU2fSettings(settings); //Call this after computeEnabledMethods and computeGluuVersion only
-                        computeOTPSettings(settings);//Call this after computeEnabledMethods only
-                        computeTwilioSettings(settings);//Call this after computeEnabledMethods only
+                        //Any of the following 4 calls has to be made after computeEnabledMethods and computeGluuVersion only
+                        computeU2fSettings(settings);
+                        computeOTPSettings(settings);
+                        computeSuperGluuSettings(settings);
+                        computeTwilioSettings(settings);
 
                         OxdConfig oxdConfig = settings.getOxdConfig();
                         if (oxdConfig==null)
@@ -265,52 +273,90 @@ public class AppConfiguration{
     }
 
     private void computeOTPSettings(Configs settings) throws Exception{
-        if (enabledMethods.contains(CredentialType.OTP))
-            settings.setOtpConfig(OTPConfig.get(ldapService.getOTPScriptInfo()));
+
+        if (enabledMethods.contains(OTP)) {
+            CustomScript script=ldapService.getCustomScript(OTP.getName());
+            OTPConfig config=OTPConfig.get(script);
+            if (config==null) {
+                enabledMethods.remove(OTP);
+                logger.error(Labels.getLabel("app.otp_settings_error"));
+            }
+            else
+                settings.setOtpConfig(config);
+        }
+
+    }
+
+    private void computeSuperGluuSettings(Configs settings) throws Exception{
+
+        if (enabledMethods.contains(SUPER_GLUU)){
+            CustomScript script=ldapService.getCustomScript(SUPER_GLUU.getName());
+            SGConfig config=SGConfig.get(script);
+            if (config==null){
+                enabledMethods.remove(SUPER_GLUU);
+                logger.error(Labels.getLabel("app.sg_settings_error"));
+            }
+            else
+                settings.setSgConfig(config);
+        }
+
     }
 
     private void computeTwilioSettings(Configs settings) throws Exception{
-        if (enabledMethods.contains(CredentialType.VERIFIED_PHONE))
-            settings.setTwilioConfig(TwilioConfig.get(ldapService.getSmsScriptInfo()));
+        if (enabledMethods.contains(VERIFIED_PHONE)){
+            CustomScript script=ldapService.getCustomScript(VERIFIED_PHONE.getName());
+            TwilioConfig config=TwilioConfig.get(script);
+            if (config==null){
+                enabledMethods.remove(VERIFIED_PHONE);
+                logger.error(Labels.getLabel("app.sms_settings_error"));
+            }
+            else
+                settings.setTwilioConfig(config);
+        }
     }
 
-    private void computeU2fSettings(Configs settings) throws Exception{
+    private void computeU2fSettings(Configs settings) {
 
-        if (enabledMethods.contains(CredentialType.SECURITY_KEY)) {
+        if (enabledMethods.contains(SECURITY_KEY))
+            try {
+                U2fSettings u2fCfg = settings.getU2fSettings();
+                boolean nocfg = u2fCfg == null;
+                boolean guessAppId = nocfg || u2fCfg.getAppId() == null;
+                boolean guessUri = nocfg || u2fCfg.getRelativeMetadataUri() == null;
 
-            U2fSettings u2fCfg = settings.getU2fSettings();
-            boolean nocfg= u2fCfg == null;
-            boolean guessAppId = nocfg || u2fCfg.getAppId() == null;
-            boolean guessUri = nocfg || u2fCfg.getRelativeMetadataUri() == null;
+                if (nocfg)
+                    u2fCfg = new U2fSettings();
 
-            if (nocfg)
-                u2fCfg = new U2fSettings();
-
-            if (guessAppId) {
-                u2fCfg.setAppId(issuerUrl);
-                logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F app ID", issuerUrl);
-            }
-
-            String endpointUrl=u2fCfg.getRelativeMetadataUri();
-            if (guessUri) {
-
-                switch (gluuVersion) {
-                    case "3.0.1":
-                    case "3.0.2":
-                        endpointUrl = ".well-known/fido-u2f-configuration";
-                        break;
-                    default:
-                        endpointUrl = "restv1/fido-u2f-configuration";
+                if (guessAppId) {
+                    u2fCfg.setAppId(issuerUrl);
+                    logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F app ID", issuerUrl);
                 }
 
-                u2fCfg.setRelativeMetadataUri(endpointUrl);
-                logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F relative endpoint URL", endpointUrl);
-            }
-            u2fCfg.setEndpointUrl(String.format("%s/%s", issuerUrl, endpointUrl));
+                String endpointUrl = u2fCfg.getRelativeMetadataUri();
+                if (guessUri) {
 
-            settings.setU2fSettings(u2fCfg);
-            logger.info(Labels.getLabel("app.u2f_settings"), mapper.writeValueAsString(u2fCfg));
-        }
+                    switch (gluuVersion) {
+                        case "3.0.1":
+                        case "3.0.2":
+                            endpointUrl = ".well-known/fido-u2f-configuration";
+                            break;
+                        default:
+                            endpointUrl = "restv1/fido-u2f-configuration";
+                    }
+
+                    u2fCfg.setRelativeMetadataUri(endpointUrl);
+                    logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F relative endpoint URL", endpointUrl);
+                }
+                u2fCfg.setEndpointUrl(String.format("%s/%s", issuerUrl, endpointUrl));
+
+                settings.setU2fSettings(u2fCfg);
+                logger.info(Labels.getLabel("app.u2f_settings"), mapper.writeValueAsString(u2fCfg));
+            }
+            catch (Exception e){
+                enabledMethods.remove(SECURITY_KEY);
+                logger.error(Labels.getLabel("app.u2f_settings_error"));
+            }
+
     }
 
     private void computeEnabledMethods(Configs settings) throws Exception{

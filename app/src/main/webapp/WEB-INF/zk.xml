@@ -10,6 +10,12 @@
         <value>true</value>
     </library-property>
 
+    <!-- session timeout redirect -->
+    <session-config>
+        <device-type>ajax</device-type>
+        <timeout-uri>/index.zul</timeout-uri>
+    </session-config>
+
     <!-- bootstrap settings -->
     <library-property>
         <name>org.zkoss.zul.Button.mold</name>
@@ -47,8 +53,5 @@
     <!-- important listeners -->
     <listener>
         <listener-class>org.gluu.credmanager.core.init.ZKInitializer</listener-class>
-    </listener>
-    <listener>
-        <listener-class>org.gluu.credmanager.core.init.DesktopInitializer</listener-class>
     </listener>
 </zk>

@@ -27,10 +27,8 @@ public class OxdService {
     private CommandClient commandClient;
 
     public void setSettings(OxdConfig config) throws Exception{
-
         this.config=config;
         commandClient=new CommandClient(config.getHost(), config.getPort());
-
     }
 
     private void modifyExpiration(CommandClient client, String oxdId) throws Exception{
@@ -66,7 +64,7 @@ public class OxdService {
             cmdParams.setPostLogoutRedirectUri(params.getPostLogoutUri());
             cmdParams.setAcrValues(new ArrayList<>(params.getAcrValues()));
 
-            //The following apparently does not have effect. See https://github.com/GluuFederation/oxd/issues/85
+            //These scopes should be set to default=true in LDAP (or using oxTrust). Otherwise the following will have no effect
             cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
 
             cmdParams.setResponseTypes(Collections.singletonList("code"));  //Use "token","id_token" for implicit flow

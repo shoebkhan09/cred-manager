@@ -4,24 +4,24 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.core.User;
-import org.gluu.credmanager.core.credential.OTPDevice;
-import org.gluu.credmanager.core.credential.SecurityKey;
-import org.gluu.credmanager.core.credential.VerifiedPhone;
+import org.gluu.credmanager.core.credential.*;
+import org.gluu.credmanager.core.credential.fido.FidoDevice;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.ldap.pojo.GluuPerson;
-import org.gluu.credmanager.core.credential.RegisteredCredential;
 import org.gluu.credmanager.conf.CredentialType;
-import static org.gluu.credmanager.conf.CredentialType.OTP;
-import static org.gluu.credmanager.conf.CredentialType.VERIFIED_PHONE;
-import static org.gluu.credmanager.conf.CredentialType.SECURITY_KEY;
+import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.gluu.credmanager.conf.CredentialType.*;
 
 /**
  * Created by jgomer on 2017-07-16.
@@ -35,6 +35,9 @@ public class UserService {
      */
     public static final String[] requiredOpenIdScopes =
             new String[]{"openid","profile","user_name","email","mobile_phone","phone","clientinfo"};
+
+    @Inject
+    AppConfiguration appConfiguration;
 
     @Inject
     LdapService ldapService;
@@ -214,11 +217,10 @@ logger.debug("Phones from ldap2: {}", vphones);
 
     }
 
-    private List<SecurityKey> getSecurityKeys(String rdn){
+    private List<FidoDevice> getFidoDevices(String rdn, String appId, Class clazz){
 
         try{
-            ldapService.createFidoBranch(rdn);
-            return ldapService.getFidoDevices(rdn);
+            return ldapService.getU2FDevices(rdn, appId, clazz);
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -235,8 +237,15 @@ logger.debug("Phones from ldap2: {}", vphones);
 
             Map<CredentialType, List<RegisteredCredential>> allCreds=new HashMap<>();
             allCreds.put(VERIFIED_PHONE, Utils.mapSortCollectList(getVerifiedPhones(person), RegisteredCredential.class::cast));
-            allCreds.put(SECURITY_KEY, Utils.mapSortCollectList(getSecurityKeys(rdn), RegisteredCredential.class::cast));
             allCreds.put(OTP, Utils.mapSortCollectList(getOtpDevices(person), RegisteredCredential.class::cast));
+
+            ldapService.createFidoBranch(rdn);
+            String appId=appConfiguration.getConfigSettings().getU2fSettings().getAppId();
+            allCreds.put(SECURITY_KEY, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SecurityKey.class), RegisteredCredential.class::cast));
+
+            appId=appConfiguration.getConfigSettings().getOxdConfig().getRedirectUri();
+            allCreds.put(SUPER_GLUU, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SuperGluuDevice.class), RegisteredCredential.class::cast));
+
             return allCreds;
         }
         catch (Exception e){
@@ -319,15 +328,20 @@ logger.debug("Phones from ldap2: {}", vphones);
     }
 
     public SecurityKey relocateFidoDevice(User user, long time) throws Exception{
-        return ldapService.relocateFidoDevice(user.getRdn(), time);
+        SecurityKey key=ldapService.relocateU2fDevice(user.getRdn(), time);
+
+        if (key==null)
+            throw new IOException(Labels.getLabel("app.u2f_recent_lookup_error", new String[]{user.getUserName()}));
+        else
+            return key;
     }
 
-    public void updateU2fDevice(SecurityKey key) throws Exception{
-        ldapService.updateU2fDevice(key);
+    public void updateFidoDevice(FidoDevice dev) throws Exception{
+        ldapService.updateFidoDevice(dev);
     }
 
-    public void removeU2fDevice(SecurityKey key) throws Exception{
-        ldapService.removeU2fDevice(key);
+    public void removeFidoDevice(FidoDevice dev) throws Exception{
+        ldapService.removeFidoDevice(dev);
     }
 
 }

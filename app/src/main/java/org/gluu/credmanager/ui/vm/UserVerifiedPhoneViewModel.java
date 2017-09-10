@@ -1,12 +1,12 @@
 package org.gluu.credmanager.ui.vm;
 
-import com.twilio.sdk.resource.instance.Message;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.core.credential.RegisteredCredential;
 import org.gluu.credmanager.core.credential.VerifiedPhone;
 import org.gluu.credmanager.misc.Utils;
+import org.gluu.credmanager.services.SmsService;
 import org.gluu.credmanager.services.UserService;
 import org.zkoss.bind.BindUtils;
 import org.zkoss.bind.annotation.*;
@@ -18,8 +18,6 @@ import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zul.Messagebox;
 
-import static org.gluu.credmanager.conf.CredentialType.VERIFIED_PHONE;
-
 import java.util.*;
 
 /**
@@ -30,15 +28,16 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
 
     private Logger logger = LogManager.getLogger(getClass());
 
+    private boolean uiAwaitingArrival;
+    private boolean uiCodesMatch;
+    private boolean uiPanelOpened;
+
     private List<RegisteredCredential> phones;
     private VerifiedPhone newPhone;
     private String code;
     private String realCode;
     private String editingNumber;
-
-    private boolean uiAwaitingArrival;
-    private boolean uiCodesMatch;
-    private boolean uiPanelOpened;
+    private SmsService smsService;
 
     public String getEditingNumber() {
         return editingNumber;
@@ -86,7 +85,7 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
 
         devices=user.getCredentials().get(CredentialType.VERIFIED_PHONE);
         phones=devices;
-
+        smsService=services.getSmsService();
         uiPanelOpened=true;
     }
 
@@ -108,12 +107,11 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
     public void sendCode(){
 
         if (Utils.stringOptional(newPhone.getNumber()).isPresent()) {   //Did user fill out the phone text box?
-            //Find the index in the list for a match of phone entered and existing phones. Only new numbers are accepted
-            int i=Utils.firstTrue(phones, VerifiedPhone.class::cast, p -> p.getNumber().equals(newPhone.getNumber()));
-            if (i>=0)
-                Messagebox.show(Labels.getLabel("usr.mobile_already_exists"), Labels.getLabel("general.warning"), Messagebox.OK, Messagebox.INFORMATION);
-            else
-                try {
+            //Check for uniquess throughout all phones in LDAP. Only new numbers are accepted
+            try {
+                if (!smsService.isPhoneNumberUnique(newPhone))
+                    Messagebox.show(Labels.getLabel("usr.mobile_already_exists"), Labels.getLabel("general.warning"), Messagebox.OK, Messagebox.INFORMATION);
+                else {
                     uiAwaitingArrival = true;
                     BindUtils.postNotifyChange(null, null, this, "uiAwaitingArrival");
 
@@ -125,12 +123,13 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
 logger.debug("CODE={}", realCode);
 
                     //Send message (service bean already knows all settings to perform this step)
-                    services.getSmsService().sendSMS(newPhone.getNumber(), body);
+                    smsService.sendSMS(newPhone.getNumber(), body);
                 }
-                catch (Exception e) {
-                    showMessageUI(false);
-                    logger.error(e.getMessage(), e);
-                }
+            }
+            catch (Exception e) {
+                showMessageUI(false);
+                logger.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -144,16 +143,19 @@ logger.debug("CODE={}", realCode);
     @Command
     public void add(){
 
-        try {
-            newPhone.setAddedOn(new Date().getTime());
-            services.getUserService().updateMobilePhonesAdd(user, phones, newPhone);
+        if (Utils.stringOptional(newPhone.getNickName()).isPresent()) {
+            try {
+                newPhone.setAddedOn(new Date().getTime());
+                userService.updateMobilePhonesAdd(user, phones, newPhone);
+                showMessageUI(true, Labels.getLabel("usr.enroll.success"));
+            }
+            catch (Exception e) {
+                showMessageUI(false, Labels.getLabel("usr.enroll.error"));
+                logger.error(e.getMessage(), e);
+            }
             cancel();
-            showMessageUI(true, Labels.getLabel("usr.enroll.success"));
         }
-        catch (Exception e){
-            showMessageUI(false, Labels.getLabel("usr.enroll.error"));
-            logger.error(e.getMessage(), e);
-        }
+
     }
 
     @NotifyChange({"uiCodesMatch", "code", "uiPanelOpened", "newPhone"})
@@ -191,14 +193,14 @@ logger.debug("CODE={}", realCode);
     public void update(){
 
         String nick=newPhone.getNickName();
-        if (nick!=null){
+        if (Utils.stringOptional(nick).isPresent()) {
             int i=Utils.firstTrue(phones, VerifiedPhone.class::cast, p -> p.getNumber().equals(editingNumber));
             VerifiedPhone ph=(VerifiedPhone) phones.get(i);
             ph.setNickName(nick);
             cancelUpdate();
 
             try {
-                services.getUserService().updateMobilePhonesAdd(user, phones, null);
+                userService.updateMobilePhonesAdd(user, phones, null);
                 showMessageUI(true);
             }
             catch (Exception e){
@@ -212,19 +214,18 @@ logger.debug("CODE={}", realCode);
     @Command
     public void delete(@BindingParam("phone") VerifiedPhone phone){
 
-        boolean flag=mayTriggerResetPreference(user.getPreference(), devices, VERIFIED_PHONE);
-        Pair<String, String> delMessages=getDelMessages(flag, VERIFIED_PHONE, phone.getNickName());
+        boolean flag=mayTriggerResetPreference();
+        Pair<String, String> delMessages=getDelMessages(flag, phone.getNickName());
 
         Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                 event ->  {
                     if (Messagebox.ON_YES.equals(event.getName())) {
-                        UserService usrService = services.getUserService();
                         try {
                             if (phones.remove(phone)) {
                                 if (flag)
-                                    usrService.setPreferredMethod(user,null);
+                                    userService.setPreferredMethod(user,null);
 
-                                usrService.updateMobilePhonesAdd(user, phones, null);
+                                userService.updateMobilePhonesAdd(user, phones, null);
                                 //trigger refresh (this method is asynchronous...)
                                 BindUtils.postNotifyChange(null, null, UserVerifiedPhoneViewModel.this, "phones");
                                 showMessageUI(true);

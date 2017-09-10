@@ -3,11 +3,15 @@ package org.gluu.credmanager.misc;
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.core.credential.fido.FidoDevice;
+import org.xdi.model.SimpleCustomProperty;
+import org.zkoss.util.Pair;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-07.
@@ -96,6 +100,30 @@ public class Utils {
     //Takes a List, applies a map on it, and then sorts according to natural order of elements, and finally collects
     public static <R, T> List<R> mapSortCollectList(List<T> list, Function<? super T, ? extends R> map){
         return list.stream().map(map).sorted().collect(Collectors.toList());
+    }
+
+    //Takes a list of SimpleCustomProperty instances, and creates a Map of (key,val) pairs where key is value1 and val is value2
+    public static Map<String, String> getScriptProperties(List<SimpleCustomProperty> properties) {
+        Map<String, String> propsMap = new HashMap<>();
+        properties.stream().forEach(prop -> propsMap.put(prop.getValue1().toLowerCase(), prop.getValue2()));
+        return propsMap;
+    }
+
+    public static <T extends FidoDevice> T getRecentlyCreatedDevice(List<T> devices, long time){
+
+        long diffs[]=devices.stream().filter(dev -> dev.getCounter()==-1)
+                .mapToLong(key -> time-key.getCreationDate().getTime()).toArray();
+
+        //Search for the smallest time difference
+        int i;
+        Pair<Long, Integer> min=new Pair<>(Long.MAX_VALUE, -1);
+        for (i=0;i<diffs.length;i++)
+            if (diffs[i]>=0 && min.getX()>diffs[i])  //Only search non-negative differences
+                min=new Pair<>(diffs[i], i);
+
+        i=min.getY();
+        return i==-1 ? null : devices.get(i);
+
     }
 
 }

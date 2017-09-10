@@ -25,22 +25,23 @@
         <include src="@load(vm.credentialsVisibility['SECURITY_KEY'] ? 'user/u2f.zul' : '')" />
         <include src="@load(vm.credentialsVisibility['VERIFIED_PHONE'] ? 'user/phone.zul' : '')" />
         <include src="@load(vm.credentialsVisibility['OTP'] ? 'user/otp.zul' : '')" />
+        <include src="@load(vm.credentialsVisibility['SUPER_GLUU'] ? 'user/super.zul' : '')" />
 
         <zk if="${vm.uiPassResetAvailable}">
             <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPanelOpened)">
                 <panelchildren sclass="padded">
                     <vlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element s8"><label value="${labels.usr.passreset_current}"/></div>
+                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_current}"/></div>
                             <textbox type="password" sclass="s8 form-control" value="@bind(vm.currentPassword)"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element s8"><label value="${labels.usr.passreset_newpass}"/></div>
+                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_newpass}"/></div>
                             <textbox id="new_pass" type="password" sclass="s8 form-control" tooltip="tooltip_pass_hint, after_center"
                                      w:onBlur="updateStrength(this)" value="@bind(vm.newPassword)"/>
                         </hlayout>
                         <hlayout spacing="3px" sclass="dpadded">
-                            <div sclass="s8"> </div>
+                            <div sclass="${pageScope.onMobile? 's6' : 's8'}"> </div>
                             <label sclass="de_emphasized" visible="@load(not empty vm.strengthText)"
                                    style="padding-left:7px" value="${labels.usr.pass.strength.title}" />
                             <label sclass="de_emphasized bold" value="@load(vm.strengthText)"/>
@@ -50,7 +51,7 @@
                             </vlayout-->
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element s8"><label value="${labels.usr.passreset_confirm}"/></div>
+                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_confirm}"/></div>
                             <textbox type="password" sclass="s8 form-control" value="@bind(vm.newPasswordConfirm)" />
                         </hlayout>
                         <div align="center">

@@ -38,7 +38,18 @@
                             <vlayout hflex="1" sclass="padded">
                                 <label value="@load(empty each.nickName ? c:l('general.no_named') : each.nickName)" sclass="bold"/>
                                 <hlayout>
-                                    <label value="${labels.general.added_on}" sclass="de_emphasized"/>
+                                    <label value="${c:l('general.last_used')}" />
+                                    <zk choose="">
+                                        <zk when="${each.lastAccessTime ne null}">
+                                            <label value="@load(each.lastAccessTime) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
+                                        </zk>
+                                        <zk>
+                                            <label value="@load(each.creationDate) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
+                                        </zk>
+                                    </zk>
+                                </hlayout>
+                                <hlayout>
+                                    <label value="${labels.general.added_on}" />
                                     <label value="@load(each.creationDate) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
                                 </hlayout>
                             </vlayout>

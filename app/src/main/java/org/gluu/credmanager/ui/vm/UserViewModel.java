@@ -2,11 +2,14 @@ package org.gluu.credmanager.ui.vm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.core.credential.RegisteredCredential;
+import org.gluu.credmanager.core.credential.fido.FidoDevice;
 import org.gluu.credmanager.services.ServiceMashup;
+import org.gluu.credmanager.services.UserService;
 import org.zkoss.bind.BindUtils;
 import org.zkoss.bind.annotation.Command;
 import org.zkoss.bind.annotation.Init;
@@ -18,7 +21,9 @@ import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Messagebox;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by jgomer on 2017-08-04.
@@ -26,33 +31,42 @@ import java.util.List;
  */
 public class UserViewModel {
 
-    final int FEEDBACK_DELAY_SUCC=1500;
-    final int FEEDBACK_DELAY_ERR=3000;
+    final static int FEEDBACK_DELAY_SUCC=1500;
+    final static int FEEDBACK_DELAY_ERR=3000;
 
     private Logger logger = LogManager.getLogger(getClass());
 
     ServiceMashup services;
+    UserService userService;
     User user;
     List<RegisteredCredential> devices;
-
-    @Init
-    public void init() throws Exception{
-        Session se= Sessions.getCurrent();
-        services= WebUtils.getServices(se);
-        user=WebUtils.getUser(se);
-    }
+    private Map<String,List<RegisteredCredential>> devicesMap;
 
     public User getUser() {
         return user;
+    }
+
+    public Map<String,List<RegisteredCredential>> getDevicesMap() {
+        return devicesMap;
     }
 
     public List<RegisteredCredential> getDevices() {
         return devices;
     }
 
+    @Init
+    public void init() throws Exception{
+        Session se= Sessions.getCurrent();
+        services= WebUtils.getServices(se);
+        user=WebUtils.getUser(se);
+        userService=services.getUserService();
+
+        devicesMap =new HashMap<>();
+        user.getCredentials().entrySet().stream().forEach(entry -> devicesMap.put(entry.getKey().toString(), entry.getValue()));
+    }
+
     @Command
     public void logoutFromAuthzServer(){
-logger.debug("loging out");
         try {
             Executions.sendRedirect(services.getOxdService().getLogoutUrl());
         }
@@ -62,34 +76,34 @@ logger.debug("loging out");
 
     }
 
-    void showMessageUI(boolean success){
+    static void showMessageUI(boolean success){
         showMessageUI(success, Labels.getLabel(success ? "general.operation_completed" : "general.error.general"));
     }
 
-    void showMessageUI(boolean success, String msg){
+    static void showMessageUI(boolean success, String msg){
         showMessageUI(success, msg, "middle_center");
     }
 
-    void showMessageUI(boolean success, String msg, String position) {
+    static void showMessageUI(boolean success, String msg, String position) {
         if (success)
             Clients.showNotification(msg, Clients.NOTIFICATION_TYPE_INFO, null, position, FEEDBACK_DELAY_SUCC);
         else
             Clients.showNotification(msg, Clients.NOTIFICATION_TYPE_WARNING, null, position, FEEDBACK_DELAY_ERR);
     }
 
-    boolean mayTriggerResetPreference(CredentialType preference, List<RegisteredCredential> devices, CredentialType credt){
-        return preference!=null && devices.size()==1 && preference.equals(credt);
+    boolean mayTriggerResetPreference(){
+        int total=devicesMap.values().stream().mapToInt(List::size).sum();
+        return total==AppConfiguration.ACTIVATE2AF_CREDS_GTE && user.getPreference()!=null;
     }
 
-    Pair<String, String> getDelMessages(boolean flag, CredentialType credt, String nick){
+    static Pair<String, String> getDelMessages(boolean flag, String nick){
 
         String title;
         StringBuffer text=new StringBuffer();
 
         if (flag) {
-            title=Labels.getLabel("general.credentials." + credt);
-            text.append(Labels.getLabel("usr.del_conflict_preference", new String[]{title}));
-            text.append("\n\n"); ;
+            text.append(Labels.getLabel("usr.del_conflict_preference", new Object[]{AppConfiguration.ACTIVATE2AF_CREDS_GTE}));
+            text.append("\n\n");
         }
         title=Labels.getLabel("usr.del_title");
         text.append(Labels.getLabel("usr.del_confirm", new String[]{nick==null ? Labels.getLabel("general.no_named") : nick}));
@@ -98,6 +112,32 @@ logger.debug("loging out");
 
         return new Pair<>(title, text.toString());
 
+    }
+
+    void processFidoDeviceRemoval(FidoDevice device, Object bean){
+
+        boolean flag=mayTriggerResetPreference();
+        Pair<String, String> delMessages=getDelMessages(flag, device.getNickName());
+
+        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+                event -> {
+                    if (Messagebox.ON_YES.equals(event.getName())) {
+                        try {
+                            if (devices.remove(device)) {
+                                if (flag)
+                                    userService.setPreferredMethod(user,null);
+
+                                userService.removeFidoDevice(device);
+                                //trigger refresh (this method is asynchronous...)
+                                BindUtils.postNotifyChange(null, null, bean, "devices");
+                                showMessageUI(true);
+                            }
+                        } catch (Exception e) {
+                            showMessageUI(false);
+                            logger.error(e.getMessage(), e);
+                        }
+                    }
+                });
     }
 
 }

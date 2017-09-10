@@ -1,7 +1,6 @@
 package org.gluu.credmanager.conf;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lochbridge.oath.otp.*;
 import com.lochbridge.oath.otp.keyprovisioning.OTPKey.OTPType;
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +13,7 @@ import org.zkoss.util.resource.Labels;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -22,9 +22,8 @@ import java.util.stream.Stream;
  * POJO storing values needed for HOTP/TOTP. Static methods of this class parse information belonging to the OTP custom
  * script to be able to get an instance of this class
  */
-public class OTPConfig {
+public class OTPConfig extends QRConfig {
 
-    private static ObjectMapper mapper=new ObjectMapper();
     private static Logger logger = LogManager.getLogger(OTPConfig.class);
 
     private OTPType type;
@@ -34,13 +33,8 @@ public class OTPConfig {
     private int timeStep;
 
     private String issuer;
-    private String label;
-    private String registrationUri;
 
     private HmacShaAlgorithm hmacShaAlgorithm;
-
-    private int qrSize;
-    private double qrMSize;
 
     public boolean isValidConfig(){
         boolean valid=false;
@@ -116,43 +110,11 @@ public class OTPConfig {
         this.issuer = issuer;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public int getQrSize() {
-        return qrSize;
-    }
-
-    public void setQrSize(int qrSize) {
-        this.qrSize = qrSize;
-    }
-
-    public double getQrMSize() {
-        return qrMSize;
-    }
-
-    public void setQrMSize(double qrMSize) {
-        this.qrMSize = qrMSize;
-    }
-
-    public String getRegistrationUri() {
-        return registrationUri;
-    }
-
-    public void setRegistrationUri(String registrationUri) {
-        this.registrationUri = registrationUri;
-    }
-
     /**
      * Creates an OTPConfig object to hold all properties required for OTP key generation and QR code display
      * @param otpScript Represents the LDAP entry corresponding to the OTP custom script
      * @return null if an error or inconsistency is found while inspecting the configuration properties of the custom script.
-     * Otherwise returns a OTPConfig object
+     * Otherwise returns an OTPConfig object
      */
     public static OTPConfig get(CustomScript otpScript) {
 
@@ -160,66 +122,31 @@ public class OTPConfig {
 
         //Check by description or displayName if this is really OTP script
         if (Utils.stringContains(otpScript.getDescription(), "otp", true) || Utils.stringContains(otpScript.getName(), "otp", true)){
-
-            final OTPConfig cfg = new OTPConfig();
-            List<SimpleCustomProperty> properties=otpScript.getProperties();
-
-            properties.stream().forEach(prop -> {
-                try {
-                    String name = prop.getValue1().toLowerCase();
-                    String value = prop.getValue2();
-
-                    switch (name) {
-                        case "otp_type":
-                            cfg.setType(OTPType.valueOf(value.toUpperCase()));
-                            break;
-                        case "issuer":
-                            cfg.setIssuer(value);
-                            break;
-                        case "label":
-                            cfg.setLabel(value);
-                            break;
-                        case "registration_uri":
-                            cfg.setRegistrationUri(value);
-                            break;
-                        case "qr_options":
-                            //value may come not properly formated (without quotes, for instance...)
-                            if (!value.contains("\""))
-                                value=value.replaceFirst("mSize","\"mSize\"").replaceFirst("size","\"size\"");
-
-                            JsonNode tree = mapper.readTree(value);
-
-                            if (tree.get("size")!=null)
-                                cfg.setQrSize(tree.get("size").asInt());
-
-                            if (tree.get("mSize")!=null)
-                                cfg.setQrMSize(tree.get("mSize").asDouble());
-                            break;
-                    }
-                }
-                catch(Exception e){
-                    logger.error(e.getMessage(), e);
-                    cfg.setType(null);
-                }
-            });
-
             try {
-                //Do not change evaluation order of this 3 predicates
-                if (cfg.getType()!=null && readFileSettings(cfg, properties) && cfg.isValidConfig()) {
+                List<SimpleCustomProperty> properties=otpScript.getProperties();
+                Map<String, String> propsMap=Utils.getScriptProperties(properties);
+
+                OTPConfig cfg = new OTPConfig();
+                cfg.populate(propsMap);
+                cfg.setType(OTPType.valueOf(propsMap.get("otp_type").toUpperCase()));
+                cfg.setIssuer(propsMap.get("issuer"));
+
+                //Do not change evaluation order of these 2 predicates
+                if (readFileSettings(cfg, properties) && cfg.isValidConfig()) {
                     config = cfg;
                     logger.info(Labels.getLabel("app.otp_settings"), mapper.writeValueAsString(cfg));
                 }
                 else
-                    logger.error(Labels.getLabel("app.otp_settings_error"));
+                    config=null;
             }
             catch (Exception e){
                 logger.error(e.getMessage(), e);
+                config=null;
             }
         }
         else
-            logger.error(Labels.getLabel("app.otp_settings_error"));
+            config=null;
 
-        //TODO: throw exception on error?
         return config;
 
     }

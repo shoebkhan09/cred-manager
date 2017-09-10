@@ -29,7 +29,6 @@ public class UserMainViewModel extends UserViewModel{
     private String introText;
     private Map<String, Boolean> credentialsVisibility;
     private boolean secondFactorAllowed;
-    private Map<String,List<RegisteredCredential>> devices2;
 
     private String currentPassword;
     private String newPassword;
@@ -55,10 +54,6 @@ public class UserMainViewModel extends UserViewModel{
             //str=Labels.getLabel("usr.pass.strength.title", new String[]{str});
         }
         return str;
-    }
-
-    public Map<String,List<RegisteredCredential>> getDevices2() {
-        return devices2;
     }
 
     public int getStrength() {
@@ -125,9 +120,6 @@ public class UserMainViewModel extends UserViewModel{
             secondFactorAllowed=systemLevelCreds.size()>0;
             if (secondFactorAllowed)
                 introText = Labels.getLabel("usr.main_intro", new String[]{appConfig.getOrgName(), helper.substring(2)});
-
-            devices2=new HashMap<>();
-            user.getCredentials().entrySet().stream().forEach(entry -> devices2.put(entry.getKey().toString(), entry.getValue()));
         }
         else
             logger.error(Labels.getLabel("app.fail_read_credentials"));

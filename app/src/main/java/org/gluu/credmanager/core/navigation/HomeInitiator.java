@@ -85,9 +85,11 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
                     }
                     break;
                 case BYPASS:
+                    /*
                     //Check offset is there, otherwise default to UTC
                     if (WebUtils.getUserOffset(se)==null)
                         WebUtils.setUserOffset(se, ZoneOffset.UTC);
+                    */
 
                     //go straight without the need for showing UI
                     User user=WebUtils.getUser(se);

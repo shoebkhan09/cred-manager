@@ -2,23 +2,28 @@ package org.gluu.credmanager.services.ldap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unboundid.ldap.sdk.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.core.credential.SecurityKey;;
+import org.gluu.credmanager.core.credential.SuperGluuDevice;
+import org.gluu.credmanager.core.credential.fido.FidoDevice;
+import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.pojo.*;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.PropertiesDecrypter;
 import org.xdi.util.security.StringEncrypter;
-import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
-import java.text.MessageFormat;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-06.
@@ -29,8 +34,6 @@ import java.util.List;
 @ApplicationScoped
 public class LdapService {
 
-    private static final String OTP_SCRIPT_BRANCH_PATTERN="inum={0}!0011!5018.D4BF,ou=scripts,o={0},o=gluu";
-    private static final String SMS_SCRIPT_BRANCH_PATTERN="inum={0}!0011!09A0.93D6,ou=scripts,o={0},o=gluu";
     private Logger logger = LogManager.getLogger(getClass());
 
     private Properties ldapProperties;
@@ -38,7 +41,7 @@ public class LdapService {
     private LdapSettings ldapSettings;
     private ObjectMapper mapper;
 
-    private OxTrustConfiguration oxTrustConfig =null;
+    private OxTrustConfiguration oxTrustConfig=null;
     private JsonNode oxAuthConfDynamic;
 
     /**
@@ -124,11 +127,6 @@ public class LdapService {
         return getOxAuthConfDynamic().get("issuer").asText();
     }
 
-    public List<SecurityKey> getFidoDevices(String userRdn){
-        String dn=String.format("%s,ou=people,o=%s,o=gluu", userRdn, ldapSettings.getOrgInum());
-        return ldapEntryManager.findEntries(String.format("ou=fido,%s", dn), SecurityKey.class, null);
-    }
-
     /**
      * Updates in LDAP the attributes that store the raw mobile phones as well as the Json representation that contains
      * the credential information associated to those phones for the person being referenced
@@ -173,14 +171,17 @@ public class LdapService {
         ldapEntryManager.merge(person);
     }
 
-    public CustomScript getOTPScriptInfo() throws Exception{
-        String dn= MessageFormat.format(OTP_SCRIPT_BRANCH_PATTERN, ldapSettings.getOrgInum());
-        return ldapEntryManager.find(CustomScript.class, dn);
-    }
+    public CustomScript getCustomScript(String acr) throws Exception{
 
-    public CustomScript getSmsScriptInfo() throws Exception{
-        String dn= MessageFormat.format(SMS_SCRIPT_BRANCH_PATTERN, ldapSettings.getOrgInum());
-        return ldapEntryManager.find(CustomScript.class, dn);
+        Filter filter=Filter.createEqualityFilter("displayName", acr);
+        String baseDN=String.format("ou=scripts,o=%s,o=gluu", ldapSettings.getOrgInum());
+        List<CustomScript> list=ldapEntryManager.findEntries(baseDN, CustomScript.class, filter);
+
+        int size=list.size();
+        if (size==1)
+            return list.get(0);
+        else
+            throw new IOException(Labels.getLabel("app.script_lookup_error", new Object[]{size, acr}));
     }
 
     public void createFidoBranch(String userRdn){
@@ -200,38 +201,74 @@ public class LdapService {
 
     }
 
-    public SecurityKey relocateFidoDevice(String userRdn, long time) throws Exception {
+    public SecurityKey relocateU2fDevice(String userRdn, long time) throws Exception {
 
         String orgy=ldapSettings.getOrgInum();
         String registeredBranch=String.format("ou=registered_devices,ou=u2f,o=%s,o=gluu", orgy);
         List<SecurityKey> keys=ldapEntryManager.findEntries(registeredBranch, SecurityKey.class,null);
-        long diffs[]=keys.stream().mapToLong(key -> time-key.getCreationDate().getTime()).toArray();
 
-        //Search for the smallest time difference
-        Pair<Long, Integer> min=new Pair<>(Long.MAX_VALUE, -1);
-        for (int i=0;i<diffs.length;i++)
-            if (diffs[i]>=0 && min.getX()>diffs[i])  //Only search non-negative differences
-                min=new Pair<>(diffs[i], i);
+        SecurityKey key=Utils.getRecentlyCreatedDevice(keys, time);   //pick device to move under own user branch
+        if (key!=null) {
+            key.setDn(String.format("oxId=%s,ou=fido,%s,ou=people,o=%s,o=gluu", key.getId(), userRdn, orgy));
+            ldapEntryManager.persist(key);
 
-        SecurityKey key=keys.get(min.getY());   //pick device to move under own user branch
-        key.setDn(String.format("oxId=%s,ou=fido,%s,ou=people,o=%s,o=gluu", key.getId(), userRdn, orgy));
-        ldapEntryManager.persist(key);
-
-        //This is not necessary as LDAP is cleaned often but good in testing environment
-        SecurityKey oldkey=new SecurityKey();
-        oldkey.setDn(String.format("oxId=%s,%s", key.getId(), registeredBranch));
-        ldapEntryManager.remove(oldkey);
-
+            //This is not necessary as LDAP is cleaned often but a need in testing environment
+            SecurityKey oldkey = new SecurityKey();
+            oldkey.setDn(String.format("oxId=%s,%s", key.getId(), registeredBranch));
+            ldapEntryManager.remove(oldkey);
+        }
         return key;
 
     }
 
-    public void updateU2fDevice(SecurityKey key) throws Exception{
-        ldapEntryManager.merge(key);
+    /**
+     * Returns a list of FidoDevice instances found under the given branch that matches de oxApplication value given and
+     * whose oxStatus attribute equals to "active"
+     * @param userRdn Branch under the query is performed
+     * @param oxApplication Value to match for oxApplication attribute (see LDAP object class oxDeviceRegistration)
+     * @param clazz Any subclass of FidoDevice
+     * @param <T>
+     * @return List of FidoDevices
+     */
+    public <T extends FidoDevice> List<T> getU2FDevices(String userRdn, String oxApplication, Class<T> clazz) throws Exception{
+        Filter filter=Filter.createANDFilter(Arrays.asList(
+                Filter.createEqualityFilter("oxApplication", oxApplication),
+                Filter.createEqualityFilter("oxStatus", "active")));
+        String dn=String.format("%s,ou=people,o=%s,o=gluu", userRdn, ldapSettings.getOrgInum());
+        return ldapEntryManager.findEntries(String.format("ou=fido,%s", dn), clazz, filter);
     }
 
-    public void removeU2fDevice(SecurityKey key) throws Exception{
-        ldapEntryManager.remove(key);
+    public void updateFidoDevice(FidoDevice device) throws Exception{
+        ldapEntryManager.merge(device);
+    }
+
+    public void removeFidoDevice(FidoDevice device) throws Exception{
+        ldapEntryManager.remove(device);
+    }
+
+    public SuperGluuDevice getSuperGluuDevice(String userRdn, long time, String oxApp) throws Exception{
+        List<SuperGluuDevice> list=getU2FDevices(userRdn, oxApp, SuperGluuDevice.class);
+logger.debug("list is {}", list.stream().map(d -> d.getDeviceData().getUuid()).collect(Collectors.toList()).toString());
+        return Utils.getRecentlyCreatedDevice(list, time);
+    }
+
+    public List<String> getSGDevicesIDs(String oxApplication) throws Exception{
+
+        Filter filter=Filter.createANDFilter(Arrays.asList(
+                Filter.createEqualityFilter("oxApplication", oxApplication),
+                Filter.createEqualityFilter("oxStatus", "active")));
+        String dn=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
+
+        List<SuperGluuDevice> list=ldapEntryManager.findEntries(dn, SuperGluuDevice.class, new String[]{"oxDeviceData"}, filter);
+        return list.stream().filter(d -> d.getDeviceData()!=null).map(d -> d.getDeviceData().getUuid()).collect(Collectors.toList());
+
+    }
+
+    public List<String> getPhoneNumbers() throws Exception{
+        String dn=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
+        List<GluuPerson> list=ldapEntryManager.findEntries(dn, GluuPerson.class, new String[]{"mobile"},null);
+        Stream<GluuPerson> mobilePeople=list.stream().filter(person -> person.getMobileNumbers()!=null);
+        return mobilePeople.flatMap(person -> person.getMobileNumbers().stream()).collect(Collectors.toList());
     }
 
 }

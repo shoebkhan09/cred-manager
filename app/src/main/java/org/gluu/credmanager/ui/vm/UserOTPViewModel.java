@@ -4,10 +4,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.OTPConfig;
+import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.core.credential.OTPDevice;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.OTPService;
-import org.gluu.credmanager.services.UserService;
 import org.zkoss.bind.BindUtils;
 import org.zkoss.bind.annotation.*;
 import org.zkoss.json.JavaScriptValue;
@@ -15,17 +15,14 @@ import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Messagebox;
 
-import static org.gluu.credmanager.conf.CredentialType.OTP;
-
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by jgomer on 2017-08-01.
@@ -94,27 +91,6 @@ public class UserOTPViewModel extends UserViewModel{
         uiPanelOpened=true;
     }
 
-    /**
-     * Creates a string for a Json representation of two values: size and mSize for QR code
-     * @param config General OTP settings object
-     * @return Json String
-     */
-    private String getFormatedQROptions(OTPConfig config){
-
-        List<String> list=new ArrayList<>();
-
-        int ival=config.getQrSize();
-        if (ival>0)
-            list.add("size:" + ival);
-
-        double dval=config.getQrMSize();
-        if (dval>0)
-            list.add("mSize: " + dval);
-
-        return list.toString().replaceFirst("\\[","{").replaceFirst("\\]","}");
-
-    }
-
     @Command
     public void showQR(){
         uiQRShown=true;
@@ -126,7 +102,8 @@ public class UserOTPViewModel extends UserViewModel{
 
         secretKey=otpService.generateSecretKey();
         String request=otpService.generateSecretKeyUri(secretKey, user.getGivenName());
-        JavaScriptValue jvalue=new JavaScriptValue(getFormatedQROptions(otpConfig));
+
+        JavaScriptValue jvalue=new JavaScriptValue(otpConfig.getFormattedQROptions(WebUtils.getPageWidth()));
 
         //Calls the startQR javascript function supplying suitable params
         Clients.response(new AuInvoke("startQR", request, otpConfig.getLabel(), jvalue, QR_SCAN_TIMEOUT));
@@ -140,7 +117,7 @@ public class UserOTPViewModel extends UserViewModel{
     @Listen("onData=#readyButton")
     public void timedOut(Event event) throws Exception {
         if (uiQRShown) {
-            //Restore UI if user did not scan code
+            //Restore UI because user did not scan code
             uiQRShown = false;
             BindUtils.postNotifyChange(null, null, this, "uiQRShown");
         }
@@ -198,7 +175,7 @@ public class UserOTPViewModel extends UserViewModel{
         if (Utils.stringOptional(newDevice.getNickName()).isPresent())
             try{
                 newDevice.setAddedOn(new Date().getTime());
-                services.getUserService().updateOTPDevicesAdd(user, devices, newDevice);
+                userService.updateOTPDevicesAdd(user, devices, newDevice);
                 success=true;
             }
             catch (Exception e){
@@ -239,7 +216,7 @@ public class UserOTPViewModel extends UserViewModel{
     public void update(){
 
         String nick=newDevice.getNickName();
-        if (nick!=null){
+        if (Utils.stringOptional(nick).isPresent()) {
             //Find the index of the current device in the device list
             int i=Utils.firstTrue(devices, OTPDevice.class::cast, dev -> dev.getId()==editingId);
             OTPDevice dev=(OTPDevice) devices.get(i);
@@ -248,7 +225,7 @@ public class UserOTPViewModel extends UserViewModel{
             cancelUpdate();     //This doesn't undo anything we already did (just controls UI aspects)
 
             try {
-                services.getUserService().updateOTPDevicesAdd(user, devices, null);
+                userService.updateOTPDevicesAdd(user, devices, null);
                 showMessageUI(true);
             }
             catch (Exception e){
@@ -262,19 +239,18 @@ public class UserOTPViewModel extends UserViewModel{
     @Command
     public void delete(@BindingParam("device") OTPDevice device){
 
-        boolean flag=mayTriggerResetPreference(user.getPreference(), devices, OTP);
-        Pair<String, String> delMessages=getDelMessages(flag, OTP, device.getNickName());
+        boolean flag=mayTriggerResetPreference();
+        Pair<String, String> delMessages=getDelMessages(flag, device.getNickName());
 
         Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                 event -> {
                         if (Messagebox.ON_YES.equals(event.getName())){
-                            UserService usrService=services.getUserService();
                             try {
                                 if (devices.remove(device)) {
                                     if (flag)
-                                        usrService.setPreferredMethod(user,null);
+                                        userService.setPreferredMethod(user,null);
 
-                                    usrService.updateOTPDevicesAdd(user, devices, null);
+                                    userService.updateOTPDevicesAdd(user, devices, null);
                                     //trigger refresh (this method is asynchronous...)
                                     BindUtils.postNotifyChange(null, null, UserOTPViewModel.this, "devices");
 
