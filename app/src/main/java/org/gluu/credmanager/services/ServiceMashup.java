@@ -35,6 +35,9 @@ public class ServiceMashup implements Serializable {
     @Inject
     private U2fService u2fService;
 
+    @Inject
+    private SGService sgService;
+
     public AppConfiguration getAppConfig() {
         return appConfiguration;
     }
@@ -58,4 +61,9 @@ public class ServiceMashup implements Serializable {
     public U2fService getU2fService() {
         return u2fService;
     }
+
+    public SGService getSgService() {
+        return sgService;
+    }
+
 }
