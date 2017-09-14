@@ -53,7 +53,7 @@ You can find a sample configuration file [here](https://github.com/GluuFederatio
 * app checks Implementation-Version entry in `MANIFEST.MF` file inside `oxauth.war` to guess Gluu version it is running on
 * If *"enabled_methods"* is not present, or has empty value or null, then all supported methods will be enabled. The exact set of methods is deduced after inspecting acr_supported_values in the server. Depending on current server setup, this can lead to only password (no 2FA at all).
 * If *"oxd-id"* is not present, or has empty value or null, registration of this app with **oxd** will take place.
-* If *"u2f_relative_uri"* is not present, or has empty value or null, it will default to ".well-known/fido-u2f-configuration" for versions earlier than 3.1.0 or "restv1/fido-u2f-configuration" for version 3.1.0. The value of issuer property found in LDAP followed by a slash (/) will be prepended to this to get a correct endpoint URL for U2F devices enrolling.
+* If *"u2f_relative_uri"* is not present, or has empty value or null, it will default to ".well-known/fido-u2f-configuration". The value of issuer property found in LDAP followed by a slash (/) will be prepended to this to get a correct endpoint URL for U2F devices enrolling.
 * If *"app_id"* is not present, or has empty value or null, it will default to the *issuer* value in oxAuth's oxAuthConfDynamic. Passing an *app_id* is useful for [multi-facets apps](https://developers.yubico.com/U2F/App_ID.html) where an HTTPS URL that resolves to a JSON list of facet IDs needs to be supplied.
 
 ### "Hidden" properties
