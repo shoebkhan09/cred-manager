@@ -203,7 +203,7 @@ class PersonAuthentication(PersonAuthenticationType):
         if (step == 2):
             return "/auth/u2f/login.xhtml"
 
-        return ""
+        return "/alter_login.xhtml"
 
     def logout(self, configurationAttributes, requestParameters):
         return True

@@ -182,7 +182,7 @@ class PersonAuthentication(PersonAuthenticationType):
         if step == 2:
             return "/auth/twiliosms/twiliosms.xhtml"
 
-        return ""
+        return "/alter_login.xhtml"
 
     def logout(self, configurationAttributes, requestParameters):
         return True
