@@ -1,15 +1,16 @@
 <?init class="org.zkoss.zk.ui.util.Composition" arg0="/basic.zul"?>
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.title}"?>
-<?link rel="icon" type="image/x-icon" href="/images/favicon.ico" ?>
-<?style src="${pageScope.onMobile ? '/styles/mobile.css' : '/styles/desktop.css'}"?>
+<?link rel="icon" type="image/x-icon" href="${sessionScope.custdir}/images/favicon.ico" ?>
+<?style src="${c:cat3(sessionScope.custdir, '/styles/', pageScope.onMobile ? 'mobile.css' : 'desktop.css')}"?>
 <?script src="/scripts/zxcvbn.js"?>
 <?script src="/scripts/main-util.js"?>
 
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <vlayout viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserMainViewModel')" self="@define(content)">
+    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserMainViewModel')"
+             self="@define(content)">
 
         <vlayout sclass="padded">
             <div align="center" sclass="padded"><label value="${labels.usr.title}" sclass="titled" /></div>
