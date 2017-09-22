@@ -1,11 +1,17 @@
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <vlayout>
-        <label value="${pageScope.error}" />
-        <label value="${pageScope.description}" />
-        <separator />
-        <button label="${general.back_main}" href="/" />
-    </vlayout>
+    <div align="center">
+        <vlayout sclass="mainDiv">
+            <hlayout height="250px" sclass="padded">
+                <vlayout sclass="padded">
+                    <label value="${pageScope.error}" sclass="titled padded" />
+                    <label value="${pageScope.description}" />
+                    <separator />
+                    <button label="${labels.usr.logout.back_home}" sclass="btn-success" href="/" />
+                </vlayout>
+            </hlayout>
+        </vlayout>
+    </div>
 
 </zk>

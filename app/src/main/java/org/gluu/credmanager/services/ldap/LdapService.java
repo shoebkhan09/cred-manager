@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 @ApplicationScoped
 public class LdapService {
 
+    public static final String MOBILE_PHONE_ATTR="mobile";
     private Logger logger = LogManager.getLogger(getClass());
 
     private Properties ldapProperties;
@@ -266,7 +267,7 @@ logger.debug("list is {}", list.stream().map(d -> d.getDeviceData().getUuid()).c
 
     public List<String> getPhoneNumbers() throws Exception{
         String dn=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
-        List<GluuPerson> list=ldapEntryManager.findEntries(dn, GluuPerson.class, new String[]{"mobile"},null);
+        List<GluuPerson> list=ldapEntryManager.findEntries(dn, GluuPerson.class, new String[]{MOBILE_PHONE_ATTR},null);
         Stream<GluuPerson> mobilePeople=list.stream().filter(person -> person.getMobileNumbers()!=null);
         return mobilePeople.flatMap(person -> person.getMobileNumbers().stream()).collect(Collectors.toList());
     }

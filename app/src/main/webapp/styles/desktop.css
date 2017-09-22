@@ -1,7 +1,5 @@
+@import url('common.css');
 /* Styles for desktop devices only */
-.bold{
-    font-weight:bold;
-}
 .logo{
     width:158px;
     height:62px;
@@ -28,12 +26,6 @@
 .couple_icons{
     width: 60px;
 }
-.form_element{
-    text-align:right;
-}
-.italic{
-    font-style:italic;
-}
 .dpadded{
     padding-bottom:12px;
 }
@@ -56,23 +48,8 @@
 .z-panel-head{
     padding-left:15px;
 }
-.z-messagebox-button {
-    color: #fff;
-    background-color: #5cb85c;
-    border-color: #4cae4c;
-}
-.z-messagebox-button:focus {
-    color: #fff;
-}
-.z-messagebox-button:hover {
-    color: #fff;
-}
 .form_button{
     font-size: 14px;
-}
-.unactivated{
-    opacity: 0.45;
-    cursor:not-allowed;
 }
 .callout {
 	padding-left: 15px;
@@ -117,6 +94,7 @@
     margin-bottom:0px;
     padding-left:8px;
 }
-input[type="radio"]{
-	margin:0px 0px 4px 0px;
+.rule-sm{
+    margin-top:10px;
+    width: 440px;
 }

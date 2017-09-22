@@ -1,0 +1,42 @@
+.header{
+    background:#00BE79;
+    color: #fff;
+}
+.header .btn-link{
+    color: #fff;
+}
+.header .btn-link:hover{
+    color: #fff;
+    text-decoration: none;
+}
+.header .btn-link:focus{
+    color: #fff;
+    text-decoration: none;
+}
+.bold{
+     font-weight:bold;
+}
+.form_element{
+    text-align:right;
+}
+.italic{
+    font-style:italic;
+}
+.z-messagebox-button {
+    color: #fff;
+    background-color: #5cb85c;
+    border-color: #4cae4c;
+}
+.z-messagebox-button:focus {
+    color: #fff;
+}
+.z-messagebox-button:hover {
+    color: #fff;
+}
+.unactivated{
+    opacity: 0.45;
+    cursor:not-allowed;
+}
+input[type="radio"]{
+	margin:0px 0px 4px 0px;
+}

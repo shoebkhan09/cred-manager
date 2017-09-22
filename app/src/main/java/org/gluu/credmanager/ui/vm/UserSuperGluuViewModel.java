@@ -115,7 +115,6 @@ public class UserSuperGluuViewModel extends UserViewModel{
     @Listen("onData=#readyButton")
     public void qrScanResult(Event event) {
 
-        String error=null;
 logger.debug("qrScanResult {}", event.getData().toString());
         if (uiQRShown) {
             switch (event.getData().toString()) {
@@ -142,7 +141,7 @@ logger.debug("got the device {}", newDevice.getId());
                             }
                         }
                         catch (Exception e) {
-                            error = e.getMessage();
+                            String error=e.getMessage();
                             logger.error(error, e);
                             showMessageUI(false, Labels.getLabel("general.error.detailed", new String[]{error}));
                         }
@@ -183,7 +182,11 @@ logger.debug("got the device {}", newDevice.getId());
     @NotifyChange({"uiQRShown", "uiEnrolled", "newDevice"})
     public void cancel() {
         try {
-            userService.removeFidoDevice(newDevice);
+            //Stop tellServer function if still running
+            Clients.response(new AuInvoke("stopPolling"));
+            //Check if cancelation was made after a real enrollment took place
+            if (newDevice!=null && newDevice.getDeviceData()!=null)
+                userService.removeFidoDevice(newDevice);
         }
         catch (Exception e){
             showMessageUI(false);

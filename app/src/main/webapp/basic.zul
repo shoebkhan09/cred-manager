@@ -2,9 +2,17 @@
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
+    <!-- this file must mirror general.zul with exception of CSS style tag and back button -->
+
+    <zscript>
+        void onClientInfo(ClientInfoEvent evt) {
+        Executions.getCurrent().getDesktop().setAttribute("pageWidth", evt.getDesktopWidth());
+        }
+    </zscript>
+
     <zk choose="">
         <zk when="${empty pageScope.error}">
-            <vlayout sclass="mainDiv">
+            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)">
                 <include src="/header.zul"/>
                 <div self="@insert(content)" />
             </vlayout>

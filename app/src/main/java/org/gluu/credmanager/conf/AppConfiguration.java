@@ -49,8 +49,9 @@ public class AppConfiguration{
     private final String DEFAULT_GLUU_BASE="/etc/gluu";
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
     private final String OXAUTH_WAR_LOCATION= "/opt/gluu/jetty/oxauth/webapps/oxauth.war";
-    private final String DEFAULT_GLUU_VERSION="3.0.2";      //This app version is mainly targeted at this version of Gluu Server
+    private final String DEFAULT_GLUU_VERSION="3.0.2";      //Current app version is mainly targeted at this version of Gluu Server
     public static final int ACTIVATE2AF_CREDS_GTE=2;    //Second factor authentication will be available to users having at least this number of enrolled creds
+    public static final String BASE_URL_BRANDING_PATH="/custom";
 
     /*
      ACR value for the routing authentication script. WARNING!: this script has to be enabled in your Gluu server with
@@ -196,6 +197,7 @@ public class AppConfiguration{
                     try {
                         orgName = ldapService.getOrganizationName();
                         issuerUrl=ldapService.getIssuerUrl();
+                        computeBrandingPath(settings);
                         computeGluuVersion(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
@@ -259,6 +261,19 @@ public class AppConfiguration{
         Optional<String> optGluu = Utils.stringOptional(settings.getGluuVersion());
         optGluu = Utils.stringOptional(optGluu.orElse(guessGluuVersion()));   //try guessing if necessary
         gluuVersion=optGluu.orElse(DEFAULT_GLUU_VERSION);      //use default if needed
+
+    }
+
+    private void computeBrandingPath(Configs settings){
+
+        String path=settings.getBrandingPath();
+        if (path!=null){
+            boolean cond=path.endsWith(BASE_URL_BRANDING_PATH) || path.endsWith(File.separator + BASE_URL_BRANDING_PATH.substring(1));
+            if (!(Files.isDirectory(Paths.get(path)) && cond )){
+                logger.error(Labels.getLabel("app.wrong_branding_path"), path);
+                settings.setBrandingPath(null);
+            }
+        }
 
     }
 
@@ -334,15 +349,7 @@ public class AppConfiguration{
 
                 String endpointUrl = u2fCfg.getRelativeMetadataUri();
                 if (guessUri) {
-
-                    switch (gluuVersion) {
-                        case "3.0.1":
-                        case "3.0.2":
-                            endpointUrl = ".well-known/fido-u2f-configuration";
-                            break;
-                        default:
-                            endpointUrl = "restv1/fido-u2f-configuration";
-                    }
+                    endpointUrl = ".well-known/fido-u2f-configuration";
 
                     u2fCfg.setRelativeMetadataUri(endpointUrl);
                     logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F relative endpoint URL", endpointUrl);

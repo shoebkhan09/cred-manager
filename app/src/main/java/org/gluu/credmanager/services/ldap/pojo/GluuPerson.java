@@ -1,5 +1,6 @@
 package org.gluu.credmanager.services.ldap.pojo;
 
+import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
@@ -15,7 +16,7 @@ import java.util.List;
 @LdapObjectClass(values = {"top", "gluuPerson", "gluuCustomPerson"})
 public class GluuPerson extends Entry {
 
-    @LdapAttribute(name="mobile")
+    @LdapAttribute(name= LdapService.MOBILE_PHONE_ATTR)
     private List<String> mobileNumbers;
 
     @LdapAttribute(name = "oxExternalUid")

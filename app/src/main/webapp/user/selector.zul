@@ -6,7 +6,8 @@
         <grid model="@load(vm.availMethods)">
             <template name="model">
                 <row>
-                    <radio label="@load(each.y)" onCheck="@command('change', method=each.x)" selected="${each.x eq vm.selectedMethod}" radiogroup="methods" />
+                    <radio label="@load(each.y)" onCheck="@command('change', method=each.x)"
+                           selected="${each.x eq vm.selectedMethod}" radiogroup="methods" />
                 </row>
             </template>
         </grid>

@@ -1,8 +1,12 @@
 package org.gluu.credmanager.core.navigation;
 
+import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.core.WebUtils;
+import org.gluu.credmanager.misc.StaticServlet;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Page;
+import org.zkoss.zk.ui.Session;
+import org.zkoss.zk.ui.Sessions;
 
 /**
  * Created by jgomer on 2017-07-20.
@@ -10,9 +14,18 @@ import org.zkoss.zk.ui.Page;
 public class CommonInitiator {
 
     public void init(Page page){
-        page.setAttribute("onMobile", WebUtils.isCurrentBrowserMobile());
-        page.setAttribute("u2fSupported", WebUtils.u2fSupportedBrowser(Executions.getCurrent().getUserAgent()));
-        //WebUtils.u2fSupportedBrowser(WebUtils.getRequestHeader("User-Agent"))
+        Session se= Sessions.getCurrent();
+
+        //This attrib should be in the session, but it's more comfortable at the page level for the purpose of mobile testing
+        //if (se.getAttribute("onMobile")==null)
+            page.setAttribute("onMobile", WebUtils.isCurrentBrowserMobile());
+
+        if (se.getAttribute("u2fSupported")==null)
+            se.setAttribute("u2fSupported", WebUtils.u2fSupportedBrowser(Executions.getCurrent().getUserAgent()));
+            //WebUtils.u2fSupportedBrowser(WebUtils.getRequestHeader("User-Agent"))
+
+        if (se.getAttribute("custdir")==null)
+            se.setAttribute("custdir", WebUtils.getBrandingPath(se)==null ? "" : AppConfiguration.BASE_URL_BRANDING_PATH);
     }
 
     public void setPageErrors(Page page, String error, String description){

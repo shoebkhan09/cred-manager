@@ -42,6 +42,7 @@ function tellServer(msg){
 function clean(){
     $('#container').html('');
     gluu_auth.progress = progress;
+    //clearInterval(gluu_auth.progress.timer);
 }
 
 function stopPolling(){

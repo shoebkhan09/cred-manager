@@ -2,7 +2,11 @@ package org.gluu.credmanager.core.init;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.core.WebUtils;
+import org.gluu.credmanager.misc.StaticServlet;
 import org.gluu.credmanager.services.ServiceMashup;
+import org.zkoss.zk.ui.Executions;
+
 import javax.inject.Inject;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSession;

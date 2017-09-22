@@ -2,24 +2,6 @@
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <style>
-        .header{
-            background:#00BE79;
-            color: #fff;
-        }
-        .btn-link{
-            color: #fff;
-        }
-        .btn-link:hover{
-            color: #fff;
-            text-decoration: none;
-        }
-        .btn-link:focus{
-            color: #fff;
-            text-decoration: none;
-        }
-    </style>
-
     <hlayout width="100%" sclass="header" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserViewModel')">
         <hlayout hflex="1" valign="middle">
             <image sclass="logo" src="/images/logo.png"/>
@@ -28,13 +10,14 @@
             <zk when="${pageScope.onMobile}">
                 <div width="50px">
                     <button sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
-                            style="padding-left:0px" image="/images/hamburger.png" label="" />
+                            style="padding-left:0px" image="${sessionScope.custdir}/images/hamburger.png" label="" />
                 </div>
             </zk>
             <zk>
                 <div width="185px">
-                    <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
-                            iconSclass="caret" image="/images/shadowed_man.png" label="@load(c:cat3(c:l('general.welcome'),' ', vm.user.givenName))" />
+                    <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" iconSclass="caret"
+                            popup="pop, after_start, type=toggle" image="${sessionScope.custdir}/images/shadowed_man.png"
+                            label="@load(c:cat3(c:l('general.welcome'),' ', vm.user.givenName))" />
                 </div>
             </zk>
         </zk>

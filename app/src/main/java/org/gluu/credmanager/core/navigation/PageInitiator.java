@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.WebUtils;
 import org.zkoss.util.resource.Labels;
-import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.Session;
 import org.zkoss.zk.ui.Sessions;
@@ -29,6 +28,7 @@ public class PageInitiator extends CommonInitiator implements Initiator {
     public PageInitiator() {
     }
 
+    @Override
     public void doInit(Page page, Map<String, Object> map) throws Exception {
         init(page);
         Session se= Sessions.getCurrent();

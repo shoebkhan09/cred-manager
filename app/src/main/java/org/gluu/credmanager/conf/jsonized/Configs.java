@@ -14,6 +14,7 @@ import org.gluu.credmanager.conf.TwilioConfig;
 public class Configs {
 
     private boolean enablePassReset;
+    private String brandingPath;
     private OxdConfig oxdConfig;
     private LdapSettings ldapSettings;
     private TwilioConfig twilioConfig;
@@ -62,6 +63,16 @@ public class Configs {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public U2fSettings getU2fSettings() {
         return u2fSettings;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getBrandingPath() {
+        return brandingPath;
+    }
+
+    @JsonProperty("branding_path")
+    public void setBrandingPath(String brandingPath) {
+        this.brandingPath = brandingPath;
     }
 
     @JsonProperty("u2f_settings")

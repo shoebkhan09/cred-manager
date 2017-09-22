@@ -10,12 +10,14 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.misc.StaticServlet;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ServiceMashup;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.Execution;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Session;
+import org.zkoss.zk.ui.Sessions;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -148,6 +150,10 @@ public class WebUtils {
 
     public static ServiceMashup getServices(Session session){
         return (ServiceMashup) session.getAttribute(SERVICES_ATTRIBUTE);
+    }
+
+    public static String getBrandingPath(Session session){
+        return getServices(session).getAppConfig().getConfigSettings().getBrandingPath();
     }
 
     public static void purgeSession(Session session){

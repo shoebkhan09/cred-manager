@@ -1,3 +1,4 @@
+<?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
 <?init class="org.gluu.credmanager.core.navigation.PageInitiator"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
@@ -8,11 +9,12 @@
         }
     </zscript>
 
+    <style src="${c:cat3(sessionScope.custdir, '/styles/', pageScope.onMobile ? 'mobile.css' : 'desktop.css')}">
+    </style>
+
     <zk choose="">
         <zk when="${empty pageScope.error}">
             <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)">
-                <style src="${pageScope.onMobile ? '/styles/mobile.css' : '/styles/desktop.css'}">
-                </style>
                 <include src="/header.zul"/>
                 <div self="@insert(nav)" />
                 <div self="@insert(content)" />
