@@ -1,5 +1,5 @@
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:n="native"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
     <panel title="${labels.usr.supergluu_title}" sclass="padded" border="normal">
@@ -31,6 +31,7 @@
                 <div sclass="padded" align="center">
                     <vlayout>
                         <button label="${labels.usr.supergluu_changeadd}" sclass="btn-success" href="user/super-detail.zul"/>
+                        <n:span class="de_emphasized">${labels.usr.supergluu_download}</n:span>
                     </vlayout>
                 </div>
             </vlayout>
