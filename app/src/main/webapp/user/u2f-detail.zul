@@ -11,7 +11,8 @@
         <include src="back.zul" />
     </div>
 
-    <vlayout viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserSecurityKeyViewModel')" self="@define(content)">
+    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserSecurityKeyViewModel')"
+             self="@define(content)">
         <div align="center" sclass="dpadded"><label value="${labels.usr.u2f_title}" sclass="titled" /></div>
         <div sclass="padded"><label value="${labels.usr.u2f_text}" /></div>
 
@@ -54,9 +55,11 @@
                                 </hlayout>
                             </vlayout>
                             <hlayout sclass="couple_icons">
-                                <image src="/images/edit_24.png" sclass="icon_edit" tooltip="tooltip_edit, after_pointer" onClick="@command('prepareForUpdate', device=each)"/>
+                                <image src="${sessionScope.custdir}/images/edit.png" sclass="icon_edit"
+                                       tooltip="tooltip_edit, after_pointer" onClick="@command('prepareForUpdate', device=each)"/>
                                 <space width="0px"/>
-                                <image src="/images/delete_48.png" sclass="icon_delete" tooltip="tooltip_delete, after_pointer" onClick="@command('delete', device=each)"/>
+                                <image src="${sessionScope.custdir}/images/delete.png" sclass="icon_delete"
+                                       tooltip="tooltip_delete, after_pointer" onClick="@command('delete', device=each)"/>
                             </hlayout>
                         </hlayout>
                     </row>
@@ -73,10 +76,10 @@
                                 <label sclass="bold" value="${labels.usr.u2f_mobile_unsupported}" />
                             </div>
                         </zk>
-                        <zk when="${zk.ff>0 or pageScope.u2fSupported}">
+                        <zk when="${zk.ff>0 or sessionScope.u2fSupported}">
                             <hlayout valign="middle">
                                 <label value="${labels.usr.u2f_pressready}" />
-                                <image src="/images/throbber.gif" visible="@load(vm.uiAwaiting)" />
+                                <image src="${sessionScope.custdir}/images/throbber.gif" visible="@load(vm.uiAwaiting)" />
                             </hlayout>
                             <div align="center">
                                 <vlayout>
