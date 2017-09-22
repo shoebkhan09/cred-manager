@@ -13,5 +13,6 @@
     "salt" : "/etc/gluu/conf/salt",
     "ox-ldap_location" : "/etc/gluu/conf/ox-ldap.properties"
   },
-  "enabled_methods" : [ ]
+  "enabled_methods" : [ ],
+  "branding_path": null
 }
