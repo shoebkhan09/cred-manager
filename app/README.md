@@ -33,7 +33,8 @@ Contents example:
 	"u2f_settings" : {
 		"u2f_relative_uri" : "restv1/fido-u2f-configuration",	//optional. Endpoint for registration of fido devices
 		"app_id": null	//optional. The U2F app ID
-	}
+	},
+	"branding_path" : "/opt/gluu/jetty/cred-manager/custom"		//optional. Used only if custom branding is required
 }
 ```
 Unless otherwise stated, the params in the example are mandatory.
@@ -155,6 +156,150 @@ Do not hit the URL of the app by now. Open `cred-manager.json`: you should see a
 
 Check the [troubleshooting guide](#troubleshooting) for more information.
 
+# Custom branding
+
+Cred-manager allows administrators to alter the appearance of the application to match their organizations look and feel. Intermediate level knowledge of CSS is required for this task.
+
+## Getting default theme files
+
+The design is driven by a few images and CSS stylesheets. These are inside app's war file so let's extract those to a separate location:
+
+* `cd` to app's war file directory. For instance `/opt/gluu/jetty/cred-manager/webapps`
+
+* Make Java bin directory available in your PATH. The following is an example for your reference:
+```
+	JAVA_HOME=/opt/gluu-server-3.0.2/opt/jdk1.8.0_112
+	export JAVA_HOME
+	PATH=$PATH:$JAVA_HOME/bin
+```
+
+* Run the following:
+
+```
+	$ jar -xf cred-manager.war images
+	$ jar -xf cred-manager.war styles
+``` 
+
+* Now you should see two new directories appeared. It's required that you transfer those to a folder named **custom**. If this application was bundled with your Gluu Server, there is already a **custom** directory nearby, something like `/opt/gluu/jetty/cred-manager/custom`. In this case the *logs*, *webapps*, and *custom* directories are at the same level. The following is an example to move `images` and `styles`:
+
+```
+	$ mv images /opt/gluu/jetty/cred-manager/custom/images
+	$ mv styles /opt/gluu/jetty/cred-manager/custom/styles
+```
+
+Glance at the contents of both directories. If you think that editing those CSS files and replacing some images will customize the look and feel, you are 
+on the line.
+
+## Enable the customizations
+
+For cred-manager to read images and styles from the custom directory, you need to supply its location in the configuration file. So please do the following:
+
+* Open `cred-manager.json` and add a property (if it's not already there) called *"branding_path"*, set it to the path of the custom directory. It might look like this:
+
+```
+		... ,
+		"branding_path": "/opt/gluu/jetty/cred-manager/custom/"
+	}
+```
+
+Remember that Json *name:value* pairs are separated by commas.
+
+* Do a subtle edition of a file to test if things are going well. For instance, open the file `styles/common.css`, locate the CSS selector for *header* and change the background color with red. Something like this:
+
+```
+	.header{
+		...
+		background: red;
+		...
+	}
+```
+
+* Save `cred-manager.json` and `common.css`
+
+* Close all browser windows where cred-manager is open. Clear your recent browser history (one day), and restart the application.
+
+* Try login and you will see a beautiful red header!
+
+## Applying your customizations
+
+Here you have some tips to take into account for matching your company design:
+
+* This app uses separate stylesheets for desktop and mobile environments (`desktop.css` and `mobile.css` respectively). File `common.css` stores styles that apply for both environments.
+
+* File names for images must remain unchanged, thus, to use an image of your own, you need to replace the current version of the file. This holds for company logo, icons, etc.
+
+* Inspect the DOM tree generated for application pages and determine the CSS selectors you need to edit or the kind of things your have to add in order to alter the appearance. Use your web browser's facilities to inspect web page composition: this is usually part of any browser's developer toolbar. Moreover, they allow you to change styles on the fly so you can play a lot before applying the real changes.
+
+* Once you do editions and add/delete images, there is no need to restart the application to see changes, however most static files are cached by browsers so you will need to clear the browser history for the current day. The `shift+Ctrl+supr` combination does the job in most browsers. Leave the cookies option unchecked so there is no need to login after every refresh.
+
+* Ignore file `jquery-ui-1.12.1.min`. You may even erase the file.
+
+* If you are modifying files/images and not seeing the changes try hitting the resource URL directly in a new browser tab. For example to load the file `common.css` in your browser, you should visit `https://<host-name>/cred-manager/custom/styles/common.css`. That way you can determine if your changes are there; if they are not, strike **`F5`**. Still getting the same content? you are not deleting your cache properly... close all tabs, empty recent cache and try again.
+
+## Reverting to default theme
+
+If for any reason you wish to restore to the default (Gluu Inc) theme. Just open `cred-manager.json` and delete "branding_path" property or simply assign a **null** value for it, like this:
+
+```
+		... ,
+		"branding_path": null
+	}
+```
+
+Then, restart the application.
+
+## Some examples
+
+Here you have how to cope with certain common use cases:
+
+### Use a different logo
+
+* Replace the file at `custom/images/logo.png` with your own PNG file.
+
+* Edit the *logo* CSS selector in files `desktop.css` and `mobile.css`. Assign the real dimensions to use for the image when displayed in desktop and mobile browsers. Dimensions should be coherent with the actual width/height ratio of original image.
+
+### Use a different favicon
+
+This the easiest customization: just replace `custom/images/favicon.ico`.
+
+### Change the font used in texts
+
+The vast majority of texts that appear in the application are using the same font. To alter the default font edit the *z-label* CSS selector in files `desktop.css` and `mobile.css`. Change the value for *font-family* (you may also alter *font-size*). Example:
+
+```
+	.z-label{
+	...
+		font-family: courier;
+	...
+	}
+```
+
+### Change colors of buttons
+
+Say you like the buttons in blue, add the following rules to `common.css` (you may append them at the end of the file):
+
+```
+	.btn-success, .btn-success:hover, .btn-success:focus, .btn-success:active,
+	.btn-success.active, .btn-success.disabled {
+		background-color: #00F;
+		border-color: #00F;
+	}
+```
+
+### Adjust width of app's content area for desktop
+
+Edit `desktop.css` file and change *mainDiv* by setting a different value for *width*:
+
+```
+	.mainDiv{
+		...
+			width:600px;
+		...
+	}
+```
+
+Now cred-manager should neatly accomodate to newer width.
+
 # Troubleshooting
 
 In the following some situations that may arise and corresponding solutions are summarized.
@@ -204,10 +349,14 @@ To choose a strong method for authentication, the user has to have enrolled at l
 
 If a user has locked out for any reason (e.g. lost devices), you can reset his preferred method by deleting the `???` attribute from the user's entry in LDAP. This way, next time he/she enters, **password** will be his new preference and he won't be asked to present additional credentials.
 
-## When accessing the application I get no more than a small error message on the top left of the screen
+## The error "Unauthorized access" is shown when accessing the application
 
-This can be caused by an unathorized access attempt (e.g. users requesting URLs without ever have logged in). 
+This is caused by an unathorized access attempt (e.g. users requesting URLs without ever have logged in).
 
-Another source of the problem can be an interruption in the steps of authentication when second factor is used and this may cause the session to have an inconsistent state: close all browser tabs related to cred-manager and oxAuth, then clean your cookies (for instance by doing Ctrl+Shift+supr), and try accessing the (root) URL of the application again.
+## "An error occurred during authorization step" is shown when accessing the application
 
-	
+This is shown when there is no possible to initiate a "conversation" with the authorization server. Check OXD Server is up and running. Also check oxd settings are properly configured.
+
+## A small error message on the top left of the screen is shown when accessing the application 
+
+The source of the problem can be an interruption in the steps of authentication when second factor is used and this may cause the session to end up in an inconsistent state: close all browser tabs related to cred-manager and oxAuth, then clean your cookies (for instance by doing Ctrl+Shift+supr), and try accessing the (root) URL of the application again.
