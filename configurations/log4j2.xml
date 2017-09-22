@@ -2,10 +2,10 @@
 <Configuration status="ERROR">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5p %C{4} %F:%L- %m%n" />
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %C{4} %F:%L- %m%n" />
         </Console>
         <RollingFile name="LOG_FILE" fileName="${sys:log.base}/logs/cred-manager.log" filePattern="${sys:log.base}/logs/cred-manager-%d{MM-dd-yy-HH-mm-ss}-%i.log">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5p %C{4} %F:%L- %m%n" />
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %C{4} %F:%L- %m%n" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="5 MB" />
             </Policies>
