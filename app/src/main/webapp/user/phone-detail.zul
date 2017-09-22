@@ -9,7 +9,8 @@
         <include src="back.zul" />
     </div>
 
-    <vlayout viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserVerifiedPhoneViewModel')" self="@define(content)">
+    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserVerifiedPhoneViewModel')"
+             self="@define(content)">
         <div align="center" sclass="dpadded"><label value="${labels.usr.mobile_title}" sclass="titled" /></div>
         <div sclass="padded"><label value="${labels.usr.mobile_text}" /></div>
 
@@ -49,9 +50,11 @@
                                 </hlayout>
                             </vlayout>
                             <hlayout sclass="couple_icons">
-                                <image src="/images/edit_24.png" sclass="icon_edit" tooltip="tooltip_edit, after_pointer" onClick="@command('prepareForUpdate', phone=each)"/>
+                                <image src="${sessionScope.custdir}/images/edit.png" sclass="icon_edit"
+                                       tooltip="tooltip_edit, after_pointer" onClick="@command('prepareForUpdate', phone=each)"/>
                                 <space width="0px"/>
-                                <image src="/images/delete_48.png" sclass="icon_delete" tooltip="tooltip_delete, after_pointer" onClick="@command('delete', phone=each)"/>
+                                <image src="${sessionScope.custdir}/images/delete.png" sclass="icon_delete"
+                                       tooltip="tooltip_delete, after_pointer" onClick="@command('delete', phone=each)"/>
                             </hlayout>
                         </hlayout>
                     </row>
@@ -71,7 +74,7 @@
                     <hlayout spacing="10px" valign="middle">
                         <textbox placeholder="${labels.usr.mobile_code}" sclass="s6 form-control" value="@bind(vm.code)"/>
                         <button label="&#160;${labels.general.validate}&#160;" sclass="btn-success form_button" onClick="@command('checkCode')" disabled="@load(vm.uiCodesMatch)"/>
-                        <image src="/images/tick_44.png" width="32px" height="32px" visible="@load(vm.uiCodesMatch)"/>
+                        <image src="/images/tick.png" width="32px" height="32px" visible="@load(vm.uiCodesMatch)"/>
                         <!-- <label value="${labels.usr.mobile_code_wrong}" sclass="de_emphasized" visible="@load((not empty vm.code) and (not vm.uiCodesMatch) and (not empty vm.newPhone.number))" /> -->
                     </hlayout>
                     <separator/>
