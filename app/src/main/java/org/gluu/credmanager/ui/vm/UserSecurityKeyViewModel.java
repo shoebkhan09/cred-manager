@@ -39,7 +39,6 @@ public class UserSecurityKeyViewModel extends UserViewModel{
     private boolean uiEnrolled;
     private boolean uiPanelOpened;
 
-    private String sessionState;
     private SecurityKey newDevice;
     private U2fService u2fService;
 
@@ -75,7 +74,6 @@ public class UserSecurityKeyViewModel extends UserViewModel{
 
     @Init(superclass = true)
     public void childInit() throws Exception{
-        sessionState= WebUtils.getCookie("session_state");
         mapper=new ObjectMapper();
 
         devices=user.getCredentials().get(CredentialType.SECURITY_KEY);
@@ -95,20 +93,14 @@ public class UserSecurityKeyViewModel extends UserViewModel{
             uiAwaiting =true;
             BindUtils.postNotifyChange(null,	null, this, "uiAwaiting");
 
-            /*
-             Passing username and session_state values does not work fine (oxAuth says session_state does not match the
-             grant...). So to make it work I just pass null. The bad is that once the registration is finished, the LDAP
-             entry is created under ou=u2f branch, not under the user's ou=fido branch... that's why the entry is moved
-             to its proper place later (see method notified)
-             */
-            //String JsonRequest=u2fService.generateJsonRegisterMessage(user.getUserName(), sessionState);
-            String JsonRequest=u2fService.generateJsonRegisterMessage(null, null);
+            String JsonRequest=u2fService.generateJsonRegisterMessage(user.getUserName(), userService.generateRandEnrollmentCode(user));
 
             //Notify browser to exec proper function
             Clients.showNotification(Labels.getLabel("usr.u2f_touch"), Clients.NOTIFICATION_TYPE_INFO, null, "middle_center", WAIT_ENROLL_TIME);
             Clients.response(new AuInvoke ("triggerU2fRegistration", new JavaScriptValue(JsonRequest), REGISTRATION_TIMEOUT));
         }
         catch (Exception e){
+            showMessageUI(false);
             logger.error(e.getMessage(), e);
         }
 
@@ -121,21 +113,18 @@ public class UserSecurityKeyViewModel extends UserViewModel{
         String error=u2fService.getRegistrationResult(JsonStr);
 
         if(error==null){
-            try {
-                u2fService.finishRegistration(null, JsonStr);
-                /*
-                  Move the entry to the appropriate location (see comments in method triggerU2fRegisterRequest). To know
-                  exactly which entry to choose, we pass the current timestamp so we can pick the most suitable entry by
-                  inspecting the creationDate attribute among all existing entries
-                 */
-                newDevice=userService.relocateFidoDevice(user, new Date().getTime());
+            u2fService.finishRegistration(user.getUserName(), JsonStr);
+            //To know exactly which entry is, we pass the current timestamp so we can pick the most suitable
+            //entry by inspecting the creationDate attribute among all existing entries
+            newDevice=u2fService.getLatestSecurityKey(user, new Date().getTime());
 
-                uiEnrolled=true;
-                BindUtils.postNotifyChange(null,	null, this, "uiEnrolled");
+            if (newDevice!=null) {
+                uiEnrolled = true;
+                BindUtils.postNotifyChange(null, null, this, "uiEnrolled");
             }
-            catch (Exception e){
+            else{
                 showMessageUI(false);
-                logger.error(Labels.getLabel("app.finish_registration_error"), e);
+                logger.error(Labels.getLabel("app.finish_registration_error"));
             }
         }
         else

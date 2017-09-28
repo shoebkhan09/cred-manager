@@ -63,16 +63,16 @@ public class SGService {
         return node;
     }
 
-    public String generateRequest(String userName, String session_state, String remoteIp){
+    public String generateRequest(String userName, String code, String remoteIp){
 
-        logger.debug(Labels.getLabel("app.start_registration_request"), userName, session_state, remoteIp);
+        logger.debug(Labels.getLabel("app.start_registration_request"), userName, remoteIp);
 
         Map<String, String> reqAsMap=new HashMap<>();
         reqAsMap.put("username", userName);
         reqAsMap.put("app", appConfig.getConfigSettings().getOxdConfig().getRedirectUri());
         reqAsMap.put("issuer", appConfig.getIssuerUrl());
         reqAsMap.put("created", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        reqAsMap.put("state", session_state);
+        reqAsMap.put("enrollment", code);
         reqAsMap.put("method", "enroll");
 
         if (remoteIp!=null) {
@@ -103,7 +103,7 @@ public class SGService {
         SuperGluuDevice sg=null;
         try {
             String appId = appConfig.getConfigSettings().getOxdConfig().getRedirectUri();
-            sg = ldapService.getSuperGluuDevice(user.getRdn(), time, appId);
+            sg = ldapService.getFidoDevice(user.getRdn(), time, appId, SuperGluuDevice.class);
             if (sg!=null && sg.getNickName()!=null)
                 sg=null;    //should have no name
         }

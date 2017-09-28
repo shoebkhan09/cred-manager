@@ -202,26 +202,6 @@ public class LdapService {
 
     }
 
-    public SecurityKey relocateU2fDevice(String userRdn, long time) throws Exception {
-
-        String orgy=ldapSettings.getOrgInum();
-        String registeredBranch=String.format("ou=registered_devices,ou=u2f,o=%s,o=gluu", orgy);
-        List<SecurityKey> keys=ldapEntryManager.findEntries(registeredBranch, SecurityKey.class,null);
-
-        SecurityKey key=Utils.getRecentlyCreatedDevice(keys, time);   //pick device to move under own user branch
-        if (key!=null) {
-            key.setDn(String.format("oxId=%s,ou=fido,%s,ou=people,o=%s,o=gluu", key.getId(), userRdn, orgy));
-            ldapEntryManager.persist(key);
-
-            //This is not necessary as LDAP is cleaned often but a need in testing environment
-            SecurityKey oldkey = new SecurityKey();
-            oldkey.setDn(String.format("oxId=%s,%s", key.getId(), registeredBranch));
-            ldapEntryManager.remove(oldkey);
-        }
-        return key;
-
-    }
-
     /**
      * Returns a list of FidoDevice instances found under the given branch that matches de oxApplication value given and
      * whose oxStatus attribute equals to "active"
@@ -247,9 +227,9 @@ public class LdapService {
         ldapEntryManager.remove(device);
     }
 
-    public SuperGluuDevice getSuperGluuDevice(String userRdn, long time, String oxApp) throws Exception{
-        List<SuperGluuDevice> list=getU2FDevices(userRdn, oxApp, SuperGluuDevice.class);
-logger.debug("list is {}", list.stream().map(d -> d.getDeviceData().getUuid()).collect(Collectors.toList()).toString());
+    public <T extends FidoDevice> T getFidoDevice(String userRdn, long time, String oxApp, Class<T> clazz) throws Exception{
+        List<T> list=getU2FDevices(userRdn, oxApp, clazz);
+logger.debug("list is {}", list.stream().map(d -> d.getId()).collect(Collectors.toList()).toString());
         return Utils.getRecentlyCreatedDevice(list, time);
     }
 
@@ -270,6 +250,12 @@ logger.debug("list is {}", list.stream().map(d -> d.getDeviceData().getUuid()).c
         List<GluuPerson> list=ldapEntryManager.findEntries(dn, GluuPerson.class, new String[]{MOBILE_PHONE_ATTR},null);
         Stream<GluuPerson> mobilePeople=list.stream().filter(person -> person.getMobileNumbers()!=null);
         return mobilePeople.flatMap(person -> person.getMobileNumbers().stream()).collect(Collectors.toList());
+    }
+
+    public void storeUserEnrollmentCode(String userRdn, String code) throws Exception{
+        GluuPerson person=getGluuPerson(userRdn);
+        person.setTemporaryEnrollmentCode(code);
+        ldapEntryManager.merge(person);
     }
 
 }

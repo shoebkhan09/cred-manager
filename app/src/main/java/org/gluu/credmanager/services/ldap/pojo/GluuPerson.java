@@ -5,6 +5,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.xdi.ldap.model.Entry;
+import org.xdi.oxauth.model.fido.u2f.U2fConstants;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,17 @@ public class GluuPerson extends Entry {
 
     @LdapAttribute(name = "userPassword")
     private String pass;
+
+    @LdapAttribute(name = U2fConstants.U2F_ENROLLMENT_CODE_ATTRIBUTE)
+    private String temporaryEnrollmentCode;
+
+    public String getTemporaryEnrollmentCode() {
+        return temporaryEnrollmentCode;
+    }
+
+    public void setTemporaryEnrollmentCode(String temporaryEnrollmentCode) {
+        this.temporaryEnrollmentCode = temporaryEnrollmentCode;
+    }
 
     public String getPass() {
         return pass;

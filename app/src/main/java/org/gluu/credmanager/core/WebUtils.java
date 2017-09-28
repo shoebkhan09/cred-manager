@@ -1,9 +1,11 @@
 package org.gluu.credmanager.core;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -25,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -193,6 +197,10 @@ public class WebUtils {
     }
 
     public static String getUrlContents(String url, int timeout) throws Exception{
+        return getUrlContents(url, Collections.emptyList(), timeout);
+    }
+
+    public static String getUrlContents(String url, List<NameValuePair> nvPairList, int timeout) throws Exception{
 
         String contents=null;
 
@@ -202,15 +210,21 @@ public class WebUtils {
         HttpConnectionParams.setSoTimeout(params, timeout);
 
         HttpGet httpGet = new HttpGet(url);
+        URIBuilder uribe = new URIBuilder(httpGet.getURI());
+        nvPairList.stream().forEach(pair -> uribe.addParameter(pair.getName(), pair.getValue()));
+
+        httpGet.setURI(uribe.build());
         httpGet.setHeader("Accept", "application/json");
         HttpResponse response = client.execute(httpGet);
         HttpEntity entity = response.getEntity();
-
+logger.debug("GET is {}", httpGet.getURI());
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
             contents=EntityUtils.toString(entity);
 
         EntityUtils.consume(entity);
 
         return contents;
+
     }
+
 }

@@ -327,21 +327,18 @@ logger.debug("Phones from ldap2: {}", vphones);
 
     }
 
-    public SecurityKey relocateFidoDevice(User user, long time) throws Exception{
-        SecurityKey key=ldapService.relocateU2fDevice(user.getRdn(), time);
-
-        if (key==null)
-            throw new IOException(Labels.getLabel("app.u2f_recent_lookup_error", new String[]{user.getUserName()}));
-        else
-            return key;
-    }
-
     public void updateFidoDevice(FidoDevice dev) throws Exception{
         ldapService.updateFidoDevice(dev);
     }
 
     public void removeFidoDevice(FidoDevice dev) throws Exception{
         ldapService.removeFidoDevice(dev);
+    }
+
+    public String generateRandEnrollmentCode(User user) throws Exception{
+        String code=UUID.randomUUID().toString();
+        ldapService.storeUserEnrollmentCode(user.getRdn(), code);
+        return code;
     }
 
 }

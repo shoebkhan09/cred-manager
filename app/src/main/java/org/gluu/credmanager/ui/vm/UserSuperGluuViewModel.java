@@ -85,20 +85,25 @@ public class UserSuperGluuViewModel extends UserViewModel{
     @Command
     public void showQR(){
 
-        String sessionState= WebUtils.getCookie("session_state");
-        String request=sgService.generateRequest(user.getUserName(), sessionState, WebUtils.getRemoteIP());
+        try {
+            String code = userService.generateRandEnrollmentCode(user);
+            String request = sgService.generateRequest(user.getUserName(), code, WebUtils.getRemoteIP());
 
-        if (request==null)
-            showMessageUI(false);
-        else {
-            uiQRShown=true;
-            BindUtils.postNotifyChange(null,	null, this, "uiQRShown");
+            if (request != null){
+                uiQRShown = true;
+                BindUtils.postNotifyChange(null, null, this, "uiQRShown");
 
-            JavaScriptValue jvalue = new JavaScriptValue(sgConfig.getFormattedQROptions(WebUtils.getPageWidth()));
-            //Calls the startQR javascript function supplying suitable params
-            Clients.response(new AuInvoke("startQR", request, sgConfig.getLabel(), jvalue, QR_SCAN_TIMEOUT, true));
+                JavaScriptValue jvalue = new JavaScriptValue(sgConfig.getFormattedQROptions(WebUtils.getPageWidth()));
+                //Calls the startQR javascript function supplying suitable params
+                Clients.response(new AuInvoke("startQR", request, sgConfig.getLabel(), jvalue, QR_SCAN_TIMEOUT, true));
+            }
+            else
+                showMessageUI(false);
         }
-
+        catch (Exception e){
+            showMessageUI(false);
+            logger.error(e.getMessage(), e);
+        }
     }
 
     @AfterCompose
