@@ -187,7 +187,13 @@ The design is driven by a few images and CSS stylesheets. These are inside app's
 	$ mv styles /opt/gluu/jetty/cred-manager/custom/styles
 ```
 
-Glance at the contents of both directories. If you think that editing those CSS files and replacing some images will customize the look and feel, you are 
+* Ensure the operating system user that runs Jetty has read permissions on the files added. You may do the following to solve it:
+
+```
+$ chown -R jetty:jetty /opt/gluu/jetty/cred-manager/custom/
+```
+
+Glance at the contents of both directories (`images` and `styles`). If you think that editing those CSS files and replacing some images will customize the look and feel, you are 
 on the line.
 
 ## Enable the customizations
@@ -340,6 +346,10 @@ Whenever you enable or disable scripts, please wait a couple of minutes for oxAu
 ## The user interface is not showing means to enroll certain types credentials
 
 Ensure you specified a correct value for *"enabled-methods"* in `cred-manager.json`. Leave it empty or null to pick all enabled methods already supported by your Gluu server.
+
+## The top right-hand menu disappeared from the user interface
+
+Try restoring and then maximizing your browser's window.
 
 ## The preferred method for authentication is set to password and cannot be changed
 
