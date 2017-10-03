@@ -63,7 +63,7 @@ These are extra properties that can be set in the JSON file to tweak certain beh
 
 ## OXD Registration
 
-If *"oxd-id"* is null, empty or non-existing, cred-manager will try to execute the "register site" step with the oxd server whose host and port is already provided in *"oxd_config"*. Once an oxdId is grabbed, the app. will update the config file so that it contains this value.
+If *"oxd-id"* is null, empty or non-existing, cred-manager will try to execute the "register site" step with the oxd server whose host and port is already provided in *"oxd_config"*. Once an `oxdId` is grabbed, the app will update the config file so that it contains this value.
 
 For registration, the following are also passed: *authz_redirect_uri*, *post_logout_uri*. All other parameters will be the defaults used by oxd.
 
@@ -72,7 +72,7 @@ For registration, the following are also passed: *authz_redirect_uri*, *post_log
 
 Log4j2 framework is used and configure via a file named `log4j2.xml` located at `/WEB-INF/classes`. It uses the system property *log.base* (found in the `start.ini` file of the app's jetty base) to determine where to write logs.
 
-[Here](https://github.com/GluuFederation/cred-manager/blob/master/configurations/log4j2.xml) you will find a sample file for `log4j2.xml`.
+[Here](https://github.com/GluuFederation/cred-manager/blob/master/configurations/log4j2.xml) you can find a sample file for `log4j2.xml`.
 
 # Installation
 
@@ -80,7 +80,7 @@ Log4j2 framework is used and configure via a file named `log4j2.xml` located at 
 
 This application requires a working installation of Gluu Server with at least the following: Apache server, LDAP server and oxAuth server. The use of oxTrust is highly recommended.
 
-* Set the following scopes to be default: `openid`, `profile`, `user_name`, `email`, `mobile_phone`, `phone`, and `clientinfo`. This can be done with oxTrust or manually in LDAP by setting the *defaultScope* attribute to **true** for the appropriate entries under the `scopes` branch.
+* Set the following scopes to be default: `openid`, `profile`, `user_name`, and `clientinfo`. This can be done with oxTrust or manually in LDAP by setting the *defaultScope* attribute to **true** for the appropriate entries under the `scopes` branch.
   
 * Purchase an oxd [license](https://oxd.gluu.org). You will be given 4 bits of data: license ID, public Key, public password, and license password.
 
