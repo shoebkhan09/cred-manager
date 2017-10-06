@@ -3,8 +3,10 @@ package org.gluu.credmanager.conf;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.gluu.credmanager.conf.jsonized.Configs;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.gluu.credmanager.conf.jsonized.U2fSettings;
@@ -197,6 +199,7 @@ public class AppConfiguration{
                     try {
                         orgName = ldapService.getOrganizationName();
                         issuerUrl=ldapService.getIssuerUrl();
+                        computeLoggingLevel(settings);
                         computeBrandingPath(settings);
                         computeGluuVersion(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
@@ -262,6 +265,25 @@ public class AppConfiguration{
         optGluu = Utils.stringOptional(optGluu.orElse(guessGluuVersion()));   //try guessing if necessary
         gluuVersion=optGluu.orElse(DEFAULT_GLUU_VERSION);      //use default if needed
 
+    }
+
+    private void computeLoggingLevel(Configs configSettings){
+
+        String currentLevl=getLoggingLevel().name();
+        String levelInConfFile=configSettings.getLogLevel();
+
+        if (levelInConfFile==null) {
+            logger.info(Labels.getLabel("app.current_log_level"), currentLevl);
+            configSettings.setLogLevel(currentLevl);
+        }
+        else
+            try {
+                Level.valueOf(levelInConfFile);
+                setLoggingLevel(levelInConfFile);
+            }
+            catch (Exception e) {
+                logger.warn(Labels.getLabel("app.wrong_long_level"), levelInConfFile, currentLevl);
+            }
     }
 
     private void computeBrandingPath(Configs settings){
@@ -426,6 +448,38 @@ public class AppConfiguration{
             logger.warn(Labels.getLabel("app.gluu_version_not_guessable"), e.getMessage());
         }
         return version;
+
+    }
+
+    public void setLoggingLevel(String strLevel){
+
+        logger.info(Labels.getLabel("app.change_log_level"), strLevel);
+        Level newLevel=Level.toLevel(strLevel);
+/*
+        LoggerContext loggerContext = LoggerContext.getContext(false);
+        for (org.apache.logging.log4j.core.Logger logger : loggerContext.getLoggers()) {
+            if (logger.getName().startsWith("org.gluu"))
+                logger.setLevel(newLevel);
+        }
+*/
+        org.apache.logging.log4j.core.config.Configurator.setLevel("org.gluu", newLevel);
+        configSettings.setLogLevel(strLevel);
+        //TODO: update config file on disk
+    }
+
+    private Level getLoggingLevel(){
+
+        //Level currLevel=null;
+        LoggerContext loggerContext = LoggerContext.getContext(false);
+        return loggerContext.getConfiguration().getLoggerConfig("org.gluu").getLevel();
+        /*
+        for (org.apache.logging.log4j.core.Logger logger : loggerContext.getLoggers())
+            if (logger.getName().startsWith("org.gluu")) {
+                currLevel = logger.getLevel();
+                break;
+            }
+        return currLevel;
+            */
 
     }
 

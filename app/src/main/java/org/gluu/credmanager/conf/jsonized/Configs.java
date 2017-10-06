@@ -23,6 +23,7 @@ public class Configs {
     private U2fSettings u2fSettings;
     private String[] enabledMethods;
     private String gluuVersion;
+    private String logLevel;
 
     public LdapSettings getLdapSettings() {
         return ldapSettings;
@@ -38,6 +39,11 @@ public class Configs {
 
     public String[] getEnabledMethods() {
         return enabledMethods;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getLogLevel() {
+        return logLevel;
     }
 
     @JsonIgnore
@@ -108,6 +114,11 @@ public class Configs {
     @JsonProperty("twilio_settings")
     public void setTwilioConfig(TwilioConfig twilioConfig) {
         this.twilioConfig = twilioConfig;
+    }
+
+    @JsonProperty("log_level")
+    public void setLogLevel(String logLevel) {
+        this.logLevel = logLevel;
     }
 
     public void setOtpConfig(OTPConfig otpConfig) {
