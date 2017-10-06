@@ -18,6 +18,8 @@ import java.util.Map;
 
 /**
  * Created by jgomer on 2017-07-16.
+ * This is a ZK Page Initiator (the doInit method is called before any rendering of UI components). It's the initiator
+ * associated to the /index.zul URL (home URL) so here's where the authentication flow is handled.
  */
 public class HomeInitiator extends CommonInitiator implements Initiator {
 
@@ -28,6 +30,7 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
 
     private Logger logger = LogManager.getLogger(getClass());
 
+    //Redirects to an authorization URL obtained with OXD
     public void goForAuthorization() throws Exception{
         WebUtils.setRedirectStage(se, RedirectStage.INITIAL);
         //do Authz Redirect
@@ -36,7 +39,6 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
 
     public void doInit(Page page, Map <String, Object> map){
 
-        //logger.info(Labels.getLabel("app.landed_home_from"), WebUtils.getRequestHeader("Referer"));
         init(page);
         se=Sessions.getCurrent(true);
         RedirectStage stage=WebUtils.getRedirectStage(se);
@@ -58,12 +60,13 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
                     }
                     break;
                 case INITIAL:
+                    //If IDP response contains error query parameter we cannot proceed
                     if (errorsParsed(page))
                         WebUtils.purgeSession(se);
                     else {
                         code = WebUtils.getQueryParam("code");
                         if (code == null)
-                            //This may happen when user did not complete the challenging process at IDP, and tries accessing the app
+                            //This may happen when user did not ever entered his username at IDP, and tries accessing the app again
                             goForAuthorization();
                         else {
                             String accessToken = oxdService.getAccessToken(code, WebUtils.getQueryParam("state"));
@@ -76,6 +79,8 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
                             user.setCredentials(usrService.getPersonalMethods(user));
                             //Update method
                             user.setPreference(usrService.getPreferredMethod(user));
+                            //Determine if belongs to manager group
+                            user.setAdmin(usrService.inManagerGroup(user));
                             //Store in session
                             WebUtils.setUser(se, user);
 
@@ -85,12 +90,6 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
                     }
                     break;
                 case BYPASS:
-                    /*
-                    //Check offset is there, otherwise default to UTC
-                    if (WebUtils.getUserOffset(se)==null)
-                        WebUtils.setUserOffset(se, ZoneOffset.UTC);
-                    */
-
                     //go straight without the need for showing UI
                     User user=WebUtils.getUser(se);
                     WebUtils.execRedirect(user.isAdmin()? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
@@ -100,6 +99,7 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
         catch (Exception e){
             logger.error(e.getMessage(), e);
             setPageErrors(page, Labels.getLabel("general.error.general"), e.getMessage());
+            WebUtils.setRedirectStage(se, RedirectStage.NONE);
         }
 
     }
