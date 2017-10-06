@@ -24,7 +24,7 @@ public class GluuPerson extends Entry {
     private List<String> externalUids;
 
     //TODO: use another LDAP attributes
-    @LdapAttribute(name = "description")
+    @LdapAttribute(name = LdapService.PREFERRED_METHOD_ATTR)
     private String preferredAuthMethod;
 
     @LdapAttribute(name = "persistentId")
@@ -38,6 +38,17 @@ public class GluuPerson extends Entry {
 
     @LdapAttribute(name = U2fConstants.U2F_ENROLLMENT_CODE_ATTRIBUTE)
     private String temporaryEnrollmentCode;
+
+    @LdapAttribute(name = "memberOf")
+    private List<String> memberships;
+
+    public List<String> getMemberships() {
+        return memberships;
+    }
+
+    public void setMemberships(List<String> memberships) {
+        this.memberships = memberships;
+    }
 
     public String getTemporaryEnrollmentCode() {
         return temporaryEnrollmentCode;

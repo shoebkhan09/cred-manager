@@ -1,0 +1,58 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client" xmlns:n="native"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.adm.resets_title}" border="normal" sclass="padded">
+        <panelchildren sclass="padded">
+            <vlayout spacing="10px">
+                <vlayout spacing="12px">
+                    <label value="${labels.adm.resets_text}"/>
+
+                    <n:p class="de_emphasized">${labels.adm.resets_note}</n:p>
+                </vlayout>
+
+                <div align="center">
+                    <hlayout spacing="10px" valign="bottom">
+                        <textbox sclass="s8 form-control" placeholder="${labels.adm.resets_textbox_placeholder}"
+                                 value="@bind(vm.searchPattern)" focus="true" id="pattern" />
+                        <button label="${labels.general.search}" sclass="btn-success form_button"
+                                onClick="@command('search', box=pattern)" w:onClick="showThrobber()" />
+                    </hlayout>
+                </div>
+
+                <separator />
+                <label visible="@load(not empty vm.users)" value="${labels.adm.resets_hintgrid}" />
+
+                <div align="center">
+                    <vlayout visible="@load(not empty vm.users)" spacing="12px">
+                        <grid model="@load(vm.users)" mold="paging" pageSize="10" width="${pageScope.onMobile ? '280px' : '420px'}">
+                            <columns sizable="true" >
+                                <column width="25px" label="" />
+                                <column width="${pageScope.onMobile ? '80px' : '90px'}" label="Username" />
+                                <column unless="${pageScope.onMobile}" label="First Name" />
+                                <column label="Family Name" />
+                            </columns>
+                            <template name="model">
+                                <row>
+                                    <checkbox id="@load(each.userId)" disabled="@load(each.getAttribute('alreadyReset'))"
+                                              checked="@bind(each.dn)" style="margin:0px" />
+                                    <label value="@load(each.userId)" />
+                                    <label unless="${pageScope.onMobile}" value="@load(each.getAttribute('givenName'))" />
+                                    <label value="@load(each.getAttribute('sn'))" />
+                                </row>
+                            </template>
+                        </grid>
+                        <hlayout spacing="30px">
+                            <button label="${labels.adm.resets_reset}" sclass="btn-success form_button"
+                                    onClick="@command('doReset')" w:onClick="showThrobber()" />
+                            <button label="${labels.general.cancel}" sclass="btn-success form_button" onClick="@command('cancel')"/>
+                        </hlayout>
+
+                    </vlayout>
+                    <label value="${labels.adm.resets_nomatches}" sclass="de_emphasized" visible="@load((vm.users ne null) and (empty vm.users))" />
+                </div>
+
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+</zk>

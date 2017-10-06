@@ -38,6 +38,8 @@ public class ServiceMashup implements Serializable {
     @Inject
     private SGService sgService;
 
+    @Inject AdminService adminService;
+
     public AppConfiguration getAppConfig() {
         return appConfiguration;
     }
@@ -64,6 +66,10 @@ public class ServiceMashup implements Serializable {
 
     public SGService getSgService() {
         return sgService;
+    }
+
+    public AdminService getAdminService() {
+        return adminService;
     }
 
 }

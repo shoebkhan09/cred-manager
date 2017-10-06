@@ -19,12 +19,23 @@ public class GluuOrganization extends Entry{
     @LdapAttribute(name = "displayName")
     private String name;
 
+    @LdapAttribute(name = "gluuManagerGroup")
+    private String managerGroupInum;
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getManagerGroupInum() {
+        return managerGroupInum;
+    }
+
+    public void setManagerGroupInum(String managerGroupInum) {
+        this.managerGroupInum = managerGroupInum;
     }
 
 }
