@@ -100,7 +100,7 @@ public class WebUtils {
             Execution exec = Executions.getCurrent();
             HttpServletResponse response = (HttpServletResponse) exec.getNativeResponse();
 
-            logger.info(Labels.getLabel("app.redirecting_to"),url);
+            logger.debug(Labels.getLabel("app.redirecting_to"),url);
             response.sendRedirect(response.encodeRedirectURL(url));
             if (voidUI)
                 exec.setVoided(voidUI); //no need to create UI since redirect will take place
@@ -217,7 +217,8 @@ public class WebUtils {
         httpGet.setHeader("Accept", "application/json");
         HttpResponse response = client.execute(httpGet);
         HttpEntity entity = response.getEntity();
-logger.debug("GET is {}", httpGet.getURI());
+
+        logger.debug("GET request is {}", httpGet.getURI());
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
             contents=EntityUtils.toString(entity);
 

@@ -2,7 +2,6 @@ package org.gluu.credmanager.core.navigation;
 
 import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.core.WebUtils;
-import org.gluu.credmanager.misc.StaticServlet;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.Session;

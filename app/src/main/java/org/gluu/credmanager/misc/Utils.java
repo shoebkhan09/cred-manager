@@ -51,11 +51,11 @@ public class Utils {
         for (Object key : map.keySet()){
             String strKey=key.toString();
             if (map.getType(strKey).isAssignableFrom(List.class)){
-                logger.debug("Found list {} in object", strKey);
+                logger.trace("nullEmptyLists. Found list {} in object", strKey);
                 List list=(List) map.get(key);
                 if (list!=null && list.size()==0) {     //Replace empty list by nulled list
                     map.put(key, null);
-                    logger.debug("Empty list {} became null", strKey);
+                    logger.trace("nullEmptyLists. Empty list {} became null", strKey);
                 }
             }
         }
@@ -70,18 +70,18 @@ public class Utils {
      * @param <T>
      * @param <C>
      */
-    public static <T, C extends Collection<T>> void emptyNullLists (Object object, Supplier<C> factory){
+    public static <T, C extends Collection<T>> void emptyNullLists(Object object, Supplier<C> factory){
 
         BeanMap map=new BeanMap(object);
         for (Object key : map.keySet()){
             String strKey=key.toString();
             if (map.getType(strKey).isAssignableFrom(List.class)){
-                logger.debug("Found list {} in object", strKey);
+                logger.trace("emptyNullLists. Found list {} in object", strKey);
                 List list=(List) map.get(key);
                 if (list==null) {     //Replace by empty list
                     List<T> empty=Collections.emptyList();
                     map.put(key, empty.stream().collect(Collectors.toCollection(factory)));
-                    logger.debug("Null list {} became empty list", strKey);
+                    logger.trace("emptyNullLists. Null list {} became empty list", strKey);
                 }
             }
         }
@@ -109,14 +109,23 @@ public class Utils {
         return propsMap;
     }
 
+    /**
+     * Chooses one device from a list of devices, such that its creation time is the closest to the timestamp given
+     * @param devices A non-null list of fido devices
+     * @param time A timestamp as milliseconds elapsed from the "epoch"
+     * @param <T>
+     * @return The best matching device (only devices added before the time supplied are considered). Null if no suitable
+     * device could be found
+     */
     public static <T extends FidoDevice> T getRecentlyCreatedDevice(List<T> devices, long time){
 
-        long diffs[]=devices.stream().filter(dev -> dev.getCounter()==-1)
-                .mapToLong(key -> time-key.getCreationDate().getTime()).toArray();
+        long diffs[]=devices.stream().mapToLong(key -> time-key.getCreationDate().getTime()).toArray();
 
+        logger.trace("getRecentlyCreatedDevice. diffs {}", Arrays.asList(diffs));
         //Search for the smallest time difference
         int i;
         Pair<Long, Integer> min=new Pair<>(Long.MAX_VALUE, -1);
+        //it always holds that diffs.length==devices.size()
         for (i=0;i<diffs.length;i++)
             if (diffs[i]>=0 && min.getX()>diffs[i])  //Only search non-negative differences
                 min=new Pair<>(diffs[i], i);

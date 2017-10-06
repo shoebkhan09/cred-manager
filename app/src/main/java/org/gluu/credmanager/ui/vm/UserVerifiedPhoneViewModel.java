@@ -120,7 +120,7 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
                     //Compose SMS body
                     String body = services.getAppConfig().getOrgName();
                     body = Labels.getLabel("usr.mobile_sms_body", new String[]{body, realCode});
-logger.debug("CODE={}", realCode);
+                    logger.trace("sendCode. code={}", realCode);
 
                     //Send message (service bean already knows all settings to perform this step)
                     smsService.sendSMS(newPhone.getNumber(), body);
