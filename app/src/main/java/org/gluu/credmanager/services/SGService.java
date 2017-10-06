@@ -43,6 +43,11 @@ public class SGService {
 
     public SGService(){}
 
+    /**
+     * Executes a geolocation call the to ip-api.com service
+     * @param ip String representing an IP address
+     * @return A JsonNode with the respone. Null if there was an error issuing or parsing the contents
+     */
     public JsonNode getGeoLocation(String ip){
 
         JsonNode node=null;
@@ -63,9 +68,16 @@ public class SGService {
         return node;
     }
 
+    /**
+     * Builds a string that encodes information in order to display a QR code
+     * @param userName Username string
+     * @param code An enrollment code associated to the code
+     * @param remoteIp An IP address to encode in the request (possibly null)
+     * @return A string encoded in JSon format with the information for QR code display
+     */
     public String generateRequest(String userName, String code, String remoteIp){
 
-        logger.debug(Labels.getLabel("app.start_registration_request"), userName, remoteIp);
+        logger.info(Labels.getLabel("app.start_registration_request"), userName, remoteIp);
 
         Map<String, String> reqAsMap=new HashMap<>();
         reqAsMap.put("username", userName);
@@ -75,7 +87,7 @@ public class SGService {
         reqAsMap.put("enrollment", code);
         reqAsMap.put("method", "enroll");
 
-        if (remoteIp!=null) {
+        if (remoteIp!=null) {   //Add  geolocation information only if we have an IP available
             reqAsMap.put("req_ip", remoteIp);
 
             JsonNode geolocation = getGeoLocation(remoteIp);
@@ -98,14 +110,23 @@ public class SGService {
 
     }
 
+    /**
+     * Returns the most recently added (with respect to the timestamp passed) Super Gluu device for the user in question
+     * @param user An User object
+     * @param time Timestamp (milliseconds from the "epoch")
+     * @return A SuperGluuDevice object or null if no device could be found. Device has to have counter=-1 and no displayName yet
+     */
     public SuperGluuDevice getLatestSuperGluuDevice(User user, long time){
 
         SuperGluuDevice sg=null;
         try {
             String appId = appConfig.getConfigSettings().getOxdConfig().getRedirectUri();
             sg = ldapService.getFidoDevice(user.getRdn(), time, appId, SuperGluuDevice.class);
-            if (sg!=null && sg.getNickName()!=null)
-                sg=null;    //should have no name
+
+            logger.debug("getLatestSuperGluuDevice. sg id is {}", sg==null ? -1 : sg.getId());
+            if (sg!=null && (sg.getNickName()!=null || sg.getCounter()>=0))
+                sg=null;    //should have no name and counter must be -1
+            logger.debug("getLatestSuperGluuDevice. sg is null {}", sg==null);
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -114,12 +135,19 @@ public class SGService {
 
     }
 
+    /**
+     * Determines if the device passed is enrolled exactly once or more times
+     * @param dev A SuperGluuDevice instance
+     * @return Boolean value indicating whether a device with this device's UUID is enrolled once for some user
+     * @throws Exception If the device is not even enrolled
+     */
     public boolean isSGDeviceUnique(SuperGluuDevice dev) throws Exception{
 
         boolean unique=false;
         String uiid=dev.getDeviceData().getUuid();
         List<String> uuids=ldapService.getSGDevicesIDs(appConfig.getConfigSettings().getOxdConfig().getRedirectUri());
-logger.debug("All sg devs {}", uuids.toString());
+
+        logger.trace("All sg devices {}", uuids.toString());
         int size=(int) uuids.stream().filter(uuid -> uuid.equals(uiid)).count();
         if (size==0)
             throw new Exception(Labels.getLabel("app.error_uniqueness", new String[]{uiid}));

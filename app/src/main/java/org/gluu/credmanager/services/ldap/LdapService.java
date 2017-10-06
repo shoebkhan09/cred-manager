@@ -13,6 +13,7 @@ import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.pojo.*;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
+import org.xdi.ldap.model.SimpleUser;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.PropertiesDecrypter;
 import org.xdi.util.security.StringEncrypter;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 public class LdapService {
 
     public static final String MOBILE_PHONE_ATTR="mobile";
+    public static final String PREFERRED_METHOD_ATTR="description";
     private Logger logger = LogManager.getLogger(getClass());
 
     private Properties ldapProperties;
@@ -42,8 +44,10 @@ public class LdapService {
     private LdapSettings ldapSettings;
     private ObjectMapper mapper;
 
+    private GluuOrganization organization=null;
     private OxTrustConfiguration oxTrustConfig=null;
     private JsonNode oxAuthConfDynamic;
+    private String usersDN;
 
     /**
      * Initializes and LdapEntryManager instance for operation
@@ -70,15 +74,39 @@ public class LdapService {
             throw new Exception(Labels.getLabel("app.bad_ldapentrymanager"));
     }
 
-    //TODO: refactor these methods to call .find(class,dn) - search in oxauth proper class with the suitable annotations
-    public String getOrganizationName() throws Exception{
+    private GluuOrganization getOrganization() throws Exception{
 
-        String dn=String.format("o=%s,o=gluu", ldapSettings.getOrgInum());
-        List<GluuOrganization> list=ldapEntryManager.findEntries(dn, GluuOrganization.class,null);
-        return list.get(0).getName();
+        if (organization==null){
+            String dn=String.format("o=%s,o=gluu", ldapSettings.getOrgInum());
+            organization=ldapEntryManager.find(GluuOrganization.class, dn);
+        }
+        return organization;
 
     }
 
+    private String getUsersDN(){
+        if (usersDN==null)
+            usersDN=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
+        return usersDN;
+    }
+    public String getOrganizationName() throws Exception{
+        return getOrganization().getName();
+    }
+
+    public boolean belongsToManagers(String userRdn) throws Exception{
+
+        boolean belongs=false;
+        String inum=getOrganization().getManagerGroupInum();
+        List<String> memberships=getGluuPerson(userRdn).getMemberships();
+
+        if (memberships!=null && memberships.size()>0)
+            belongs=memberships.stream().anyMatch(membership -> membership.equals(inum));
+
+        return belongs;
+
+    }
+
+    //TODO: refactor these methods to call .find(class,dn) - search in oxauth proper class with the suitable annotations
     private OxTrustConfiguration getOxTrustConfig(){
 
         if (oxTrustConfig ==null){
@@ -100,8 +128,14 @@ public class LdapService {
     }
 
     public GluuPerson getGluuPerson(String rdn) throws Exception{
-        String dn=String.format("%s,ou=people,o=%s,o=gluu", rdn, ldapSettings.getOrgInum());
+        String dn=String.format("%s,%s", rdn, getUsersDN());
         return ldapEntryManager.find(GluuPerson.class, dn);
+    }
+
+    public List<GluuPerson> getPeopleById(List<String> uids) throws Exception{
+        Stream<Filter> filterStream=uids.stream().map(uid -> Filter.createEqualityFilter("uid", uid));
+        Filter filter=Filter.createORFilter(filterStream.collect(Collectors.toList()));
+        return ldapEntryManager.findEntries(getUsersDN(), GluuPerson.class,  filter);
     }
 
     /**
@@ -187,8 +221,8 @@ public class LdapService {
 
     public void createFidoBranch(String userRdn){
 
-        String dn=String.format("ou=fido,%s,ou=people,o=%s,o=gluu", userRdn, ldapSettings.getOrgInum());
-        OUEntry entry=null;
+        String dn=String.format("ou=fido,%s,%s", userRdn, getUsersDN());
+        OUEntry entry;
         try {
             entry = ldapEntryManager.find(OUEntry.class, dn);
         }
@@ -203,7 +237,7 @@ public class LdapService {
     }
 
     /**
-     * Returns a list of FidoDevice instances found under the given branch that matches de oxApplication value given and
+     * Returns a list of FidoDevice instances found under the given branch that matches the oxApplication value given and
      * whose oxStatus attribute equals to "active"
      * @param userRdn Branch under the query is performed
      * @param oxApplication Value to match for oxApplication attribute (see LDAP object class oxDeviceRegistration)
@@ -215,8 +249,8 @@ public class LdapService {
         Filter filter=Filter.createANDFilter(Arrays.asList(
                 Filter.createEqualityFilter("oxApplication", oxApplication),
                 Filter.createEqualityFilter("oxStatus", "active")));
-        String dn=String.format("%s,ou=people,o=%s,o=gluu", userRdn, ldapSettings.getOrgInum());
-        return ldapEntryManager.findEntries(String.format("ou=fido,%s", dn), clazz, filter);
+        String dn=String.format("ou=fido,%s,%s", userRdn, getUsersDN());
+        return ldapEntryManager.findEntries(dn, clazz, filter);
     }
 
     public void updateFidoDevice(FidoDevice device) throws Exception{
@@ -229,7 +263,7 @@ public class LdapService {
 
     public <T extends FidoDevice> T getFidoDevice(String userRdn, long time, String oxApp, Class<T> clazz) throws Exception{
         List<T> list=getU2FDevices(userRdn, oxApp, clazz);
-logger.debug("list is {}", list.stream().map(d -> d.getId()).collect(Collectors.toList()).toString());
+        logger.debug("getFidoDevice. list is {}", list.stream().map(d -> d.getId()).collect(Collectors.toList()).toString());
         return Utils.getRecentlyCreatedDevice(list, time);
     }
 
@@ -238,7 +272,7 @@ logger.debug("list is {}", list.stream().map(d -> d.getId()).collect(Collectors.
         Filter filter=Filter.createANDFilter(Arrays.asList(
                 Filter.createEqualityFilter("oxApplication", oxApplication),
                 Filter.createEqualityFilter("oxStatus", "active")));
-        String dn=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
+        String dn=getUsersDN();
 
         List<SuperGluuDevice> list=ldapEntryManager.findEntries(dn, SuperGluuDevice.class, new String[]{"oxDeviceData"}, filter);
         return list.stream().filter(d -> d.getDeviceData()!=null).map(d -> d.getDeviceData().getUuid()).collect(Collectors.toList());
@@ -246,7 +280,7 @@ logger.debug("list is {}", list.stream().map(d -> d.getId()).collect(Collectors.
     }
 
     public List<String> getPhoneNumbers() throws Exception{
-        String dn=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
+        String dn=getUsersDN();
         List<GluuPerson> list=ldapEntryManager.findEntries(dn, GluuPerson.class, new String[]{MOBILE_PHONE_ATTR},null);
         Stream<GluuPerson> mobilePeople=list.stream().filter(person -> person.getMobileNumbers()!=null);
         return mobilePeople.flatMap(person -> person.getMobileNumbers().stream()).collect(Collectors.toList());
@@ -256,6 +290,20 @@ logger.debug("list is {}", list.stream().map(d -> d.getId()).collect(Collectors.
         GluuPerson person=getGluuPerson(userRdn);
         person.setTemporaryEnrollmentCode(code);
         ldapEntryManager.merge(person);
+    }
+
+    public <T> List<T> findUsersWithPreferred(String searchString, String attributes[], Class<T> cls) throws Exception{
+
+        Stream<Filter> stream=Arrays.asList(attributes).stream()
+                .map(attr -> Filter.createSubstringFilter(attr, null, new String[]{searchString}, null));
+
+        Filter filter=Filter.createANDFilter(Arrays.asList(
+                Filter.createORFilter(stream.collect(Collectors.toList())),
+                Filter.createPresenceFilter(PREFERRED_METHOD_ATTR)
+        ));
+
+        return ldapEntryManager.findEntries(getUsersDN(), cls, attributes, filter);
+
     }
 
 }

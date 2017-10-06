@@ -33,8 +33,8 @@ public class UserService {
     /*
     The list of OpenId scopes required to be able to inspect the claims needed. See attributes of User class
      */
-    public static final String[] requiredOpenIdScopes =
-            new String[]{"openid","profile","user_name","email","mobile_phone","phone","clientinfo"};
+    public static final String[] requiredOpenIdScopes = new String[]{"openid","profile","user_name","clientinfo"};
+        //,"email","mobile_phone","phone"
 
     @Inject
     AppConfiguration appConfiguration;
@@ -55,8 +55,8 @@ public class UserService {
         User u = new User();
         u.setUserName(getClaim(claims,"user_name"));
         u.setGivenName(getClaim(claims,"given_name"));
-        u.setEmail(getClaim(claims,"email"));
-        //u.setPhone(getClaim(claims, "phone_number_verified"));
+        //u.setEmail(getClaim(claims,"email"));
+        //u.setPhone(getClaim(claims, "phone_number_verified"));    scopes: `email`, `mobile_phone`, `phone`,
         //u.setMobilePhones(claims.get("phone_mobile_number"));
 
         String inum=getClaim(claims, "inum");
@@ -140,7 +140,6 @@ public class UserService {
 
         OTPDevice device=new OTPDevice(uid);
         int hash=device.getId();
-logger.debug("Hashed id {}", hash);
 
         Optional<OTPDevice> extraInfoOTP=list.stream().filter(dev -> dev.getId()==hash).findFirst();
         if (extraInfoOTP.isPresent()) {
@@ -183,7 +182,8 @@ logger.debug("Hashed id {}", hash);
                 json="[]";
 
             List<VerifiedPhone> vphones=mapper.readValue(json, new TypeReference<List<VerifiedPhone>>(){});
-logger.debug("Phones from ldap2: {}", vphones);
+
+            logger.trace("getVerifiedPhones. Phones from ldap: {}", vphones);
             Stream<VerifiedPhone> stream=person.getMobileNumbers().stream().map(str -> getExtraPhoneInfo(str, vphones));
 
             return stream.collect(Collectors.toList());
@@ -339,6 +339,19 @@ logger.debug("Phones from ldap2: {}", vphones);
         String code=UUID.randomUUID().toString();
         ldapService.storeUserEnrollmentCode(user.getRdn(), code);
         return code;
+    }
+
+    public boolean inManagerGroup(User user){
+
+        boolean inManager=false;
+        try{
+            inManager=ldapService.belongsToManagers(user.getRdn());
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return inManager;
+
     }
 
 }

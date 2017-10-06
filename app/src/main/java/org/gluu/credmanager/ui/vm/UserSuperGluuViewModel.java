@@ -120,7 +120,7 @@ public class UserSuperGluuViewModel extends UserViewModel{
     @Listen("onData=#readyButton")
     public void qrScanResult(Event event) {
 
-logger.debug("qrScanResult {}", event.getData().toString());
+        logger.debug("qrScanResult. Event value is {}", event.getData().toString());
         if (uiQRShown) {
             switch (event.getData().toString()) {
                 case "timeout":
@@ -132,9 +132,9 @@ logger.debug("qrScanResult {}", event.getData().toString());
                     if (newDevice != null) {    //New device detected, stop polling
                         stopPolling();
                         try {
-logger.debug("got the device {}", newDevice.getId());
+                            logger.debug("qrScanResult. Got device {}", newDevice.getId());
                             //It's enrolled in LDAP, nonetheless we are missing the nickname yet and also the check if
-                            // it has not previously been enrolled
+                            //it has not previously been enrolled (by another user, for instance)
                             uiEnrolled = sgService.isSGDeviceUnique(newDevice);
                             if (uiEnrolled)
                                 BindUtils.postNotifyChange(null, null, this, "uiEnrolled");
