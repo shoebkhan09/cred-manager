@@ -7,14 +7,14 @@
         <RollingFile name="LOG_FILE" fileName="${sys:log.base}/logs/cred-manager.log" filePattern="${sys:log.base}/logs/cred-manager-%d{MM-dd-yy-HH-mm-ss}-%i.log">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %C{4} %F:%L- %m%n" />
             <Policies>
-                <SizeBasedTriggeringPolicy size="5 MB" />
+                <SizeBasedTriggeringPolicy size="4 MB" />
             </Policies>
             <DefaultRolloverStrategy max="10" />
         </RollingFile>
 
     </Appenders>
     <Loggers>
-        <Logger name="org.gluu" level="DEBUG">
+        <Logger name="org.gluu" level="INFO">
             <AppenderRef ref="LOG_FILE" />
         </Logger>
         <Root level="WARN">
