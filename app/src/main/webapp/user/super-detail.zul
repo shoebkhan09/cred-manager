@@ -9,10 +9,6 @@
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client" xmlns:n="native"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <div self="@define(nav)">
-        <include src="back.zul" />
-    </div>
-
     <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserSuperGluuViewModel')"
              self="@define(content)">
 
@@ -68,7 +64,7 @@
                             <hlayout sclass="couple_icons">
                                 <image src="${sessionScope.custdir}/images/edit.png" sclass="icon_edit"
                                        tooltip="tooltip_edit, after_pointer" onClick="@command('prepareForUpdate', device=each)"/>
-                                <space width="0px"/>
+                                <space sclass="minspace" />
                                 <image src="${sessionScope.custdir}/images/delete.png" sclass="icon_delete"
                                        tooltip="tooltip_delete, after_pointer" onClick="@command('delete', device=each)"/>
                             </hlayout>

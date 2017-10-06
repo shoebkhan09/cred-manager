@@ -40,3 +40,9 @@
 input[type="radio"]{
 	margin:0px 0px 4px 0px;
 }
+.z-toolbar a:hover{
+	text-decoration:none;
+}
+.minspace{
+    width:0px;
+}

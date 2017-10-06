@@ -14,9 +14,9 @@
 
     <zk choose="">
         <zk when="${empty pageScope.error}">
-            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)">
+            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)" spacing="0px">
                 <include src="/header.zul"/>
-                <div self="@insert(nav)" />
+                <include src="/back.zul" withHome="true" />
                 <div self="@insert(content)" />
             </vlayout>
         </zk>

@@ -1,3 +1,4 @@
+<?init class="org.gluu.credmanager.core.navigation.PageInitiator"?>
 <?init class="org.zkoss.zk.ui.util.Composition" arg0="/basic.zul"?>
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.title}"?>
@@ -12,8 +13,8 @@
     <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserMainViewModel')"
              self="@define(content)">
 
+        <div align="center"><label value="${labels.usr.title}" sclass="titled" /></div>
         <vlayout sclass="padded">
-            <div align="center" sclass="padded"><label value="${labels.usr.title}" sclass="titled" /></div>
             <div sclass="dpadded">
                 <label value="@load(vm.introText)" />
             </div>

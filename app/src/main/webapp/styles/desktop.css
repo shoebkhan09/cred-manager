@@ -98,3 +98,10 @@
     margin-top:10px;
     width: 440px;
 }
+.z-toolbar-content{
+    font-size: 14px;
+}
+.z-toolbar-content span{
+	font-size:14px;
+	color:#333;
+}

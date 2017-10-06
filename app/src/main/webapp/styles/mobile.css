@@ -31,7 +31,7 @@ body{
     padding-bottom:10px;
 }
 .padded{
-    padding:7px;
+    padding:10px;
 }
 .z-label{
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -98,4 +98,11 @@ body{
 .rule-sm{
     margin-top:10px;
     width: 320px;
+}
+.z-toolbar-content span{
+	font-size:12px;
+	color:#333;
+}
+.z-paging-info{
+    display:none;
 }

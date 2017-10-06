@@ -1,8 +1,7 @@
-<?init class="org.gluu.credmanager.core.navigation.PageInitiator"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <!-- this file must mirror general.zul with exception of CSS style tag and back button -->
+    <!-- this file must mirror general.zul with exception of CSS style tag, back button, and page initiator -->
 
     <zscript>
         void onClientInfo(ClientInfoEvent evt) {
@@ -12,8 +11,9 @@
 
     <zk choose="">
         <zk when="${empty pageScope.error}">
-            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)">
+            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)" spacing="0px">
                 <include src="/header.zul"/>
+                <include src="/back.zul" withHome="false" />
                 <div self="@insert(content)" />
             </vlayout>
         </zk>
