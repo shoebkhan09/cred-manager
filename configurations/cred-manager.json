@@ -3,9 +3,7 @@
   "oxd_config" : {
     "host" : "localhost",
     "port" : 8099,
-    "oxd-id": "b3978699-a97b-4dbb-962a-f757c5578dc3",
     "authz_redirect_uri" : "https://cred-manager.gluu.org/cred-manager/",
-    "post_logout_uri" : "https://cred-manager.gluu.org/cred-manager/bye.zul"
   },
   "ldap_settings" : {
     "applianceInum" : "@!3358.AAC9.1B80.48BD!0002!5CEC.4E51",
