@@ -6,14 +6,13 @@ import com.unboundid.ldap.sdk.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
-import org.gluu.credmanager.core.credential.SecurityKey;;
 import org.gluu.credmanager.core.credential.SuperGluuDevice;
 import org.gluu.credmanager.core.credential.fido.FidoDevice;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.pojo.*;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
-import org.xdi.ldap.model.SimpleUser;
+import org.xdi.oxauth.model.fido.u2f.DeviceRegistrationStatus;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.PropertiesDecrypter;
 import org.xdi.util.security.StringEncrypter;
@@ -70,33 +69,33 @@ public class LdapService {
         OperationsFacade facade = new OperationsFacade(connProvider);   //bindConnProvider??
         ldapEntryManager=new CustomEntryManager(facade);
 
-        if (ldapEntryManager==null)
+        if (ldapEntryManager!=null){
+
+            //Initialize important class members
+            String dn=String.format("ou=configuration,inum=%s,ou=appliances,o=gluu", ldapSettings.getApplianceInum());
+
+            OxAuthConfiguration authConfig=ldapEntryManager.find(OxAuthConfiguration.class, "ou=oxauth," + dn);
+            oxAuthConfDynamic = mapper.readTree(authConfig.getStrConfDynamic());
+
+            oxTrustConfig=ldapEntryManager.find(OxTrustConfiguration.class, "ou=oxtrust," + dn);
+
+            usersDN=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
+
+            dn=String.format("o=%s,o=gluu", ldapSettings.getOrgInum());
+            organization=ldapEntryManager.find(GluuOrganization.class, dn);
+        }
+        else
             throw new Exception(Labels.getLabel("app.bad_ldapentrymanager"));
     }
 
-    private GluuOrganization getOrganization() throws Exception{
-
-        if (organization==null){
-            String dn=String.format("o=%s,o=gluu", ldapSettings.getOrgInum());
-            organization=ldapEntryManager.find(GluuOrganization.class, dn);
-        }
-        return organization;
-
-    }
-
-    private String getUsersDN(){
-        if (usersDN==null)
-            usersDN=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
-        return usersDN;
-    }
     public String getOrganizationName() throws Exception{
-        return getOrganization().getName();
+        return organization.getName();
     }
 
     public boolean belongsToManagers(String userRdn) throws Exception{
 
         boolean belongs=false;
-        String inum=getOrganization().getManagerGroupInum();
+        String inum=organization.getManagerGroupInum();
         List<String> memberships=getGluuPerson(userRdn).getMemberships();
 
         if (memberships!=null && memberships.size()>0)
@@ -106,36 +105,15 @@ public class LdapService {
 
     }
 
-    //TODO: refactor these methods to call .find(class,dn) - search in oxauth proper class with the suitable annotations
-    private OxTrustConfiguration getOxTrustConfig(){
-
-        if (oxTrustConfig ==null){
-            String dn=String.format("ou=oxtrust,ou=configuration,inum=%s,ou=appliances,o=gluu", ldapSettings.getApplianceInum());
-            List<OxTrustConfiguration> list=ldapEntryManager.findEntries(dn, OxTrustConfiguration.class,null);
-            oxTrustConfig =list.get(0);
-        }
-        return oxTrustConfig;
-    }
-
-    private JsonNode getOxAuthConfDynamic() throws Exception{
-
-        if (oxAuthConfDynamic==null){
-            String dn=String.format("ou=oxauth,ou=configuration,inum=%s,ou=appliances,o=gluu", ldapSettings.getApplianceInum());
-            List<OxAuthConfiguration> list=ldapEntryManager.findEntries(dn, OxAuthConfiguration.class,null);
-            oxAuthConfDynamic = mapper.readTree(list.get(0).getStrConfDynamic());
-        }
-        return oxAuthConfDynamic;
-    }
-
     public GluuPerson getGluuPerson(String rdn) throws Exception{
-        String dn=String.format("%s,%s", rdn, getUsersDN());
+        String dn=String.format("%s,%s", rdn, usersDN);
         return ldapEntryManager.find(GluuPerson.class, dn);
     }
 
     public List<GluuPerson> getPeopleById(List<String> uids) throws Exception{
         Stream<Filter> filterStream=uids.stream().map(uid -> Filter.createEqualityFilter("uid", uid));
         Filter filter=Filter.createORFilter(filterStream.collect(Collectors.toList()));
-        return ldapEntryManager.findEntries(getUsersDN(), GluuPerson.class,  filter);
+        return ldapEntryManager.findEntries(usersDN, GluuPerson.class,  filter);
     }
 
     /**
@@ -146,7 +124,7 @@ public class LdapService {
      */
     public boolean isBackendLdapEnabled() throws Exception{
 
-        JsonNode tree=mapper.readTree(getOxTrustConfig().getConfCacheRefreshStr());
+        JsonNode tree=mapper.readTree(oxTrustConfig.getConfCacheRefreshStr());
 
         List<Boolean> enabledList=new ArrayList<>();
         tree.get("sourceConfigs").forEach(node -> enabledList.add(node.get("enabled").asBoolean()));
@@ -155,11 +133,11 @@ public class LdapService {
     }
 
     public String getOIDCEndpoint() throws Exception{
-        return getOxAuthConfDynamic().get("openIdConfigurationEndpoint").asText();
+        return oxAuthConfDynamic.get("openIdConfigurationEndpoint").asText();
     }
 
     public String getIssuerUrl() throws Exception{
-        return getOxAuthConfDynamic().get("issuer").asText();
+        return oxAuthConfDynamic.get("issuer").asText();
     }
 
     /**
@@ -196,7 +174,7 @@ public class LdapService {
     }
 
     public boolean authenticate(String uid, String pass) throws Exception{
-        JsonNode baseDnNode=mapper.readTree(getOxTrustConfig().getConfApplicationStr()).get("baseDN");
+        JsonNode baseDnNode=mapper.readTree(oxTrustConfig.getConfApplicationStr()).get("baseDN");
         return ldapEntryManager.authenticate(uid, pass, baseDnNode.asText());
     }
 
@@ -221,7 +199,7 @@ public class LdapService {
 
     public void createFidoBranch(String userRdn){
 
-        String dn=String.format("ou=fido,%s,%s", userRdn, getUsersDN());
+        String dn=String.format("ou=fido,%s,%s", userRdn, usersDN);
         OUEntry entry;
         try {
             entry = ldapEntryManager.find(OUEntry.class, dn);
@@ -248,8 +226,8 @@ public class LdapService {
     public <T extends FidoDevice> List<T> getU2FDevices(String userRdn, String oxApplication, Class<T> clazz) throws Exception{
         Filter filter=Filter.createANDFilter(Arrays.asList(
                 Filter.createEqualityFilter("oxApplication", oxApplication),
-                Filter.createEqualityFilter("oxStatus", "active")));
-        String dn=String.format("ou=fido,%s,%s", userRdn, getUsersDN());
+                Filter.createEqualityFilter("oxStatus", DeviceRegistrationStatus.ACTIVE.getValue())));
+        String dn=String.format("ou=fido,%s,%s", userRdn, usersDN);
         return ldapEntryManager.findEntries(dn, clazz, filter);
     }
 
@@ -271,17 +249,15 @@ public class LdapService {
 
         Filter filter=Filter.createANDFilter(Arrays.asList(
                 Filter.createEqualityFilter("oxApplication", oxApplication),
-                Filter.createEqualityFilter("oxStatus", "active")));
-        String dn=getUsersDN();
+                Filter.createEqualityFilter("oxStatus", DeviceRegistrationStatus.ACTIVE.getValue())));
 
-        List<SuperGluuDevice> list=ldapEntryManager.findEntries(dn, SuperGluuDevice.class, new String[]{"oxDeviceData"}, filter);
+        List<SuperGluuDevice> list=ldapEntryManager.findEntries(usersDN, SuperGluuDevice.class, new String[]{"oxDeviceData"}, filter);
         return list.stream().filter(d -> d.getDeviceData()!=null).map(d -> d.getDeviceData().getUuid()).collect(Collectors.toList());
 
     }
 
     public List<String> getPhoneNumbers() throws Exception{
-        String dn=getUsersDN();
-        List<GluuPerson> list=ldapEntryManager.findEntries(dn, GluuPerson.class, new String[]{MOBILE_PHONE_ATTR},null);
+        List<GluuPerson> list=ldapEntryManager.findEntries(usersDN, GluuPerson.class, new String[]{MOBILE_PHONE_ATTR},null);
         Stream<GluuPerson> mobilePeople=list.stream().filter(person -> person.getMobileNumbers()!=null);
         return mobilePeople.flatMap(person -> person.getMobileNumbers().stream()).collect(Collectors.toList());
     }
@@ -302,7 +278,19 @@ public class LdapService {
                 Filter.createPresenceFilter(PREFERRED_METHOD_ATTR)
         ));
 
-        return ldapEntryManager.findEntries(getUsersDN(), cls, attributes, filter);
+        return ldapEntryManager.findEntries(usersDN, cls, attributes, filter);
+
+    }
+
+    public int preferenceCount(List<String> methods) throws Exception{
+
+        int total=0;
+        for (String method : methods){
+            Filter filter=Filter.createEqualityFilter(PREFERRED_METHOD_ATTR, method);
+            List<GluuPerson> list=ldapEntryManager.findEntries(usersDN, GluuPerson.class, new String[]{"dn"}, filter);
+            total+=list.size();
+        }
+        return total;
 
     }
 

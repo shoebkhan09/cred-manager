@@ -13,9 +13,9 @@ import java.util.List;
  */
 public enum CredentialType {
     SUPER_GLUU      ("super_gluu", null),
+    VERIFIED_PHONE  ("twilio_sms", "twilio"),   //Certain Gluu servers identify this method as twilio_sms or simply twilio
     SECURITY_KEY    ("u2f", null),
-    OTP             ("otp", null),
-    VERIFIED_PHONE  ("twilio_sms", "twilio");   //Certain Gluu servers identify this method as twilio_sms or simply twilio
+    OTP             ("otp", null);
 
     //This is the acr value corresponding to this method (the name field of the associated interception script). It must be NON-NULL
     private String name;

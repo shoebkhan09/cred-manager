@@ -41,7 +41,7 @@ public class ContextAttributeListener implements ServletContextAttributeListener
             logger.info(Labels.getLabel("app.webapp_init_ok"));
         else {
             logger.info(Labels.getLabel("app.webapp_init_failure"));
-            logger.error(Labels.getLabel("app.notoperable"));
+            logger.fatal(Labels.getLabel("app.notoperable"));
         }
     }
 

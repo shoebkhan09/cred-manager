@@ -8,7 +8,7 @@ import org.gluu.credmanager.ui.model.UIModel;
 import org.zkoss.bind.annotation.*;
 import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
-import org.zkoss.zul.ListModelSet;
+import org.zkoss.zul.ListModelList;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public class UserPreferenceViewModel extends UserViewModel {
     private String noMethodName;
     private CredentialType prevSelectedMethod;
     private CredentialType selectedMethod;
-    private ListModelSet<Pair<CredentialType, String>> availMethods;
+    private ListModelList<Pair<CredentialType, String>> availMethods;
 
     private boolean uiEditing;
     private boolean uiEditable;
@@ -47,7 +47,7 @@ public class UserPreferenceViewModel extends UserViewModel {
 
         noMethodName=Labels.getLabel("usr.method.none");
         Set<CredentialType> enabledMethods=services.getAppConfig().getEnabledMethods();
-        availMethods = UIModel.getCredentialList(services.getUserService().getEffectiveMethods(user, enabledMethods));
+        availMethods = UIModel.getCredentialList(userService.getEffectiveMethods(user, enabledMethods));
 
         int totalCreds = user.getCredentials().values().stream().mapToInt(List::size).sum();
         logger.info(Labels.getLabel("app.credentials_total"), user.getUserName(), totalCreds);
@@ -79,7 +79,7 @@ public class UserPreferenceViewModel extends UserViewModel {
         return uiEditable;
     }
 
-    public ListModelSet<Pair<CredentialType, String>> getAvailMethods() {
+    public ListModelList<Pair<CredentialType, String>> getAvailMethods() {
         return availMethods;
     }
 
@@ -96,7 +96,7 @@ public class UserPreferenceViewModel extends UserViewModel {
 
         uiEditing = false;
         //saves to LDAP and updates user object afterwards
-        if (services.getUserService().setPreferredMethod(user, selectedMethod))
+        if (userService.setPreferredMethod(user, selectedMethod))
             showMessageUI(true);
         else{
             selectedMethod=prevSelectedMethod;

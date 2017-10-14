@@ -8,6 +8,8 @@ import org.xdi.ldap.model.Entry;
 
 /**
  * Created by jgomer on 2017-07-09.
+ * This class was created instead of reusing org.xdi.config.oxtrust.LdapOxAuthConfiguration because importing oxcore-service
+ * project was giving weld problem
  */
 @LdapEntry
 @LdapObjectClass(values = { "top", "oxAuthConfiguration"})
