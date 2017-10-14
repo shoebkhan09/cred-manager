@@ -10,9 +10,8 @@
                     <template name="children">
                         <radio label="@load(each)" onCheck="@command('changeLogLevel', level=each)" w:onClick="showThrobber()"
                                selected="@load(each eq vm.selectedLogLevel)" radiogroup="methods"/>
-                        <space width="11px"/>
+                        <space width="@load(vm.logLevels.indexOf(each) eq (vm.logLevels.size()-1) ? '0px' : '11px')"/>
                     </template>
-
                 </div>
             </vlayout>
         </panelchildren>

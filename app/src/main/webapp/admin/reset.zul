@@ -1,6 +1,10 @@
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client" xmlns:n="native"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
-
+    <style>
+        .z-checkbox-content{
+            padding-left:0px;
+        }
+    </style>
     <panel title="${labels.adm.resets_title}" border="normal" sclass="padded">
         <panelchildren sclass="padded">
             <vlayout spacing="10px">
@@ -34,7 +38,7 @@
                             <template name="model">
                                 <row>
                                     <checkbox id="@load(each.userId)" disabled="@load(each.getAttribute('alreadyReset'))"
-                                              checked="@bind(each.dn)" style="margin:0px" />
+                                              checked="@bind(each.dn)" />
                                     <label value="@load(each.userId)" />
                                     <label unless="${pageScope.onMobile}" value="@load(each.getAttribute('givenName'))" />
                                     <label value="@load(each.getAttribute('sn'))" />
@@ -44,7 +48,7 @@
                         <hlayout spacing="30px">
                             <button label="${labels.adm.resets_reset}" sclass="btn-success form_button"
                                     onClick="@command('doReset')" w:onClick="showThrobber()" />
-                            <button label="${labels.general.cancel}" sclass="btn-success form_button" onClick="@command('cancel')"/>
+                            <button label="${labels.general.cancel}" sclass="btn-success form_button" onClick="@command('cancelReset')"/>
                         </hlayout>
 
                     </vlayout>

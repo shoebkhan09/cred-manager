@@ -1,0 +1,27 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client" xmlns:n="native"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.adm.branding_title}" border="normal" sclass="padded">
+        <panelchildren sclass="padded">
+            <radiogroup id="groupie" />
+            <vlayout>
+                <label value="${labels.adm.branding_text}"/>
+                <vlayout sclass="padded">
+                    <radio label="${labels.adm.branding_use_default}" selected="@load(not vm.customBrandingEnabled)"
+                           onCheck="@command('changeBranding')" radiogroup="groupie" />
+                    <radio label="${labels.adm.branding_use_custom}" selected="@load(vm.customBrandingEnabled)"
+                           onClick="path.focus()" onCheck="@command('changeBranding', val='')" radiogroup="groupie" />
+                    <vlayout style="${pageScope.onMobile ? '' : 'padding-left:30px'}" sclass="padded" visible="@load(vm.customBrandingEnabled)">
+                        <div align="right" sclass="s12">
+                            <textbox sclass="s12 form-control" value="@bind(vm.brandingPath)" id="path" />
+                            <separator />
+                            <button label="${labels.general.save}" sclass="btn-success form_button" onClick="@command('saveBrandingPath')" w:onClick="showThrobber()" />
+                        </div>
+                        <n:span class="de_emphasized">${labels.adm.branding_learn}</n:span>
+                    </vlayout>
+                </vlayout>
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+</zk>

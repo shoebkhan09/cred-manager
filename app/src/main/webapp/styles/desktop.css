@@ -4,6 +4,9 @@
     width:158px;
     height:62px;
 }
+.s3{
+    width: 75px;
+}
 .s6{
     width: 150px;
 }
@@ -89,7 +92,7 @@
 	font-size:15px;
 	min-height:80px;
 }
-.z-radio-content{
+.z-radio-content, .z-checkbox-content{
     font-size: 14px;
     margin-bottom:0px;
     padding-left:8px;

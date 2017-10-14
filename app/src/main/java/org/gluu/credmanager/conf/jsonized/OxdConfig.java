@@ -9,7 +9,6 @@ import java.util.Set;
 /**
  * Created by jgomer on 2017-07-07.
  */
-//@JsonIgnoreProperties({ "clientName, acrValues" })
 public class OxdConfig{
 
     private String host;
@@ -32,12 +31,13 @@ public class OxdConfig{
         return oxdId;
     }
 
-    public String getPostLogoutUri() {
-        return postLogoutUri;
-    }
-
     public String getRedirectUri() {
         return redirectUri;
+    }
+
+    @JsonIgnore
+    public String getPostLogoutUri() {
+        return postLogoutUri;
     }
 
     @JsonIgnore
@@ -68,7 +68,6 @@ public class OxdConfig{
         this.redirectUri = redirectUri;
     }
 
-    @JsonProperty("post_logout_uri")
     public void setPostLogoutUri(String postLogoutUri) {
         this.postLogoutUri = postLogoutUri;
     }

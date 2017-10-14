@@ -2,11 +2,15 @@ package org.gluu.credmanager.services;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.xdi.ldap.model.SimpleUser;
+import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -21,6 +25,10 @@ public class AdminService {
 
     @Inject
     private LdapService ldapService;
+
+    public void logAdminEvent(String description){
+        logger.warn(Labels.getLabel("app.admin_event"), description);
+    }
 
     /**
      * Builds a list of users whose username, first or last name matches the pattern passed, and at the same time have a
@@ -58,6 +66,30 @@ public class AdminService {
             logger.error(e.getMessage(), e);
         }
         return modified;
+
+    }
+
+    /**
+     * Determines if there are no users with this type of method as preferred in LDAP
+     * @param type A credential
+     * @return False if any user has type as his preferred. True otherwise
+     */
+    public boolean zeroPreferences(CredentialType type){
+
+        boolean zero;
+        try {
+            List<String> acrs=new ArrayList<>();
+            acrs.add(type.getName());
+            if (type.getAlternativeName()!=null)
+                acrs.add(type.getAlternativeName());
+
+            zero=ldapService.preferenceCount(acrs)==0;
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+            zero=false;
+        }
+        return zero;
 
     }
 

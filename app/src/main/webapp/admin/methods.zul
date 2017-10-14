@@ -1,0 +1,28 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client" xmlns:n="native"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.adm.methods_title}" border="normal" sclass="padded">
+        <panelchildren sclass="padded">
+            <vlayout spacing="12px">
+                <label value="${labels.adm.methods_text}"/>
+                <div align="center">
+                    <hlayout>
+                        <div children="@load(vm.methods)">
+                            <template name="children">
+                                <checkbox label="${each.y}" onCheck="@command('checkMethod', cred=each.x, evt=event)"
+                                    disabled="@load(not vm.activeMethods.get(each.x))" checked="@load(vm.enabledMethods.contains(each.x))" />
+                                <space width="@load(vm.methods.indexOf(each) eq (vm.methods.size()-1) ? '0px' : '15px')"/>
+                            </template>
+                        </div>
+                    </hlayout>
+                    <separator />
+                    <separator />
+                    <button disabled="@load(empty vm.methods)" label="&#160;${labels.general.save}&#160;"
+                            sclass="btn-success form_button" onClick="@command('saveMethods')" w:onClick="showThrobber()" />
+                </div>
+                <n:span sclass="de_emphasized">${labels.adm.methods_hint}</n:span>
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+</zk>

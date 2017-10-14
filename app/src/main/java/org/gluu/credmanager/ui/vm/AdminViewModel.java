@@ -4,24 +4,32 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
+import org.gluu.credmanager.conf.CredentialType;
+import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.AdminService;
+import org.gluu.credmanager.ui.model.UIModel;
 import org.xdi.ldap.model.CustomAttribute;
 import org.xdi.ldap.model.SimpleUser;
 import org.zkoss.bind.BindUtils;
-import org.zkoss.bind.annotation.BindingParam;
-import org.zkoss.bind.annotation.Command;
-import org.zkoss.bind.annotation.Init;
-import org.zkoss.bind.annotation.NotifyChange;
+import org.zkoss.bind.annotation.*;
+import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Executions;
+import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.util.Clients;
+import org.zkoss.zul.Checkbox;
+import org.zkoss.zul.ListModelList;
+import org.zkoss.zul.Messagebox;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-10-03.
@@ -34,11 +42,18 @@ public class AdminViewModel extends UserViewModel {
 
     private static final int MINLEN_SEARCH_PATTERN=3;
 
+    private String appName;
     private List<String> logLevels;
     private List<SimpleUser> users;
     private String selectedLogLevel;
     private String subpage;
     private String searchPattern;
+    private String brandingPath;
+    private String oxdHost;
+    private int oxdPort;
+    private ListModelList<Pair<CredentialType, String>> methods;
+    private Map<CredentialType, Boolean> activeMethods;
+    private Set<CredentialType> uiSelectedMethods;
 
     private AdminService myService;
 
@@ -66,13 +81,60 @@ public class AdminViewModel extends UserViewModel {
         this.searchPattern = searchPattern;
     }
 
+    @DependsOn("brandingPath")
+    public boolean isCustomBrandingEnabled() {
+        return brandingPath!=null;
+    }
+
+    public String getBrandingPath() {
+        return brandingPath;
+    }
+
+    public void setBrandingPath(String brandingPath) {
+        this.brandingPath = brandingPath;
+    }
+
+    public String getOxdHost() {
+        return oxdHost;
+    }
+
+    public void setOxdHost(String oxdHost) {
+        this.oxdHost = oxdHost;
+    }
+
+    public int getOxdPort() {
+        return oxdPort;
+    }
+
+    public void setOxdPort(int oxdPort) {
+        this.oxdPort = oxdPort;
+    }
+
+    public ListModelList<Pair<CredentialType, String>> getMethods() {
+        return methods;
+    }
+
+    public Map<CredentialType, Boolean> getActiveMethods() {
+        return activeMethods;
+    }
+
+    public Set<CredentialType> getEnabledMethods(){
+        return appCfg.getEnabledMethods();
+    }
+
     @Init(superclass = true)
     public void childInit() {
+        appName=Executions.getCurrent().getDesktop().getWebApp().getAppName();
         myService=services.getAdminService();
         appCfg=services.getAppConfig();
 
         logLevels=Arrays.asList(Level.values()).stream().sorted().map(levl -> levl.name()).collect(Collectors.toList());
         selectedLogLevel=appCfg.getConfigSettings().getLogLevel();
+        brandingPath=appCfg.getConfigSettings().getBrandingPath();
+        oxdHost=appCfg.getConfigSettings().getOxdConfig().getHost();
+        oxdPort=appCfg.getConfigSettings().getOxdConfig().getPort();
+
+        initMethods();
     }
 
     @Command
@@ -83,13 +145,22 @@ public class AdminViewModel extends UserViewModel {
         users=null;
     }
 
+    private void restoreUI(){
+        Clients.response(new AuInvoke("hideThrobber"));
+    }
+
+    /* ========== LOG LEVEL ========== */
+
     @Command
     public void changeLogLevel(@BindingParam("level") String newLevel){
         //Here it is assumed that changing log level is always a successful operation
         appCfg.setLoggingLevel(newLevel);
         Clients.response(new AuInvoke("hideThrobber"));
         showMessageUI(true);
+        myService.logAdminEvent("Log level changed to " + newLevel);
     }
+
+    /* ========== RESET CREDENTIALS ========== */
 
     @Command
     public void search(@BindingParam("box") Component box){
@@ -140,6 +211,7 @@ public class AdminViewModel extends UserViewModel {
                     resetAttr.setValue(usr.getDn());    //DN here stores true/false not a DN!
                 }
                 showMessageUI(true);
+                myService.logAdminEvent("Reset preferred method for users " + users.stream().map(u -> u.getUserId()).collect(Collectors.toList()));
             }
             else {
                 //Flush list if something went wrong
@@ -152,15 +224,158 @@ public class AdminViewModel extends UserViewModel {
 
     }
 
-    private void restoreUI(){
-        Clients.response(new AuInvoke("hideThrobber"));
-    }
-
     @NotifyChange({"users","searchPattern"})
     @Command
-    public void cancel(){
+    public void cancelReset(){
         users=null;
         searchPattern=null;
+    }
+
+    /* ========== CUSTOM BRANDING ========== */
+
+    @NotifyChange("brandingPath")
+    @Command
+    public void changeBranding(@BindingParam("val") String value){
+        //A non-null value means custom branding is selected
+        if (value==null) {
+            brandingPath = null;
+            storeBrandingPath();
+        }
+        else
+        if (brandingPath==null)
+            brandingPath=value;
+    }
+
+    public void storeBrandingPath(){
+        appCfg.getConfigSettings().setBrandingPath(brandingPath);
+        showMessageUI(true);
+        myService.logAdminEvent("Changed branding path to " + brandingPath);
+    }
+
+    @Command
+    public void saveBrandingPath(){
+        //Check directory exists
+
+        try {
+            //First predicate is required because isDirectory returns true if an empty path is provided ...
+            if (Utils.stringOptional(brandingPath).isPresent() && Files.isDirectory(Paths.get(brandingPath))) {
+                if (!Files.isDirectory(Paths.get(brandingPath, "images")) || !Files.isDirectory(Paths.get(brandingPath, "styles")))
+                    Messagebox.show(Labels.getLabel("adm.branding_no_subdirs"), appName, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+                            event -> {
+                                if (Messagebox.ON_YES.equals(event.getName()))
+                                    storeBrandingPath();
+                            }
+                    );
+                else
+                    storeBrandingPath();
+            }
+            else
+                Messagebox.show(Labels.getLabel("adm.branding_no_dir"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+            Messagebox.show(Labels.getLabel("adm.branding_no_dir"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        }
+        restoreUI();
+
+    }
+
+    /* ========== OXD SETTINGS ========== */
+
+    public void storeOxdSettings(){
+        appCfg.getConfigSettings().getOxdConfig().setHost(oxdHost);
+        appCfg.getConfigSettings().getOxdConfig().setPort(oxdPort);
+        appCfg.getConfigSettings().getOxdConfig().setOxdId(null);   //This will provoke re-registration
+        Messagebox.show(Labels.getLabel("adm.oxd_restart_required"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        myService.logAdminEvent("Changed oxd host/port to " + oxdHost + "/" + oxdPort);
+    }
+
+    @Command
+    public void saveOxdSettings(){
+
+        if (Utils.stringOptional(oxdHost).isPresent() && oxdPort>=0) {
+
+            boolean connected=false;
+            try {
+                connected=WebUtils.hostAvailabilityCheck(new InetSocketAddress(oxdHost, oxdPort), 3500);
+            }
+            catch (Exception e){
+                logger.error(e.getMessage(), e);
+            }
+            if (!connected)
+                Messagebox.show(Labels.getLabel("adm.oxd_no_connection"), appName, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+                        event -> {
+                            if (Messagebox.ON_YES.equals(event.getName()))
+                                storeOxdSettings();
+                        }
+                );
+            else
+                storeOxdSettings();
+        }
+        else
+            Messagebox.show(Labels.getLabel("adm.oxd_no_settings"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        restoreUI();
+    }
+
+    /* ========== ENABLED AUTHN METHODS ========== */
+
+    private void initMethods(){
+
+        try {
+            Set<String> serverAcrs = appCfg.retrieveServerAcrs();
+            //This one contains all possible credential types no matter if enabled
+            methods = UIModel.getCredentialList(new LinkedHashSet<>(Arrays.asList(CredentialType.values())));
+
+            activeMethods = new HashMap<>();
+            methods.stream().map(Pair::getX)
+                    .forEach(ct -> activeMethods.put(ct, serverAcrs.contains(ct.getName()) || serverAcrs.contains(ct.getAlternativeName())));
+
+            //Copy global (AppConfiguration's) enabled methods
+            uiSelectedMethods=new HashSet<>();
+            getEnabledMethods().stream().forEach(ct -> uiSelectedMethods.add(ct));
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+
+    }
+
+    @Command
+    public void checkMethod(@BindingParam("cred") CredentialType cred, @BindingParam("evt") Event evt){
+        Checkbox box=(Checkbox) evt.getTarget();
+        if (box.isChecked())
+            uiSelectedMethods.add(cred);
+        else
+            uiSelectedMethods.remove(cred);
+    }
+
+    @NotifyChange("enabledMethods")
+    @Command
+    public void saveMethods(){
+
+        List<String> failed=new ArrayList<>();
+        //Revise only that are originally enabled on the server
+        Stream<CredentialType> stream=activeMethods.entrySet().stream().filter(entry -> entry.getValue()).map(entry -> entry.getKey());
+        for (CredentialType method : stream.collect(Collectors.toList())){
+            if (uiSelectedMethods.contains(method))
+                getEnabledMethods().add(method);
+            else {
+                if (myService.zeroPreferences(method))
+                    getEnabledMethods().remove(method);
+                else {
+                    uiSelectedMethods.add(method);  //Turn it on again
+                    failed.add(method.getUIName());
+                }
+            }
+        }
+        if (failed.size()==0)
+            Messagebox.show(Labels.getLabel("adm.methods_change_success"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        else
+            Messagebox.show(Labels.getLabel("adm.methods_existing_credentials", new String[]{failed.toString()}),
+                    appName, Messagebox.OK, Messagebox.EXCLAMATION);
+
+        restoreUI();
+
     }
 
 }

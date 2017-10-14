@@ -7,6 +7,9 @@ body{
     width:120px;
     height:47px;
 }
+.s3{
+    width: 60px;
+}
 .s6{
     width: 120px;
 }
@@ -90,7 +93,7 @@ body{
 	font-size:10px;
 	min-height:60px;
 }
-.z-radio-content{
+.z-radio-content, .z-checkbox-content{
     font-size:12px;
     margin-bottom:0px;
     padding-left:8px;

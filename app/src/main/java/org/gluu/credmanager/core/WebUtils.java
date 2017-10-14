@@ -25,6 +25,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +46,7 @@ public class WebUtils {
     public enum RedirectStage {NONE, INITIAL, BYPASS};
     public static final String USER_PAGE_URL ="user.zul";
     public static final String ADMIN_PAGE_URL ="admin.zul";
+    public static final String LOGOUT_PAGE_URL ="bye.zul";
     //public static final String HOME_PAGE_URL ="index.zul";
 
     public static final String SERVICES_ATTRIBUTE="SRV";
@@ -226,6 +230,20 @@ public class WebUtils {
 
         return contents;
 
+    }
+
+    public static boolean hostAvailabilityCheck(SocketAddress address, int timeout) {
+        boolean available=false;
+        try (
+                Socket socket = new Socket()
+        ){
+            socket.connect(address, timeout);
+            available=true;
+        }
+        catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return available;
     }
 
 }

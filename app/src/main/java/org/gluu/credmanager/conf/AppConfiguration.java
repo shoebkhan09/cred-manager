@@ -10,6 +10,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.gluu.credmanager.conf.jsonized.Configs;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.gluu.credmanager.conf.jsonized.U2fSettings;
+import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.OxdService;
@@ -216,11 +217,12 @@ public class AppConfiguration{
                         else{
                             Optional<String> oxdHostOpt=Utils.stringOptional(oxdConfig.getHost());
                             Optional<String> oxdRedirectUri=Utils.stringOptional(oxdConfig.getRedirectUri());
-                            Optional<String> oxdLogoutUri=Utils.stringOptional(oxdConfig.getPostLogoutUri());
 
-                            if (!(oxdConfig.getPort()>0 && oxdHostOpt.isPresent() && oxdLogoutUri.isPresent() && (oxdRedirectUri.isPresent())))
+                            if (!(oxdConfig.getPort()>0 && oxdHostOpt.isPresent() && (oxdRedirectUri.isPresent())))
                                 logger.error(Labels.getLabel("app.oxd_settings_missing"));
                             else{
+                                oxdConfig.setPostLogoutUri(oxdRedirectUri.get() + "/" + WebUtils.LOGOUT_PAGE_URL);
+
                                 Optional<String> oxdIdOpt=Utils.stringOptional(oxdConfig.getOxdId());
                                 if (oxdIdOpt.isPresent()) {
                                     oxdService.setSettings(oxdConfig);
@@ -229,6 +231,7 @@ public class AppConfiguration{
                                 else{
                                     try{
                                         //Do registration
+                                        //TODO: delete previous existing client?
                                         oxdConfig.setClientName("cred-manager");
                                         oxdConfig.setOxdId(oxdService.doRegister(oxdConfig));
                                         oxdService.setSettings(oxdConfig);
@@ -237,7 +240,7 @@ public class AppConfiguration{
                                         inOperableState = true;
                                     }
                                     catch (Exception e) {
-                                        logger.error(Labels.getLabel("app.oxd_registration_failed"), e.getMessage());
+                                        logger.fatal(Labels.getLabel("app.oxd_registration_failed"), e.getMessage());
                                         throw e;
                                     }
                                 }
@@ -289,12 +292,21 @@ public class AppConfiguration{
     private void computeBrandingPath(Configs settings){
 
         String path=settings.getBrandingPath();
+        /*
         if (path!=null){
             boolean cond=path.endsWith(BASE_URL_BRANDING_PATH) || path.endsWith(File.separator + BASE_URL_BRANDING_PATH.substring(1));
             if (!(Files.isDirectory(Paths.get(path)) && cond )){
-                logger.error(Labels.getLabel("app.wrong_branding_path"), path);
-                settings.setBrandingPath(null);
             }
+        }
+        */
+        try{
+            if (Utils.stringOptional(path).isPresent() && !Files.isDirectory(Paths.get(path)))
+                throw new IOException("Not a directory");
+        }
+        catch (Exception e){
+            logger.error(Labels.getLabel("app.wrong_branding_path"), path);
+            logger.error(e.getMessage(), e);
+            settings.setBrandingPath(null);
         }
 
     }
@@ -388,18 +400,25 @@ public class AppConfiguration{
 
     }
 
-    private void computeEnabledMethods(Configs settings) throws Exception{
+    public Set<String> retrieveServerAcrs() throws Exception{
 
-        String strArr[]=new String[]{};
         String OIDCEndpointURL=ldapService.getOIDCEndpoint();
-        Set<String> possibleMethods=new HashSet(CredentialType.ACR_NAMES_SUPPORTED);
-
         logger.debug(Labels.getLabel("app.obtaining_acrs"), OIDCEndpointURL);
         JsonNode values=mapper.readTree(new URL(OIDCEndpointURL)).get("acr_values_supported");
 
         //Store server's supported acr values in a set
         Set<String> supportedSet=new HashSet<>();
         values.forEach(node -> supportedSet.add(node.asText()));
+
+        return supportedSet;
+
+    }
+
+    private void computeEnabledMethods(Configs settings) throws Exception{
+
+        String strArr[]=new String[]{};
+        Set<String> possibleMethods=new HashSet(CredentialType.ACR_NAMES_SUPPORTED);
+        Set<String> supportedSet=retrieveServerAcrs();
 
         //Verify default and routing acr are there
         List<String> acrList=Arrays.asList(SIMPLE_AUTH_ACR, ROUTING_ACR);

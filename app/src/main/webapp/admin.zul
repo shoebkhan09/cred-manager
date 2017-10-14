@@ -43,7 +43,7 @@
                            onClick="@command('loadSubPage', page='/admin/logging.zul')" />
             <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.oxd_title}&#160;" onCheck="recheck(event)"
-                           onClick="@command('loadSubPage', page='/admin/default.zul')" />
+                           onClick="@command('loadSubPage', page='/admin/oxd-config.zul')" />
             <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.pass_reset_title}&#160;" onCheck="recheck(event)"
                            onClick="@command('loadSubPage', page='/admin/default.zul')" />
@@ -52,10 +52,10 @@
                            onClick="@command('loadSubPage', page='/admin/default.zul')" />
             <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.methods_title}&#160;" onCheck="recheck(event)"
-                           onClick="@command('loadSubPage', page='/admin/default.zul')" />
+                           onClick="@command('loadSubPage', page='/admin/methods.zul')" />
             <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.branding_title}&#160;" onCheck="recheck(event)"
-                           onClick="@command('loadSubPage', page='/admin/default.zul')" />
+                           onClick="@command('loadSubPage', page='/admin/branding.zul')" />
             <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.resets_title}&#160;" onCheck="recheck(event)"
                            onClick="@command('loadSubPage', page='/admin/reset.zul')" />

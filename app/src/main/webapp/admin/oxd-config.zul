@@ -1,0 +1,22 @@
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client" xmlns:n="native"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <panel title="${labels.adm.oxd_title}" border="normal" sclass="padded">
+        <panelchildren sclass="padded">
+            <vlayout>
+                <label value="${labels.adm.oxd_text}"/>
+                <div align="center" sclass="padded">
+                    <hlayout valign="middle">
+                        <textbox sclass="s8 form-control" placeholder="${labels.amd.oxd_host_placeholder}" value="@bind(vm.oxdHost)" />
+                        :
+                        <textbox sclass="s3 form-control" placeholder="${labels.amd.oxd_port_placeholder}" value="@bind(vm.oxdPort)" />
+                    </hlayout>
+                    <separator />
+                    <separator />
+                    <button label="&#160;${labels.general.save}&#160;" sclass="btn-success form_button" onClick="@command('saveOxdSettings')" w:onClick="showThrobber()" />
+                </div>
+            </vlayout>
+        </panelchildren>
+    </panel>
+
+</zk>
