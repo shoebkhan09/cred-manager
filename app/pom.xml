@@ -22,12 +22,6 @@
 		<jackson.version>2.5.3</jackson.version>
         <ox.version>3.1.0.Final</ox.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!--ox.version>3.0.1</ox.version-->
-		<!--
-		<oxauth.version>3.1.0-SNAPSHOT</oxauth.version>
-		<httpclient.version>4.5.3</httpclient.version>
-		-->
 	</properties>
 	
 	<repositories>
