@@ -9,7 +9,7 @@
                     <hlayout valign="middle">
                         <textbox sclass="s8 form-control" placeholder="${labels.amd.oxd_host_placeholder}" value="@bind(vm.oxdHost)" />
                         :
-                        <textbox sclass="s3 form-control" placeholder="${labels.amd.oxd_port_placeholder}" value="@bind(vm.oxdPort)" />
+                        <textbox width="60px" sclass="form-control" placeholder="${labels.amd.oxd_port_placeholder}" value="@bind(vm.oxdPort)" />
                     </hlayout>
                     <separator />
                     <separator />

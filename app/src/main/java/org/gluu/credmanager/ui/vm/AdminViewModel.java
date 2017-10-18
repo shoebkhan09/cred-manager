@@ -3,8 +3,8 @@ package org.gluu.credmanager.ui.vm;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
+import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.AdminService;
@@ -33,12 +33,13 @@ import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-10-03.
- * This is the ViewModel of page admin.zul. It controls administrative functionalities
+ * This is the ViewModel of page admin.zul. It controls administrative functionalities. The method getConfigSettings in
+ * AdminService bean is used to obtain (partial) references to the current working settings. The objects retrieved by
+ * that method must not be changed (excluding primitives or Strings which if altered, do not modify the original object)
  */
 public class AdminViewModel extends UserViewModel {
 
     private Logger logger = LogManager.getLogger(getClass());
-    private AppConfiguration appCfg;
 
     private static final int MINLEN_SEARCH_PATTERN=3;
 
@@ -54,6 +55,9 @@ public class AdminViewModel extends UserViewModel {
     private ListModelList<Pair<CredentialType, String>> methods;
     private Map<CredentialType, Boolean> activeMethods;
     private Set<CredentialType> uiSelectedMethods;
+    private LdapSettings ldapSettings;
+    private boolean passResetEnabled;
+    private boolean passResetImpossible;
 
     private AdminService myService;
 
@@ -119,30 +123,57 @@ public class AdminViewModel extends UserViewModel {
     }
 
     public Set<CredentialType> getEnabledMethods(){
-        return appCfg.getEnabledMethods();
+        return myService.getEnabledMethods();
+    }
+
+    public LdapSettings getLdapSettings() {
+        return ldapSettings;
+    }
+
+    public void setLdapSettings(LdapSettings ldapSettings) {
+        this.ldapSettings = ldapSettings;
+    }
+
+    public boolean isPassResetEnabled() {
+        return passResetEnabled;
+    }
+
+    public boolean isPassResetImpossible() {
+        return passResetImpossible;
     }
 
     @Init(superclass = true)
     public void childInit() {
         appName=Executions.getCurrent().getDesktop().getWebApp().getAppName();
         myService=services.getAdminService();
-        appCfg=services.getAppConfig();
 
+        //This is a fixed list that remains constant all the time
         logLevels=Arrays.asList(Level.values()).stream().sorted().map(levl -> levl.name()).collect(Collectors.toList());
-        selectedLogLevel=appCfg.getConfigSettings().getLogLevel();
-        brandingPath=appCfg.getConfigSettings().getBrandingPath();
-        oxdHost=appCfg.getConfigSettings().getOxdConfig().getHost();
-        oxdPort=appCfg.getConfigSettings().getOxdConfig().getPort();
-
-        initMethods();
     }
 
     @Command
     @NotifyChange({"subpage"})
-    //Changes the page loaded in the content area (by default default.zul is being shown)
+    /**
+     * Changes the page loaded in the content area. Also sets values needed in the UI (these are taken directly from
+     * calls to AdminService's getConfigSettings method.
+     * @param page The (string) url of the page that must be loaded (by default /admin/default.zul is being shown)
+     */
     public void loadSubPage(@BindingParam("page") String page){
         subpage=page;
         users=null;
+        reloadSettings();
+        //Saves some computations
+        if (page.equals("/admin/methods.zul"))
+            initMethods();
+    }
+
+    public void reloadSettings(){
+        selectedLogLevel=myService.getConfigSettings().getLogLevel();
+        brandingPath=myService.getConfigSettings().getBrandingPath();
+        passResetEnabled=myService.getConfigSettings().isEnablePassReset();
+        passResetImpossible=myService.isPassResetImpossible();
+        initOxd();
+        initLdap();
     }
 
     private void restoreUI(){
@@ -153,11 +184,13 @@ public class AdminViewModel extends UserViewModel {
 
     @Command
     public void changeLogLevel(@BindingParam("level") String newLevel){
-        //Here it is assumed that changing log level is always a successful operation
-        appCfg.setLoggingLevel(newLevel);
-        Clients.response(new AuInvoke("hideThrobber"));
-        showMessageUI(true);
-        myService.logAdminEvent("Log level changed to " + newLevel);
+
+        String msg=myService.updateLoggingLevel(newLevel);
+        if (msg==null)
+            showMessageUI(true);
+        else
+            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+        restoreUI();
     }
 
     /* ========== RESET CREDENTIALS ========== */
@@ -165,17 +198,16 @@ public class AdminViewModel extends UserViewModel {
     @Command
     public void search(@BindingParam("box") Component box){
 
-        searchPattern=searchPattern.trim(); //avoid cheaters
         //Validates if input conforms to requirement of length
-        if (Utils.stringOptional(searchPattern).map(str -> str.length()).orElse(0) < MINLEN_SEARCH_PATTERN)
+        if (Utils.stringOptional(searchPattern).map(str -> str.trim().length()).orElse(0) < MINLEN_SEARCH_PATTERN)
             Clients.showNotification(Labels.getLabel("adm.resets_textbox_hint", new Integer[]{MINLEN_SEARCH_PATTERN}),
                     Clients.NOTIFICATION_TYPE_WARNING, box, "before_center", FEEDBACK_DELAY_ERR);
         else{
-            users=myService.searchUsers(searchPattern);
-            if (users==null)
+            users=myService.searchUsers(searchPattern.trim()); //avoid cheaters by trimming
+            if (users==null)    //No resuls found
                 showMessageUI(false);
             else {
-                //Takes the resulting list of users mathing the pattern and does sorting...
+                //Takes the resulting list of users matching the pattern and does sorting...
                 users = users.stream().sorted(Comparator.comparing(SimpleUser::getUserId)).collect(Collectors.toList());
 
                 //tricks: use a custom attribute to associate with checkboxes of the grid, and save dn elsewhere:
@@ -185,9 +217,10 @@ public class AdminViewModel extends UserViewModel {
                     custAttrs.add(new CustomAttribute("realDN", u.getDn()));
                 }
 
-                //trick: use dn to associate with checkboxes of the grid:
+                //One more trick: use dn to associate with checkboxes of the grid:
                 users.stream().forEach(user -> user.setDn("false"));
             }
+            //triggers update of interface
             BindUtils.postNotifyChange(null, null, this, "users");
         }
         restoreUI();
@@ -202,31 +235,53 @@ public class AdminViewModel extends UserViewModel {
                 && u.getDn().equals("true")).map(u -> u.getAttribute("realDN")).collect(Collectors.toList());
 
         if (userDNs.size()>0) { //proceed only if there is some fresh selection in the grid
+            //Perform the actual resetting
             int total = myService.resetPreference(userDNs);
             if (total == userDNs.size()) {      //Check the no. of users changed matches the expected
                 for (SimpleUser usr : users) {
+                    //No NPE here because search method fills the alreadyReset attribute for all users in the grid
                     CustomAttribute resetAttr = usr.getCustomAttributes().stream().
                             filter(attr -> attr.getName().equals("alreadyReset")).findFirst().get();
                     //attribute alreadyReset is true if the corresponding user row was selected
                     resetAttr.setValue(usr.getDn());    //DN here stores true/false not a DN!
                 }
                 showMessageUI(true);
-                myService.logAdminEvent("Reset preferred method for users " + users.stream().map(u -> u.getUserId()).collect(Collectors.toList()));
             }
             else {
                 //Flush list if something went wrong
                 users = null;
-                String msg = Labels.getLabel("adm.resets_entries_updated", new Integer[]{total});
+                String msg = Labels.getLabel("adm.resets_only_updated", new Integer[]{total});
                 showMessageUI(false, Labels.getLabel("general.error.detailed", new String[]{msg}));
             }
         }
+        else
+            showMessageUI(false, Labels.getLabel("adm.resets_noselection"));
         restoreUI();
 
+    }
+
+    @Command
+    //This simulates a click on a checkbox (although the click is coming from one made upon a row)
+    public void rowClicked(@BindingParam("evt") Event event, @BindingParam("val") SimpleUser user){
+        try {
+            //IMPORTANT: Assuming the check is the first child of row!
+            Checkbox box = (Checkbox) event.getTarget().getFirstChild();
+            if (!box.isDisabled()) {
+                //Simulate check on the checkbox
+                box.setChecked(!box.isChecked());
+                //Sync the user paired to this checkbox
+                user.setDn(Boolean.toString(box.isChecked()));
+            }
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
     }
 
     @NotifyChange({"users","searchPattern"})
     @Command
     public void cancelReset(){
+        //Provoke the grid to disappear, and cleaning the search textbox
         users=null;
         searchPattern=null;
     }
@@ -239,26 +294,28 @@ public class AdminViewModel extends UserViewModel {
         //A non-null value means custom branding is selected
         if (value==null) {
             brandingPath = null;
-            storeBrandingPath();
+            storeBrandingPath();    //Apply update immediately when the default option has been selected
         }
         else
         if (brandingPath==null)
-            brandingPath=value;
+            brandingPath=value;     //Makes the textfield appear emptied, but no update takes place yet (see saveBrandingPath)
     }
 
     public void storeBrandingPath(){
-        appCfg.getConfigSettings().setBrandingPath(brandingPath);
-        showMessageUI(true);
-        myService.logAdminEvent("Changed branding path to " + brandingPath);
+        String msg=myService.updateBrandingPath(brandingPath);
+        if (msg==null)
+            showMessageUI(true);
+        else
+            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
     }
 
     @Command
     public void saveBrandingPath(){
-        //Check directory exists
 
         try {
             //First predicate is required because isDirectory returns true if an empty path is provided ...
             if (Utils.stringOptional(brandingPath).isPresent() && Files.isDirectory(Paths.get(brandingPath))) {
+                //Check directory exists
                 if (!Files.isDirectory(Paths.get(brandingPath, "images")) || !Files.isDirectory(Paths.get(brandingPath, "styles")))
                     Messagebox.show(Labels.getLabel("adm.branding_no_subdirs"), appName, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                             event -> {
@@ -282,12 +339,18 @@ public class AdminViewModel extends UserViewModel {
 
     /* ========== OXD SETTINGS ========== */
 
+    private void initOxd(){
+        //Take immutable copy of oxd relevant settings
+        oxdHost=myService.getConfigSettings().getOxdConfig().getHost();
+        oxdPort=myService.getConfigSettings().getOxdConfig().getPort();
+    }
+
     public void storeOxdSettings(){
-        appCfg.getConfigSettings().getOxdConfig().setHost(oxdHost);
-        appCfg.getConfigSettings().getOxdConfig().setPort(oxdPort);
-        appCfg.getConfigSettings().getOxdConfig().setOxdId(null);   //This will provoke re-registration
-        Messagebox.show(Labels.getLabel("adm.oxd_restart_required"), appName, Messagebox.OK, Messagebox.INFORMATION);
-        myService.logAdminEvent("Changed oxd host/port to " + oxdHost + "/" + oxdPort);
+        String msg=myService.updateOxdSettings(oxdHost, oxdPort);
+        if (msg==null)
+            Messagebox.show(Labels.getLabel("adm.restart_required"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        else
+            Messagebox.show(Labels.getLabel("adm.oxd_fail_update"), appName, Messagebox.OK, Messagebox.EXCLAMATION);
     }
 
     @Command
@@ -295,7 +358,7 @@ public class AdminViewModel extends UserViewModel {
 
         if (Utils.stringOptional(oxdHost).isPresent() && oxdPort>=0) {
 
-            boolean connected=false;
+            boolean connected=false;    //Try to guess if this is really an oxd-server
             try {
                 connected=WebUtils.hostAvailabilityCheck(new InetSocketAddress(oxdHost, oxdPort), 3500);
             }
@@ -307,6 +370,11 @@ public class AdminViewModel extends UserViewModel {
                         event -> {
                             if (Messagebox.ON_YES.equals(event.getName()))
                                 storeOxdSettings();
+                            else {  //Revert to last known working (or accepted)
+                                initOxd();
+                                BindUtils.postNotifyChange(null, null, AdminViewModel.this, "oxdHost");
+                                BindUtils.postNotifyChange(null, null, AdminViewModel.this, "oxdPort");
+                            }
                         }
                 );
             else
@@ -322,20 +390,24 @@ public class AdminViewModel extends UserViewModel {
     private void initMethods(){
 
         try {
-            Set<String> serverAcrs = appCfg.retrieveServerAcrs();
-            //This one contains all possible credential types no matter if enabled
+            //Retrieve current active ACR values
+            Set<String> serverAcrs = myService.retrieveServerAcrs();
+            //Fill list with all possible credential types no matter if enabled
             methods = UIModel.getCredentialList(new LinkedHashSet<>(Arrays.asList(CredentialType.values())));
 
+            //Fill map used in the UI to determine if some checkbox is disabled
             activeMethods = new HashMap<>();
             methods.stream().map(Pair::getX)
                     .forEach(ct -> activeMethods.put(ct, serverAcrs.contains(ct.getName()) || serverAcrs.contains(ct.getAlternativeName())));
 
-            //Copy global (AppConfiguration's) enabled methods
+            //uiSelectedMethods is a set that is being sync whenever the user selects/deselects a method in the UI
+            //Here it is initialized to the have the same items as the global AppConfiguration enabledMethods member
             uiSelectedMethods=new HashSet<>();
             getEnabledMethods().stream().forEach(ct -> uiSelectedMethods.add(ct));
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
+            methods=new ListModelList<>();      //This is to provoke the subpage becoming useless
         }
 
     }
@@ -343,6 +415,7 @@ public class AdminViewModel extends UserViewModel {
     @Command
     public void checkMethod(@BindingParam("cred") CredentialType cred, @BindingParam("evt") Event evt){
         Checkbox box=(Checkbox) evt.getTarget();
+        //Add or remove from set depending on whether it's checked or not
         if (box.isChecked())
             uiSelectedMethods.add(cred);
         else
@@ -351,15 +424,17 @@ public class AdminViewModel extends UserViewModel {
 
     @NotifyChange("enabledMethods")
     @Command
+    //This method changes the application level configuration for enabled methods
     public void saveMethods(){
 
         List<String> failed=new ArrayList<>();
-        //Revise only that are originally enabled on the server
+        //Iterate over only those originally enabled on the server
         Stream<CredentialType> stream=activeMethods.entrySet().stream().filter(entry -> entry.getValue()).map(entry -> entry.getKey());
         for (CredentialType method : stream.collect(Collectors.toList())){
             if (uiSelectedMethods.contains(method))
                 getEnabledMethods().add(method);
             else {
+                //Check if it's allowed to uncheck this method
                 if (myService.zeroPreferences(method))
                     getEnabledMethods().remove(method);
                 else {
@@ -368,14 +443,74 @@ public class AdminViewModel extends UserViewModel {
                 }
             }
         }
-        if (failed.size()==0)
-            Messagebox.show(Labels.getLabel("adm.methods_change_success"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        if (failed.size()==0) {
+            //Do the update and show success/fail message
+            String msg=myService.updateEnabledMethods();
+            if (msg==null)
+                Messagebox.show(Labels.getLabel("adm.methods_change_success"), appName, Messagebox.OK, Messagebox.INFORMATION);
+            else
+                Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+        }
         else
             Messagebox.show(Labels.getLabel("adm.methods_existing_credentials", new String[]{failed.toString()}),
                     appName, Messagebox.OK, Messagebox.EXCLAMATION);
 
         restoreUI();
 
+    }
+
+    /* ========== LDAP SETTINGS ========== */
+
+    public void initLdap(){
+        //Retrieves a clone of the LDAP settings. This is so as the ldapSettings variable is bound to UI components,
+        //so user interaction would affect the real operating settings if this weren't a clone
+        ldapSettings=myService.copyOfWorkingLdapSettings();
+    }
+
+    @Command
+    public void saveLdapSettings(){
+
+        //salt is optional, check the others were provided
+        List<String> settingsList=Arrays.asList(ldapSettings.getApplianceInum(), ldapSettings.getOrgInum(), ldapSettings.getOxLdapLocation());
+        boolean nonNull=settingsList.stream().map(Utils::stringOptional).allMatch(Optional::isPresent);
+        boolean nonEmpty=nonNull && settingsList.stream().allMatch(s -> s.trim().length()>0);
+
+        if (nonNull && nonEmpty){
+            //Verify values provided make sense
+            String msg=myService.testLdapSettings(ldapSettings);
+            if (msg==null) {
+                //If they do, update
+                msg=myService.updateLdapSettings();
+
+                if (msg==null)
+                    Messagebox.show(Labels.getLabel("adm.restart_required"), appName, Messagebox.OK, Messagebox.INFORMATION);
+                else
+                    Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+            }
+            else {
+                initLdap();    //Revert to AdminService local (working) copy of settings
+                Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+            }
+            BindUtils.postNotifyChange(null, null, this, "ldapSettings");
+        }
+        else
+            showMessageUI(false, Labels.getLabel("adm.ldap_nonempty"));
+        restoreUI();
+
+    }
+
+    /* ========== PASS RESET ========== */
+
+    @NotifyChange("passResetEnabled")
+    @Command
+    public void doSwitch(){
+        passResetEnabled=!passResetEnabled;
+        String msg=myService.updatePassReset(passResetEnabled);
+        if (msg==null)
+            showMessageUI(true);
+        else
+            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+        restoreUI();
     }
 
 }

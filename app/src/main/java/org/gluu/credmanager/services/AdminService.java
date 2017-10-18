@@ -1,22 +1,29 @@
 package org.gluu.credmanager.services;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
+import org.gluu.credmanager.conf.jsonized.Configs;
+import org.gluu.credmanager.conf.jsonized.LdapSettings;
+import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.xdi.ldap.model.SimpleUser;
 import org.zkoss.util.resource.Labels;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by jgomer on 2017-10-05.
- * An app. scoped bean that contains method that helps to achieve administrative tasks
+ * A app-scoped bean that contains methods to achieve administrative tasks
  */
 @ApplicationScoped
 public class AdminService {
@@ -24,11 +31,62 @@ public class AdminService {
     private Logger logger = LogManager.getLogger(getClass());
 
     @Inject
+    private AppConfiguration appConfig;
+
+    @Inject
     private LdapService ldapService;
 
-    public void logAdminEvent(String description){
-        logger.warn(Labels.getLabel("app.admin_event"), description);
+    private Configs localSettings;
+
+    private ObjectMapper mapper;
+
+    public Configs getConfigSettings(){
+        return localSettings;
     }
+
+    @PostConstruct
+    public void setup(){
+        try {
+            mapper=new ObjectMapper();
+            //Is this a way to clone-deep a bean? ... NO
+            //localSettings = (Configs) BeanUtils.cloneBean(appConfig.getConfigSettings()); Neither the following:
+            //localSettings = mapper.convertValue(appConfig.getConfigSettings(), Configs.class);
+            localSettings=mapper.readValue(mapper.writeValueAsString(appConfig.getConfigSettings()), new TypeReference<Configs>(){});
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+    }
+
+    public void logAdminEvent(String description){
+        logger.warn(Labels.getLabel("adm.admin_event"), description);
+    }
+
+    /* ========== "PROXY" METHODS ========== */
+
+    public Set<String> retrieveServerAcrs() throws Exception {
+        return appConfig.retrieveServerAcrs();
+    }
+
+    public Set<CredentialType> getEnabledMethods(){
+        return appConfig.getEnabledMethods();
+    }
+
+    private String updateSettings(){
+
+        String detail=null;
+        try {
+            appConfig.updateConfigFile(localSettings);
+        }
+        catch (Exception e){
+            detail=Labels.getLabel("adm.conffile_error_update");
+            logger.error(e.getMessage(), e);
+        }
+        return detail;
+
+    }
+
+    /* ========== RESET CREDENTIALS ========== */
 
     /**
      * Builds a list of users whose username, first or last name matches the pattern passed, and at the same time have a
@@ -60,6 +118,7 @@ public class AdminService {
             for (String dn : userDNs){
                 ldapService.updatePreferredMethod(dn.substring(0, dn.indexOf(",")).trim(), null);
                 modified++;
+                logAdminEvent("Reset preferred method for user " + dn);
             }
         }
         catch (Exception e){
@@ -90,6 +149,137 @@ public class AdminService {
             zero=false;
         }
         return zero;
+
+    }
+
+    /* ========== LOG LEVEL ========== */
+
+    public String updateLoggingLevel(String level){
+        localSettings.setLogLevel(level);
+        //Do runtime change (here it is assumed that changing log level is always a successful operation)
+        appConfig.setLoggingLevel(level);
+        logAdminEvent("Log level changed to " + level);
+        //persist
+        return updateSettings();
+    }
+
+    /* ========== CUSTOM BRANDING ========== */
+
+    public String updateBrandingPath(String path){
+        path=Utils.stringOptional(path).orElse(null);   //converts empty or null in null, otherwise leave it intact
+        localSettings.setBrandingPath(path);
+        //Do runtime change
+        appConfig.getConfigSettings().setBrandingPath(path);
+        logAdminEvent("Changed branding path to " + path);
+        //persist
+        return updateSettings();
+    }
+
+    /* ========== OXD SETTINGS ========== */
+
+    //This method does not change application level settings
+    public String updateOxdSettings(String host, int port){
+
+        //Detect if there are changes with respect to current configuration
+        if (host.equals(localSettings.getOxdConfig().getHost()) && port==localSettings.getOxdConfig().getPort())
+            return null;
+        else{
+            //update local copy
+            localSettings.getOxdConfig().setHost(host);
+            localSettings.getOxdConfig().setPort(port);
+            localSettings.getOxdConfig().setOxdId(null);    //This will provoke re-registration after restart
+
+            logAdminEvent("Changed oxd host/port to " + host + "/" + port);
+            //no runtime change here, or else the app stops working well
+            return updateSettings();
+        }
+
+    }
+
+    /* ========== LDAP SETTINGS ========== */
+
+    public LdapSettings copyOfWorkingLdapSettings(){
+        return copyOfLdapSettings(localSettings.getLdapSettings());
+    }
+
+    private LdapSettings copyOfLdapSettings(LdapSettings settings){
+
+        LdapSettings ldapSettings=null;
+        try {
+            ldapSettings=mapper.readValue(mapper.writeValueAsString(settings), new TypeReference<LdapSettings>(){});
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return ldapSettings;
+
+    }
+
+    //This method does not change application level settings
+    public String testLdapSettings(LdapSettings newSettings){
+
+        String msg=null;
+        LdapSettings backup=copyOfWorkingLdapSettings();
+        LdapSettings newSettingsCopy=copyOfLdapSettings(newSettings);
+        try{
+            logger.info(Labels.getLabel("adm.ldap_testing"));
+            ldapService.setup(newSettingsCopy);
+            //If it gets here, it means the provided settings were fine, so local copy can be overriden
+            localSettings.setLdapSettings(newSettingsCopy);
+        }
+        catch (Exception e) {
+            msg = e.getMessage();
+        }
+        try{
+            //Revert to backup settings
+            logger.warn(Labels.getLabel("adm.ldap_revert_conf"));
+            ldapService.setup(backup);
+        }
+        catch (Exception e1){
+            //FATAL! :O
+            logger.fatal(e1.getMessage(), e1);
+        }
+        return msg;
+
+    }
+
+    public String updateLdapSettings(){
+        //persist
+        return updateSettings();
+    }
+
+    /* ========== PASS RESET ========== */
+
+    public boolean isPassResetImpossible(){
+        try {
+            return ldapService.isBackendLdapEnabled();
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+            return true;
+        }
+    }
+
+    public String updatePassReset(boolean val){
+        //update local copy
+        localSettings.setEnablePassReset(val);
+        //Do runtime change
+        appConfig.setPassReseteable(val);
+        logAdminEvent("Changed pass reset availability to " + Boolean.toString(val).toUpperCase());
+        //persist
+        return updateSettings();
+    }
+
+    /* ========== ENABLED AUTHN METHODS ========== */
+
+    public String updateEnabledMethods(){
+
+        //The runtime variable used for storing the enabled methods is already updated
+        Set<CredentialType> set=getEnabledMethods();
+        logAdminEvent("Changed enabled methods to: " + set);
+        List<String> list=set.stream().map(CredentialType::getName).collect(Collectors.toList());
+        localSettings.setEnabledMethods(list);
+        return updateSettings();
 
     }
 

@@ -17,10 +17,7 @@ import org.gluu.credmanager.services.OxdService;
 import org.gluu.credmanager.services.ldap.pojo.CustomScript;
 import org.zkoss.util.resource.Labels;
 
-import static org.gluu.credmanager.conf.CredentialType.OTP;
-import static org.gluu.credmanager.conf.CredentialType.VERIFIED_PHONE;
-import static org.gluu.credmanager.conf.CredentialType.SUPER_GLUU;
-import static org.gluu.credmanager.conf.CredentialType.SECURITY_KEY;
+import static org.gluu.credmanager.conf.CredentialType.*;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -39,12 +36,10 @@ import java.util.zip.ZipFile;
 /**
  * Created by jgomer on 2017-07-04.
  * This managed bean is in charge of reading/parsing all necessary settings the application needs for working.
- * All configurations are taken primarly from the app's Json config file, and from LDAP as described here:
- * https://github.com/GluuFederation/cred-manager/blob/master/app/README.md#application-initialization
+ * All configurations are taken primarly from the app's Json config file, and from LDAP as described in app's admin guide
  * The method setup (annotated with @PostConstruct) triggers all parsing. This class does its best to infer certain
  * parameters when they are not provided and warns whenever a vital parameter is wrong, missing or inconsistent (see
- * member inOperableState).
- * Most configurations are saved in the configSettings member.
+ * member inOperableState). Most configurations are saved in the configSettings member.
  */
 @ApplicationScoped
 public class AppConfiguration{
@@ -74,7 +69,8 @@ public class AppConfiguration{
     private String orgName;
     private String issuerUrl;
 
-    //The following override those properties inside found inside configSettings
+    //The following override those properties found inside configSettings. Administrative functionalities (see AdminService bean),
+    //MUST update these properties as well as those of Configs object (which are the ones that can be serialized to disk)
     private Set<CredentialType> enabledMethods;
     private boolean passReseteable;
     private String gluuVersion;
@@ -82,8 +78,8 @@ public class AppConfiguration{
 
     private Logger logger = LogManager.getLogger(getClass());
     private ObjectMapper mapper=new ObjectMapper();
-
     private String gluuBase;
+    private File srcConfigFile;
 
     @Inject
     private LdapService ldapService;
@@ -123,6 +119,10 @@ public class AppConfiguration{
         return issuerUrl;
     }
 
+    public void setPassReseteable(boolean passReseteable) {
+        this.passReseteable = passReseteable;
+    }
+
     private void setGluuBase(String candidateGluuBase) {
 
         String osName = System.getProperty("os.name").toLowerCase();
@@ -135,6 +135,11 @@ public class AppConfiguration{
 
     }
 
+    /**
+     * Returns a reference to the configuration file of the application (cred-manager.json)
+     * @param baseDir Path to configuration file without the CONF_FILE_RELATIVE_PATH part
+     * @return A File object
+     */
     private File getConfigFile(String baseDir){
         Path path=Paths.get(baseDir, CONF_FILE_RELATIVE_PATH);
         return Files.exists(path) ? path.toFile() : null;
@@ -147,12 +152,14 @@ public class AppConfiguration{
         setGluuBase(System.getProperty("gluu.base"));
 
         if (gluuBase!=null){
-            File src=getConfigFile(gluuBase);
-            if (src==null)
+            //Get a reference to the config-file
+            srcConfigFile=getConfigFile(gluuBase);
+            if (srcConfigFile==null)
                 logger.error(Labels.getLabel("app.conf_file_not_readable"), CONF_FILE_RELATIVE_PATH);
             else
                 try{
-                    configSettings=mapper.readValue(src, Configs.class);
+                    //Parses config file in a Configs instance
+                    configSettings=mapper.readValue(srcConfigFile, Configs.class);
                 }
                 catch (IOException e){
                     inOperableState=false;
@@ -161,12 +168,10 @@ public class AppConfiguration{
                     logger.error(e.getMessage(),e);
                 }
                 finally {
+                    //Check settings consistency, infer some, and override others
                     if (computeSettings(configSettings))
                         try {
-                            //update file to disk
-                            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                            mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-                            mapper.writeValue(src, configSettings);
+                            updateConfigFile(configSettings);
                         }
                         catch (Exception e) {
                             logger.error(Labels.getLabel("app.conf_update_error"), e);
@@ -174,6 +179,13 @@ public class AppConfiguration{
                 }
         }
 
+    }
+
+    public void updateConfigFile(Configs configs) throws Exception{
+        //update file to disk
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        mapper.writeValue(srcConfigFile, configs);
     }
 
     private boolean computeSettings(Configs settings) {
@@ -205,7 +217,7 @@ public class AppConfiguration{
                         computeGluuVersion(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
-                        //Any of the following 4 calls has to be made after computeEnabledMethods and computeGluuVersion only
+                        //The following 4 statements are executed only after computeEnabledMethods and computeGluuVersion are called
                         computeU2fSettings(settings);
                         computeOTPSettings(settings);
                         computeSuperGluuSettings(settings);
@@ -221,7 +233,9 @@ public class AppConfiguration{
                             if (!(oxdConfig.getPort()>0 && oxdHostOpt.isPresent() && (oxdRedirectUri.isPresent())))
                                 logger.error(Labels.getLabel("app.oxd_settings_missing"));
                             else{
-                                oxdConfig.setPostLogoutUri(oxdRedirectUri.get() + "/" + WebUtils.LOGOUT_PAGE_URL);
+                                String tmp=oxdRedirectUri.get();    //Remove trailing slash if any in redirect URI
+                                tmp=tmp.endsWith("/") ? tmp.substring(0, tmp.length()-1) : tmp;
+                                oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
 
                                 Optional<String> oxdIdOpt=Utils.stringOptional(oxdConfig.getOxdId());
                                 if (oxdIdOpt.isPresent()) {
@@ -230,8 +244,8 @@ public class AppConfiguration{
                                 }
                                 else{
                                     try{
-                                        //Do registration
                                         //TODO: delete previous existing client?
+                                        //Do registration
                                         oxdConfig.setClientName("cred-manager");
                                         oxdConfig.setOxdId(oxdService.doRegister(oxdConfig));
                                         oxdService.setSettings(oxdConfig);
@@ -282,10 +296,11 @@ public class AppConfiguration{
         else
             try {
                 Level.valueOf(levelInConfFile);
+                logger.info(Labels.getLabel("app.set_log_level"), levelInConfFile);
                 setLoggingLevel(levelInConfFile);
             }
             catch (Exception e) {
-                logger.warn(Labels.getLabel("app.wrong_long_level"), levelInConfFile, currentLevl);
+                logger.warn(Labels.getLabel("app.wrong_log_level"), levelInConfFile, currentLevl);
             }
     }
 
@@ -400,6 +415,11 @@ public class AppConfiguration{
 
     }
 
+    /**
+     * Performs a GET to the OIDC metadata URL and extracts the ACR values supported by the server
+     * @return A Set of String values
+     * @throws Exception
+     */
     public Set<String> retrieveServerAcrs() throws Exception{
 
         String OIDCEndpointURL=ldapService.getOIDCEndpoint();
@@ -416,7 +436,6 @@ public class AppConfiguration{
 
     private void computeEnabledMethods(Configs settings) throws Exception{
 
-        String strArr[]=new String[]{};
         Set<String> possibleMethods=new HashSet(CredentialType.ACR_NAMES_SUPPORTED);
         Set<String> supportedSet=retrieveServerAcrs();
 
@@ -429,17 +448,15 @@ public class AppConfiguration{
             //Now, keep the interesting ones. This will filter things like "basic", "auth_ldap_server", etc.
             supportedSet.retainAll(possibleMethods);
 
-            Optional<String[]> methods = Utils.arrayOptional(settings.getEnabledMethods());
-            //If there are no enabled methods in config file, assume we want all of them
-            String tmp[] = (methods.isPresent()) ? methods.get() : possibleMethods.toArray(strArr);
+            Optional<List<String>> methods=Utils.listOptional(settings.getEnabledMethods());
 
+            //If there are no enabled methods in config file, assume we want all of them
+            Set<String> enabledSet = new HashSet<>(methods.isPresent() ? methods.get() : possibleMethods);
             //From enabled methods in config file, keep only those really supported by server
-            Set<String> enabledSet = new HashSet<>(Arrays.asList(tmp));
             enabledSet.retainAll(supportedSet);
 
             //log result so far
-            strArr = enabledSet.toArray(strArr);
-            logger.warn(Labels.getLabel("app.effective_acrs"), Arrays.asList(strArr).toString(), strArr.length);
+            logger.warn(Labels.getLabel("app.effective_acrs"), enabledSet, enabledSet.size());
 
             //Put it on this bean...
             Stream<CredentialType> stream = enabledSet.stream().map(CredentialType::get);
@@ -472,18 +489,15 @@ public class AppConfiguration{
 
     public void setLoggingLevel(String strLevel){
 
-        logger.info(Labels.getLabel("app.change_log_level"), strLevel);
         Level newLevel=Level.toLevel(strLevel);
-/*
+        /*
         LoggerContext loggerContext = LoggerContext.getContext(false);
         for (org.apache.logging.log4j.core.Logger logger : loggerContext.getLoggers()) {
             if (logger.getName().startsWith("org.gluu"))
                 logger.setLevel(newLevel);
-        }
-*/
+        }*/
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.gluu", newLevel);
         configSettings.setLogLevel(strLevel);
-        //TODO: update config file on disk
     }
 
     private Level getLoggingLevel(){
@@ -497,9 +511,7 @@ public class AppConfiguration{
                 currLevel = logger.getLevel();
                 break;
             }
-        return currLevel;
-            */
-
+        return currLevel; */
     }
 
 }

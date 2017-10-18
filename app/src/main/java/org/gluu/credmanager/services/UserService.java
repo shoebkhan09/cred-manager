@@ -7,16 +7,14 @@ import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.credential.*;
-import org.gluu.credmanager.core.credential.fido.FidoDevice;
+import org.gluu.credmanager.core.credential.FidoDevice;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.ldap.pojo.GluuPerson;
 import org.gluu.credmanager.conf.CredentialType;
-import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,6 +50,7 @@ public class UserService {
      */
     public User createUserFromClaims(Map<String, List<String>> claims){
 
+        //TODO: add logging here
         User u = new User();
         u.setUserName(getClaim(claims,"user_name"));
         u.setGivenName(getClaim(claims,"given_name"));
@@ -62,6 +61,9 @@ public class UserService {
         String inum=getClaim(claims, "inum");
         if (inum!=null)
             u.setRdn("inum=" + inum);
+
+        if (u.getRdn()==null || u.getUserName()==null)
+            u=null;
 
         return u;
     }

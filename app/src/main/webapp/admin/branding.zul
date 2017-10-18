@@ -11,7 +11,7 @@
                            onCheck="@command('changeBranding')" radiogroup="groupie" />
                     <radio label="${labels.adm.branding_use_custom}" selected="@load(vm.customBrandingEnabled)"
                            onClick="path.focus()" onCheck="@command('changeBranding', val='')" radiogroup="groupie" />
-                    <vlayout style="${pageScope.onMobile ? '' : 'padding-left:30px'}" sclass="padded" visible="@load(vm.customBrandingEnabled)">
+                    <vlayout spacing="12px" style="${pageScope.onMobile ? '' : 'padding-left:30px'}" sclass="padded" visible="@load(vm.customBrandingEnabled)">
                         <div align="right" sclass="s12">
                             <textbox sclass="s12 form-control" value="@bind(vm.brandingPath)" id="path" />
                             <separator />

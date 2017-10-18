@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.core.credential.SuperGluuDevice;
-import org.gluu.credmanager.core.credential.fido.FidoDevice;
+import org.gluu.credmanager.core.credential.FidoDevice;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.pojo.*;
 import org.gluu.site.ldap.LDAPConnectionProvider;
@@ -55,37 +55,53 @@ public class LdapService {
      */
     public void setup(LdapSettings settings) throws Exception{
 
-        mapper = new ObjectMapper();
-        ldapSettings=settings;
+        try {
+            mapper = new ObjectMapper();
+            ldapSettings = settings;
 
-        String saltFile=ldapSettings.getSaltLocation();
-        ldapProperties = new FileConfiguration(ldapSettings.getOxLdapLocation()).getProperties();
-        if (saltFile != null){
-            String salt = new FileConfiguration(saltFile).getProperties().getProperty("encodeSalt");
-            ldapProperties = PropertiesDecrypter.decryptProperties(StringEncrypter.instance(salt), ldapProperties);
-        }
-        LDAPConnectionProvider connProvider = new LDAPConnectionProvider(ldapProperties);
+            ldapProperties = new FileConfiguration(ldapSettings.getOxLdapLocation()).getProperties();
+            String saltFile = ldapSettings.getSaltLocation();
+            if (Utils.stringOptional(saltFile).isPresent()) {
+                String salt = new FileConfiguration(saltFile).getProperties().getProperty("encodeSalt");
+                ldapProperties = PropertiesDecrypter.decryptProperties(StringEncrypter.instance(salt), ldapProperties);
+            }
+            LDAPConnectionProvider connProvider = new LDAPConnectionProvider(ldapProperties);
 
-        OperationsFacade facade = new OperationsFacade(connProvider);   //bindConnProvider??
-        ldapEntryManager=new CustomEntryManager(facade);
-
-        if (ldapEntryManager!=null){
+            OperationsFacade facade = new OperationsFacade(connProvider);   //bindConnProvider??
+            ldapEntryManager = new CustomEntryManager(facade);
 
             //Initialize important class members
-            String dn=String.format("ou=configuration,inum=%s,ou=appliances,o=gluu", ldapSettings.getApplianceInum());
-
-            OxAuthConfiguration authConfig=ldapEntryManager.find(OxAuthConfiguration.class, "ou=oxauth," + dn);
-            oxAuthConfDynamic = mapper.readTree(authConfig.getStrConfDynamic());
-
-            oxTrustConfig=ldapEntryManager.find(OxTrustConfiguration.class, "ou=oxtrust," + dn);
-
-            usersDN=String.format("ou=people,o=%s,o=gluu", ldapSettings.getOrgInum());
-
-            dn=String.format("o=%s,o=gluu", ldapSettings.getOrgInum());
-            organization=ldapEntryManager.find(GluuOrganization.class, dn);
+            loadApplianceSettings(ldapSettings);
+            loadOrganizationSettings(ldapSettings);
         }
-        else
-            throw new Exception(Labels.getLabel("app.bad_ldapentrymanager"));
+        catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw new Exception(Labels.getLabel("app.wrong_ldap_settings"));
+        }
+
+    }
+
+    public void loadOrganizationSettings(LdapSettings settings) throws IOException{
+
+        String dn=String.format("o=%s,o=gluu", settings.getOrgInum());
+        organization=ldapEntryManager.find(GluuOrganization.class, dn);
+        if (organization==null)
+            throw new IOException();
+
+        usersDN="ou=people," + dn;
+
+    }
+
+    public void loadApplianceSettings(LdapSettings settings) throws IOException{
+        String dn=String.format("ou=configuration,inum=%s,ou=appliances,o=gluu", settings.getApplianceInum());
+
+        OxAuthConfiguration authConfig=ldapEntryManager.find(OxAuthConfiguration.class, "ou=oxauth," + dn);
+        if (authConfig==null)   //Prevent having a useless NPE
+            throw new IOException();
+
+        oxAuthConfDynamic = mapper.readTree(authConfig.getStrConfDynamic());
+        oxTrustConfig=ldapEntryManager.find(OxTrustConfiguration.class, "ou=oxtrust," + dn);
+
     }
 
     public String getOrganizationName() throws Exception{
@@ -124,11 +140,14 @@ public class LdapService {
      */
     public boolean isBackendLdapEnabled() throws Exception{
 
-        JsonNode tree=mapper.readTree(oxTrustConfig.getConfCacheRefreshStr());
+        if (oxTrustConfig!=null) {
+            JsonNode tree = mapper.readTree(oxTrustConfig.getConfCacheRefreshStr());
 
-        List<Boolean> enabledList=new ArrayList<>();
-        tree.get("sourceConfigs").forEach(node -> enabledList.add(node.get("enabled").asBoolean()));
-        return enabledList.stream().anyMatch(item -> item);
+            List<Boolean> enabledList = new ArrayList<>();
+            tree.get("sourceConfigs").forEach(node -> enabledList.add(node.get("enabled").asBoolean()));
+            return enabledList.stream().anyMatch(item -> item);
+        }
+        return false;
 
     }
 
@@ -174,8 +193,11 @@ public class LdapService {
     }
 
     public boolean authenticate(String uid, String pass) throws Exception{
-        JsonNode baseDnNode=mapper.readTree(oxTrustConfig.getConfApplicationStr()).get("baseDN");
-        return ldapEntryManager.authenticate(uid, pass, baseDnNode.asText());
+        if (oxTrustConfig!=null) {
+            JsonNode baseDnNode = mapper.readTree(oxTrustConfig.getConfApplicationStr()).get("baseDN");
+            return ldapEntryManager.authenticate(uid, pass, baseDnNode.asText());
+        }
+        throw new UnsupportedOperationException(Labels.getLabel("app.ldap_authn_unsupported"));
     }
 
     public void changePassword(String userRdn, String newPassword) throws Exception{
