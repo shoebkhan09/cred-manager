@@ -7,6 +7,8 @@ import org.gluu.credmanager.conf.OTPConfig;
 import org.gluu.credmanager.conf.SGConfig;
 import org.gluu.credmanager.conf.TwilioConfig;
 
+import java.util.List;
+
 /**
  * Created by jgomer on 2017-07-06.
  */
@@ -21,7 +23,7 @@ public class Configs {
     private OTPConfig otpConfig;
     private SGConfig sgConfig;
     private U2fSettings u2fSettings;
-    private String[] enabledMethods;
+    private List<String> enabledMethods;
     private String gluuVersion;
     private String logLevel;
 
@@ -37,7 +39,8 @@ public class Configs {
         return oxdConfig;
     }
 
-    public String[] getEnabledMethods() {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<String> getEnabledMethods() {
         return enabledMethods;
     }
 
@@ -102,7 +105,7 @@ public class Configs {
     }
 
     @JsonProperty("enabled_methods")
-    public void setEnabledMethods(String[] enabledMethods) {
+    public void setEnabledMethods(List<String> enabledMethods) {
         this.enabledMethods = enabledMethods;
     }
 

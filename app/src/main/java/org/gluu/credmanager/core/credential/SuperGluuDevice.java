@@ -1,6 +1,5 @@
 package org.gluu.credmanager.core.credential;
 
-import org.gluu.credmanager.core.credential.fido.FidoDevice;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
 import org.xdi.oxauth.model.fido.u2f.protocol.DeviceData;

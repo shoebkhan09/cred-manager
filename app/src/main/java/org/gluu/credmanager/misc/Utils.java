@@ -3,7 +3,7 @@ package org.gluu.credmanager.misc;
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.gluu.credmanager.core.credential.fido.FidoDevice;
+import org.gluu.credmanager.core.credential.FidoDevice;
 import org.xdi.model.SimpleCustomProperty;
 import org.zkoss.util.Pair;
 
@@ -11,7 +11,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by jgomer on 2017-07-07.
@@ -26,6 +25,10 @@ public class Utils {
 
     public static <T> Optional<T[]> arrayOptional(T[] array){
         return Optional.ofNullable(array).map(arr -> arr.length==0 ? null : arr);
+    }
+
+    public static <T> Optional<List<T>> listOptional(List<T> list){
+        return Optional.ofNullable(list).map(l -> l.size()==0 ? null : l);
     }
 
     public static boolean stringContains(String string, String value, boolean ci){
@@ -46,7 +49,7 @@ public class Utils {
      * @param object Object to process. Changes are effective in place
      */
     public static void nullEmptyLists(Object object){
-
+        //TODO: implement this using mapper.convertValue(object, Map.class)?
         BeanMap map=new BeanMap(object);
         for (Object key : map.keySet()){
             String strKey=key.toString();
@@ -72,6 +75,7 @@ public class Utils {
      */
     public static <T, C extends Collection<T>> void emptyNullLists(Object object, Supplier<C> factory){
 
+        //TODO: implement this using mapper.convertValue(object, Map.class)?
         BeanMap map=new BeanMap(object);
         for (Object key : map.keySet()){
             String strKey=key.toString();

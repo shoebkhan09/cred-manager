@@ -16,7 +16,6 @@ public class ZKInitializer implements WebAppInit {
     public void init(WebApp webApp) throws Exception{
         //This attribute is stored here for future use inside zul templates
         webApp.getAttributes().put("appName", webApp.getAppName());
-        //webApp.getAttributes().put(COUNT_DESKTOPS, 0);
         webApp.getServletContext().setAttribute(ZK_READY_ATTR, true);
     }
 

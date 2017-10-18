@@ -12,6 +12,7 @@ import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.*;
 import org.zkoss.zk.ui.util.Initiator;
 
+import javax.management.AttributeNotFoundException;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
@@ -37,69 +38,80 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
         WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getRoutingAcr()));
     }
 
+    private User getUserFromClaims(Map<String, List<String>> claims, UserService usrService) throws AttributeNotFoundException{
+
+        User user=usrService.createUserFromClaims(claims);
+
+        if (user==null)
+            throw new AttributeNotFoundException(Labels.getLabel("app.user_no_claims"));
+
+        //Update current user with credentials he has added so far:
+        user.setCredentials(usrService.getPersonalMethods(user));
+        //Update method
+        user.setPreference(usrService.getPreferredMethod(user));
+        //Determine if belongs to manager group
+        user.setAdmin(usrService.inManagerGroup(user));
+
+        return user;
+
+    }
+
     public void doInit(Page page, Map <String, Object> map){
 
         init(page);
-        se=Sessions.getCurrent(true);
-        RedirectStage stage=WebUtils.getRedirectStage(se);
+        if (page.getAttribute("error")==null){
 
-        services=WebUtils.getServices(se);
-        oxdService=services.getOxdService();
-        UserService usrService=services.getUserService();
+            se=Sessions.getCurrent(true);
+            RedirectStage stage=WebUtils.getRedirectStage(se);
+            services=WebUtils.getServices(se);
+            oxdService=services.getOxdService();
 
-        try {
-            switch (stage){
-                case NONE:
-                    try {
-                        goForAuthorization();
-                    }
-                    catch (Exception e){
-                        String error=Labels.getLabel("app.error_authorization_step");
-                        setPageErrors(page, error, e.getMessage());
-                        logger.error(error, e);
-                    }
-                    break;
-                case INITIAL:
-                    //If IDP response contains error query parameter we cannot proceed
-                    if (errorsParsed(page))
-                        WebUtils.purgeSession(se);
-                    else {
-                        code = WebUtils.getQueryParam("code");
-                        if (code == null)
-                            //This may happen when user did not ever entered his username at IDP, and tries accessing the app again
+            try {
+                switch (stage){
+                    case NONE:
+                        try {
                             goForAuthorization();
-                        else {
-                            String accessToken = oxdService.getAccessToken(code, WebUtils.getQueryParam("state"));
-                            logger.debug(Labels.getLabel("app.authz_codes"), code, accessToken);
-
-                            Map<String, List<String>> claims = oxdService.getUserClaims(accessToken);
-
-                            User user = usrService.createUserFromClaims(claims);
-                            //Update current user with credentials he has added so far:
-                            user.setCredentials(usrService.getPersonalMethods(user));
-                            //Update method
-                            user.setPreference(usrService.getPreferredMethod(user));
-                            //Determine if belongs to manager group
-                            user.setAdmin(usrService.inManagerGroup(user));
-                            //Store in session
-                            WebUtils.setUser(se, user);
-
-                            WebUtils.setRedirectStage(se, RedirectStage.BYPASS);
-                            //This flow continues at index.zul
                         }
-                    }
-                    break;
-                case BYPASS:
-                    //go straight without the need for showing UI
-                    User user=WebUtils.getUser(se);
-                    WebUtils.execRedirect(user.isAdmin()? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
-                    break;
+                        catch (Exception e){
+                            String error=Labels.getLabel("app.error_authorization_step");
+                            setPageErrors(page, error, e.getMessage());
+                            logger.error(error, e);
+                        }
+                        break;
+                    case INITIAL:
+                        //If IDP response contains error query parameter we cannot proceed
+                        if (errorsParsed(page))
+                            WebUtils.purgeSession(se);
+                        else {
+                            code = WebUtils.getQueryParam("code");
+                            if (code == null)
+                                //This may happen when user did not ever entered his username at IDP, and tries accessing the app again
+                                goForAuthorization();
+                            else {
+                                String accessToken = oxdService.getAccessToken(code, WebUtils.getQueryParam("state"));
+                                logger.debug(Labels.getLabel("app.authz_codes"), code, accessToken);
+
+                                User user = getUserFromClaims(oxdService.getUserClaims(accessToken), services.getUserService());
+                                //Store in session
+                                WebUtils.setUser(se, user);
+
+                                WebUtils.setRedirectStage(se, RedirectStage.BYPASS);
+                                //This flow continues at index.zul
+                            }
+                        }
+                        break;
+                    case BYPASS:
+                        //go straight without the need for showing UI
+                        User user=WebUtils.getUser(se);
+                        WebUtils.execRedirect(user.isAdmin()? WebUtils.ADMIN_PAGE_URL : WebUtils.USER_PAGE_URL);
+                        break;
+                }
             }
-        }
-        catch (Exception e){
-            logger.error(e.getMessage(), e);
-            setPageErrors(page, Labels.getLabel("general.error.general"), e.getMessage());
-            WebUtils.setRedirectStage(se, RedirectStage.NONE);
+            catch (Exception e){
+                logger.error(e.getMessage(), e);
+                setPageErrors(page, Labels.getLabel("general.error.general"), e.getMessage());
+                WebUtils.setRedirectStage(se, RedirectStage.NONE);
+            }
         }
 
     }

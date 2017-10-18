@@ -21,9 +21,6 @@ public class LogoutInitiator extends CommonInitiator implements Initiator {
         init(page);
         //Do session clean up
         WebUtils.purgeSession(Sessions.getCurrent());
-
-        //page.setAttribute("homeUrl", WebUtils.HOME_PAGE_URL);
-        //logger.info("Session cleaned");
     }
 
 }
