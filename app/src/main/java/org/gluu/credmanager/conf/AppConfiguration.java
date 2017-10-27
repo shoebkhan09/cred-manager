@@ -15,6 +15,7 @@ import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.OxdService;
 import org.gluu.credmanager.services.ldap.pojo.CustomScript;
+import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 
 import static org.gluu.credmanager.conf.CredentialType.*;
@@ -48,7 +49,8 @@ public class AppConfiguration{
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
     private final String OXAUTH_WAR_LOCATION= "/opt/gluu/jetty/oxauth/webapps/oxauth.war";
     private final String DEFAULT_GLUU_VERSION="3.0.2";      //Current app version is mainly targeted at this version of Gluu Server
-    public static final int ACTIVATE2AF_CREDS_GTE=2;    //Second factor authentication will be available to users having at least this number of enrolled creds
+
+    public static final Pair<Integer, Integer> BOUNDS_MINCREDS_2FA =new Pair<>(1,3);
     public static final String BASE_URL_BRANDING_PATH="/custom";
 
     /*
@@ -160,14 +162,7 @@ public class AppConfiguration{
                 try{
                     //Parses config file in a Configs instance
                     configSettings=mapper.readValue(srcConfigFile, Configs.class);
-                }
-                catch (IOException e){
-                    inOperableState=false;
-                    String params[]=new String[]{CONF_FILE_RELATIVE_PATH, e.getMessage()};
-                    logger.error(Labels.getLabel("app.conf_file_not_parsable"), params);
-                    logger.error(e.getMessage(),e);
-                }
-                finally {
+
                     //Check settings consistency, infer some, and override others
                     if (computeSettings(configSettings))
                         try {
@@ -176,6 +171,11 @@ public class AppConfiguration{
                         catch (Exception e) {
                             logger.error(Labels.getLabel("app.conf_update_error"), e);
                         }
+                }
+                catch (Exception e){
+                    inOperableState=false;
+                    logger.error(Labels.getLabel("app.conf_file_not_parsable"));
+                    logger.error(e.getMessage(),e);
                 }
         }
 
@@ -215,6 +215,7 @@ public class AppConfiguration{
                         computeLoggingLevel(settings);
                         computeBrandingPath(settings);
                         computeGluuVersion(settings);
+                        computeMinCredsForStrongAuth(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
                         //The following 4 statements are executed only after computeEnabledMethods and computeGluuVersion are called
@@ -282,6 +283,21 @@ public class AppConfiguration{
         optGluu = Utils.stringOptional(optGluu.orElse(guessGluuVersion()));   //try guessing if necessary
         gluuVersion=optGluu.orElse(DEFAULT_GLUU_VERSION);      //use default if needed
 
+    }
+
+    private void computeMinCredsForStrongAuth(Configs settings){
+
+        int defaultValue=(BOUNDS_MINCREDS_2FA.getX() + BOUNDS_MINCREDS_2FA.getY())/2;
+        Integer providedValue=settings.getMinCredsFor2FA();
+        if (providedValue==null) {
+            logger.info(Labels.getLabel("app.mincreds_defaulted"));
+            settings.setMinCredsFor2FA(defaultValue);
+        }
+        else
+        if (providedValue < BOUNDS_MINCREDS_2FA.getX() || providedValue > BOUNDS_MINCREDS_2FA.getY()) {
+            logger.info(Labels.getLabel("app.mincreds_2FA_notinbounds"), providedValue, BOUNDS_MINCREDS_2FA.getX(), BOUNDS_MINCREDS_2FA.getY(), defaultValue);
+            settings.setMinCredsFor2FA(defaultValue);
+        }
     }
 
     private void computeLoggingLevel(Configs configSettings){
