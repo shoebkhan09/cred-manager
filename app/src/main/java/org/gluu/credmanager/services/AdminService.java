@@ -283,4 +283,18 @@ public class AdminService {
 
     }
 
+    /* ========== MINIMUM CREDENTIALS FOR STRONG AUTHENTICATION ========== */
+
+    public String updateMinCreds(int minCreds){
+
+        //update local copy
+        localSettings.setMinCredsFor2FA(minCreds);
+        //Do runtime change
+        appConfig.getConfigSettings().setMinCredsFor2FA(minCreds);
+        logAdminEvent("Changed minimum number of enrolled credentials for 2FA usage to " + minCreds);
+
+        return updateSettings();
+
+    }
+
 }

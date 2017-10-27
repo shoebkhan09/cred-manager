@@ -3,6 +3,7 @@ package org.gluu.credmanager.ui.vm;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.core.WebUtils;
@@ -58,6 +59,8 @@ public class AdminViewModel extends UserViewModel {
     private LdapSettings ldapSettings;
     private boolean passResetEnabled;
     private boolean passResetImpossible;
+    private int minCreds2FA;
+    private List<Integer> minCredsList;
 
     private AdminService myService;
 
@@ -142,6 +145,18 @@ public class AdminViewModel extends UserViewModel {
         return passResetImpossible;
     }
 
+    public int getMinCreds2FA() {
+        return minCreds2FA;
+    }
+
+    public void setMinCreds2FA(int minCreds2FA) {
+        this.minCreds2FA = minCreds2FA;
+    }
+
+    public List<Integer> getMinCredsList() {
+        return minCredsList;
+    }
+
     @Init(superclass = true)
     public void childInit() {
         appName=Executions.getCurrent().getDesktop().getWebApp().getAppName();
@@ -174,6 +189,7 @@ public class AdminViewModel extends UserViewModel {
         passResetImpossible=myService.isPassResetImpossible();
         initOxd();
         initLdap();
+        initMinCreds();
     }
 
     private void restoreUI(){
@@ -511,6 +527,61 @@ public class AdminViewModel extends UserViewModel {
         else
             Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
         restoreUI();
+    }
+
+    /* ========== MINIMUM CREDENTIALS FOR STRONG AUTHENTICATION ========== */
+
+    public void initMinCreds(){
+
+        minCreds2FA=myService.getConfigSettings().getMinCredsFor2FA();
+        if (minCredsList==null) {
+            minCredsList = new ArrayList<>();
+
+            Pair<Integer, Integer> bounds = AppConfiguration.BOUNDS_MINCREDS_2FA;
+            for (int i = bounds.getX(); i <= bounds.getY(); i++)
+                minCredsList.add(i);
+        }
+
+    }
+
+    public void storeMinCreds(int newval){
+
+        String msg=myService.updateMinCreds(newval);
+        if (msg==null)
+            Messagebox.show(Labels.getLabel("adm.methods_change_success"), appName, Messagebox.OK, Messagebox.INFORMATION);
+        else
+            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+        initMinCreds();
+
+    }
+
+    public void promptBeforeProceed(String message, int newval){
+
+        Messagebox.show(message, appName, Messagebox.YES | Messagebox.NO, Messagebox.EXCLAMATION,
+                event -> {
+                    if (Messagebox.ON_YES.equals(event.getName()))
+                        storeMinCreds(newval);
+                    else {  //Revert to last known working (or accepted)
+                        initMinCreds();
+                        BindUtils.postNotifyChange(null, null, AdminViewModel.this, "minCreds2FA");
+                    }
+                }
+        );
+
+    }
+
+    @Command
+    public void changeMinCreds(@BindingParam("val") Integer val){
+
+        if (val==1)     //only one sucks
+            promptBeforeProceed(Labels.getLabel("adm.strongauth_warning_one"), val);
+        else
+        if (val>minCreds2FA)   //maybe problematic...
+            promptBeforeProceed(Labels.getLabel("adm.strongauth_warning_up", new Integer[]{minCreds2FA}), val);
+        else
+            storeMinCreds(val);
+        restoreUI();
+
     }
 
 }

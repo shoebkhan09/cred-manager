@@ -39,23 +39,26 @@
              self="@define(content)" spacing="0px">
 
         <toolbar align="center">
-            <toolbarbutton mode="toggle" label="&#160;${labels.adm.logging_title}&#160;" onCheck="recheck(event)"
-                           onClick="@command('loadSubPage', page='/admin/logging.zul')" />
+            <toolbarbutton mode="toggle" label="&#160;${labels.adm.ldap_title}&#160;" onCheck="recheck(event)"
+                           onClick="@command('loadSubPage', page='/admin/ldap.zul')" />
             <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.oxd_title}&#160;" onCheck="recheck(event)"
                            onClick="@command('loadSubPage', page='/admin/oxd-config.zul')" />
             <space sclass="minspace" />
-            <toolbarbutton mode="toggle" label="&#160;${labels.adm.passreset_title}&#160;" onCheck="recheck(event)"
-                           onClick="@command('loadSubPage', page='/admin/pass-reset.zul')" />
-            <space sclass="minspace" />
-            <toolbarbutton mode="toggle" label="&#160;${labels.adm.ldap_title}&#160;" onCheck="recheck(event)"
-                           onClick="@command('loadSubPage', page='/admin/ldap.zul')" />
-            <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.methods_title}&#160;" onCheck="recheck(event)"
                            onClick="@command('loadSubPage', page='/admin/methods.zul')" />
             <space sclass="minspace" />
+            <toolbarbutton mode="toggle" label="&#160;${labels.adm.strongauth_title}&#160;" onCheck="recheck(event)"
+                           onClick="@command('loadSubPage', page='/admin/strongauth.zul')" />
+            <space sclass="minspace" />
+            <toolbarbutton mode="toggle" label="&#160;${labels.adm.passreset_title}&#160;" onCheck="recheck(event)"
+                           onClick="@command('loadSubPage', page='/admin/pass-reset.zul')" />
+            <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.branding_title}&#160;" onCheck="recheck(event)"
                            onClick="@command('loadSubPage', page='/admin/branding.zul')" />
+            <space sclass="minspace" />
+            <toolbarbutton mode="toggle" label="&#160;${labels.adm.logging_title}&#160;" onCheck="recheck(event)"
+                           onClick="@command('loadSubPage', page='/admin/logging.zul')" />
             <space sclass="minspace" />
             <toolbarbutton mode="toggle" label="&#160;${labels.adm.resets_title}&#160;" onCheck="recheck(event)"
                            onClick="@command('loadSubPage', page='/admin/pref-reset.zul')" />

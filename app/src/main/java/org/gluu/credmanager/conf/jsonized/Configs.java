@@ -26,6 +26,7 @@ public class Configs {
     private List<String> enabledMethods;
     private String gluuVersion;
     private String logLevel;
+    private int minCredsFor2FA;
 
     public LdapSettings getLdapSettings() {
         return ldapSettings;
@@ -77,6 +78,15 @@ public class Configs {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getBrandingPath() {
         return brandingPath;
+    }
+
+    public Integer getMinCredsFor2FA() {
+        return minCredsFor2FA;
+    }
+
+    @JsonProperty("min_creds_2FA")
+    public void setMinCredsFor2FA(Integer minCredsFor2FA) {
+        this.minCredsFor2FA = minCredsFor2FA;
     }
 
     @JsonProperty("branding_path")
