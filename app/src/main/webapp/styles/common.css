@@ -35,7 +35,7 @@
 }
 .unactivated{
     opacity: 0.45;
-    cursor:not-allowed;
+    cursor:not-allowed !important;
 }
 input[type="radio"], input[type="checkbox"]{
 	margin:0px 0px 4px 0px;

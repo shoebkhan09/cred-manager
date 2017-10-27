@@ -13,7 +13,6 @@ import org.zkoss.zk.ui.*;
 import org.zkoss.zk.ui.util.Initiator;
 
 import javax.management.AttributeNotFoundException;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +45,7 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
             throw new AttributeNotFoundException(Labels.getLabel("app.user_no_claims"));
 
         //Update current user with credentials he has added so far:
-        user.setCredentials(usrService.getPersonalMethods(user));
+        user.setCredentials(usrService.getPersonalCredentials(user));
         //Update method
         user.setPreference(usrService.getPreferredMethod(user));
         //Determine if belongs to manager group

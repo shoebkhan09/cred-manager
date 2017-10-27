@@ -90,18 +90,23 @@ public class UserViewModel {
             Clients.showNotification(msg, Clients.NOTIFICATION_TYPE_WARNING, null, position, FEEDBACK_DELAY_ERR);
     }
 
-    boolean mayTriggerResetPreference(){
-        int total=devicesMap.values().stream().mapToInt(List::size).sum();
-        return total==AppConfiguration.ACTIVATE2AF_CREDS_GTE && user.getPreference()!=null;
+    //Second factor authentication will be available to users having at least this number of enrolled creds
+    public int getMinimumCredsFor2FA(){     //this is public since it's called from zul templates
+        return services.getAppConfig().getConfigSettings().getMinCredsFor2FA();
     }
 
-    static Pair<String, String> getDelMessages(boolean flag, String nick){
+    boolean mayTriggerResetPreference(){
+        int total=devicesMap.values().stream().mapToInt(List::size).sum();
+        return total==getMinimumCredsFor2FA() && user.getPreference()!=null;
+    }
+
+    Pair<String, String> getDelMessages(boolean flag, String nick){
 
         String title;
         StringBuffer text=new StringBuffer();
 
         if (flag) {
-            text.append(Labels.getLabel("usr.del_conflict_preference", new Object[]{AppConfiguration.ACTIVATE2AF_CREDS_GTE}));
+            text.append(Labels.getLabel("usr.del_conflict_preference", new Object[]{getMinimumCredsFor2FA()}));
             text.append("\n\n");
         }
         title=Labels.getLabel("usr.del_title");

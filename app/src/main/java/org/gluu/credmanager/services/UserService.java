@@ -230,7 +230,12 @@ public class UserService {
         }
     }
 
-    public Map<CredentialType, List<RegisteredCredential>> getPersonalMethods(User user){
+    /**
+     * Computes the current users's enrolled credentials creating a mapping of credential type vs. list of credentials
+     * @param user The User subject of retrieval
+     * @return A Map with user's credentials. Only returned
+     */
+    public Map<CredentialType, List<RegisteredCredential>> getPersonalCredentials(User user){
 
         try {
             String rdn = user.getRdn();
@@ -238,36 +243,46 @@ public class UserService {
             Utils.emptyNullLists(person, ArrayList::new);
 
             Map<CredentialType, List<RegisteredCredential>> allCreds=new HashMap<>();
-            allCreds.put(VERIFIED_PHONE, Utils.mapSortCollectList(getVerifiedPhones(person), RegisteredCredential.class::cast));
-            allCreds.put(OTP, Utils.mapSortCollectList(getOtpDevices(person), RegisteredCredential.class::cast));
+            Set<CredentialType> enabled=appConfiguration.getEnabledMethods();
 
-            ldapService.createFidoBranch(rdn);
-            String appId=appConfiguration.getConfigSettings().getU2fSettings().getAppId();
-            allCreds.put(SECURITY_KEY, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SecurityKey.class), RegisteredCredential.class::cast));
+            if (enabled.contains(VERIFIED_PHONE))
+                allCreds.put(VERIFIED_PHONE, Utils.mapSortCollectList(getVerifiedPhones(person), RegisteredCredential.class::cast));
 
-            appId=appConfiguration.getConfigSettings().getOxdConfig().getRedirectUri();
-            allCreds.put(SUPER_GLUU, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SuperGluuDevice.class), RegisteredCredential.class::cast));
+            if (enabled.contains(OTP))
+                allCreds.put(OTP, Utils.mapSortCollectList(getOtpDevices(person), RegisteredCredential.class::cast));
 
+            if (enabled.contains(SECURITY_KEY) || enabled.contains(SUPER_GLUU)) {
+                ldapService.createFidoBranch(rdn);
+                String appId;
+
+                if (enabled.contains(SECURITY_KEY)) {
+                    appId = appConfiguration.getConfigSettings().getU2fSettings().getAppId();
+                    allCreds.put(SECURITY_KEY, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SecurityKey.class), RegisteredCredential.class::cast));
+                }
+                if (enabled.contains(SUPER_GLUU)) {
+                    appId = appConfiguration.getConfigSettings().getOxdConfig().getRedirectUri();
+                    allCreds.put(SUPER_GLUU, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SuperGluuDevice.class), RegisteredCredential.class::cast));
+                }
+            }
             return allCreds;
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
             return null;
         }
+
     }
 
     /**
      * Returns a set of CredentialType such that every element in the set has at least one corresponding enrolled credential
      * for this user. This set has to a subset of one conformed by all currently enabled credential types
      * @param user The user for which the set will be generated
-     * @param enabledMethods Current set of enabled authentication methods
      * @return The set referred above.
      */
-    public Set<CredentialType> getEffectiveMethods(User user, Set<CredentialType> enabledMethods){
+    public Set<CredentialType> getEffectiveMethods(User user){
         //Get those credentials types that have associated at least one item
         Stream<Map.Entry<CredentialType, List<RegisteredCredential>>> stream=user.getCredentials().entrySet().stream();
         Set<CredentialType> set=stream.filter(e -> e.getValue().size()>0).map(e -> e.getKey()).collect(Collectors.toCollection(HashSet::new));
-        set.retainAll(enabledMethods);
         return set;
     }
 

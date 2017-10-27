@@ -32,10 +32,6 @@ public class UserPreferenceViewModel extends UserViewModel {
     private boolean uiEditable;
     private boolean uiNotEnoughCredsFor2FA;
 
-    public int getMinimumCredsFor2FA(){
-        return AppConfiguration.ACTIVATE2AF_CREDS_GTE;
-    }
-
     public boolean isUiNotEnoughCredsFor2FA(){
         return uiNotEnoughCredsFor2FA;
     }
@@ -47,7 +43,7 @@ public class UserPreferenceViewModel extends UserViewModel {
 
         noMethodName=Labels.getLabel("usr.method.none");
         Set<CredentialType> enabledMethods=services.getAppConfig().getEnabledMethods();
-        availMethods = UIModel.getCredentialList(userService.getEffectiveMethods(user, enabledMethods));
+        availMethods = UIModel.getCredentialList(userService.getEffectiveMethods(user));
 
         int totalCreds = user.getCredentials().values().stream().mapToInt(List::size).sum();
         logger.info(Labels.getLabel("app.credentials_total"), user.getUserName(), totalCreds);
