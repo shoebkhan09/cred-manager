@@ -57,7 +57,8 @@ public class AppConfiguration{
      ACR value for the routing authentication script. WARNING!: this script has to be enabled in your Gluu server with
      the same or lower level than SIMPLE_AUTH_ACR
      */
-    private static final String ROUTING_ACR="router";
+    //TODO: look out!
+    private static final String ROUTING_ACR="router";//"cred_manager";
     /*
      ACR value for user+password auth only. It is not necessarily equivalent to Gluu's default authn method which is found
      in the oxAuthenticationMode attribute of the appliance. Anyway, SIMPLE_AUTH_ACR should be part of server's acr_supported_values
@@ -101,9 +102,11 @@ public class AppConfiguration{
         return passReseteable;
     }
 
+    /*
     public String getGluuVersion() {
         return gluuVersion;
     }
+    */
 
     public Set<CredentialType> getEnabledMethods() {
         return enabledMethods;
@@ -224,43 +227,7 @@ public class AppConfiguration{
                         computeSuperGluuSettings(settings);
                         computeTwilioSettings(settings);
 
-                        OxdConfig oxdConfig = settings.getOxdConfig();
-                        if (oxdConfig==null)
-                            logger.error(Labels.getLabel("app.no_oxd_config"));
-                        else{
-                            Optional<String> oxdHostOpt=Utils.stringOptional(oxdConfig.getHost());
-                            Optional<String> oxdRedirectUri=Utils.stringOptional(oxdConfig.getRedirectUri());
-
-                            if (!(oxdConfig.getPort()>0 && oxdHostOpt.isPresent() && (oxdRedirectUri.isPresent())))
-                                logger.error(Labels.getLabel("app.oxd_settings_missing"));
-                            else{
-                                String tmp=oxdRedirectUri.get();    //Remove trailing slash if any in redirect URI
-                                tmp=tmp.endsWith("/") ? tmp.substring(0, tmp.length()-1) : tmp;
-                                oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
-
-                                Optional<String> oxdIdOpt=Utils.stringOptional(oxdConfig.getOxdId());
-                                if (oxdIdOpt.isPresent()) {
-                                    oxdService.setSettings(oxdConfig);
-                                    inOperableState = true;
-                                }
-                                else{
-                                    try{
-                                        //TODO: delete previous existing client?
-                                        //Do registration
-                                        oxdConfig.setClientName("cred-manager");
-                                        oxdConfig.setOxdId(oxdService.doRegister(oxdConfig));
-                                        oxdService.setSettings(oxdConfig);
-
-                                        update=true;
-                                        inOperableState = true;
-                                    }
-                                    catch (Exception e) {
-                                        logger.fatal(Labels.getLabel("app.oxd_registration_failed"), e.getMessage());
-                                        throw e;
-                                    }
-                                }
-                            }
-                        }
+                        update=computeOxdSettings(settings);
                     }
                     catch (Exception e){
                         logger.error(e.getMessage(),e);
@@ -434,7 +401,7 @@ public class AppConfiguration{
     /**
      * Performs a GET to the OIDC metadata URL and extracts the ACR values supported by the server
      * @return A Set of String values
-     * @throws Exception
+     * @throws Exception If an networking or parsing error occurs
      */
     public Set<String> retrieveServerAcrs() throws Exception{
 
@@ -452,7 +419,7 @@ public class AppConfiguration{
 
     private void computeEnabledMethods(Configs settings) throws Exception{
 
-        Set<String> possibleMethods=new HashSet(CredentialType.ACR_NAMES_SUPPORTED);
+        Set<String> possibleMethods=new HashSet<>(CredentialType.ACR_NAMES_SUPPORTED);
         Set<String> supportedSet=retrieveServerAcrs();
 
         //Verify default and routing acr are there
@@ -460,7 +427,7 @@ public class AppConfiguration{
         if (supportedSet.containsAll(acrList)) {
 
             //Add them all to oxd configuration object. These will be a superset of methods used in practice...
-            settings.getOxdConfig().setAcrValues(new HashSet(supportedSet));
+            settings.getOxdConfig().setAcrValues(new HashSet<>(supportedSet));
             //Now, keep the interesting ones. This will filter things like "basic", "auth_ldap_server", etc.
             supportedSet.retainAll(possibleMethods);
 
@@ -483,6 +450,50 @@ public class AppConfiguration{
 
     }
 
+    private boolean computeOxdSettings(Configs settings) throws Exception{
+
+        boolean update=false;
+
+        OxdConfig oxdConfig = settings.getOxdConfig();
+        if (oxdConfig==null)
+            logger.error(Labels.getLabel("app.no_oxd_config"));
+        else{
+            Optional<String> oxdHostOpt=Utils.stringOptional(oxdConfig.getHost());
+            Optional<String> oxdRedirectUri=Utils.stringOptional(oxdConfig.getRedirectUri());
+
+            if (!(oxdConfig.getPort()>0 && oxdHostOpt.isPresent() && oxdRedirectUri.isPresent()))
+                logger.error(Labels.getLabel("app.oxd_settings_missing"));
+            else{
+                String tmp=oxdRedirectUri.get();    //Remove trailing slash if any in redirect URI
+                tmp=tmp.endsWith("/") ? tmp.substring(0, tmp.length()-1) : tmp;
+                oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
+
+                Optional<String> oxdIdOpt=Utils.stringOptional(oxdConfig.getOxdId());
+                if (oxdIdOpt.isPresent()) {
+                    oxdService.setSettings(oxdConfig);
+                    inOperableState = true;
+                }
+                else{
+                    try{
+                        //TODO: delete previous existing client?
+                        //Do registration
+                        oxdConfig.setClientName("cred-manager");
+                        oxdConfig.setOxdId(oxdService.doRegister(oxdConfig));
+                        oxdService.setSettings(oxdConfig);
+
+                        update=true;
+                        inOperableState = true;
+                    }
+                    catch (Exception e) {
+                        logger.fatal(Labels.getLabel("app.oxd_registration_failed"), e.getMessage());
+                        throw e;
+                    }
+                }
+            }
+        }
+        return update;
+    }
+
     private String guessGluuVersion(){
 
         String version=null;
@@ -492,7 +503,7 @@ public class AppConfiguration{
         {
             version=war.getManifest().getMainAttributes().getValue("Implementation-Version");
             if (version!=null) {
-                version.toLowerCase().replaceFirst("-snapshot", "");
+                version=version.toLowerCase().replaceFirst("-snapshot", "");
                 logger.info(Labels.getLabel("app.gluu_version_guessed"), version);
             }
         }

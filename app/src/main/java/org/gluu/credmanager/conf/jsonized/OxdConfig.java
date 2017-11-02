@@ -19,6 +19,9 @@ public class OxdConfig{
     private String postLogoutUri;
     private String clientName;
     private Set<String> acrValues;
+    private boolean useHttpsExtension;
+    private String clientId;
+    private String clientSecret;
 
     public String getHost() {
         return host;
@@ -28,13 +31,13 @@ public class OxdConfig{
         return port;
     }
 
+    public String getRedirectUri() {
+        return redirectUri;
+    }
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getOxdId() {
         return oxdId;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
     }
 
     @JsonIgnore
@@ -52,12 +55,28 @@ public class OxdConfig{
         return acrValues;
     }
 
-    public void setHost(String host) {
-        this.host = host;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getClientId() {
+        return clientId;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    public boolean isUseHttpsExtension() {
+        return useHttpsExtension;
+    }
+
+    @JsonProperty("client_id")
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    @JsonProperty("client_secret")
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
     }
 
     @JsonProperty("oxd-id")
@@ -70,6 +89,11 @@ public class OxdConfig{
         this.redirectUri = redirectUri;
     }
 
+    @JsonProperty("use_https_extension")
+    public void setUseHttpsExtension(boolean useHttpsExtension) {
+        this.useHttpsExtension = useHttpsExtension;
+    }
+
     public void setPostLogoutUri(String postLogoutUri) {
         this.postLogoutUri = postLogoutUri;
     }
@@ -80,6 +104,14 @@ public class OxdConfig{
 
     public void setAcrValues(Set<String> acrValues) {
         this.acrValues = acrValues;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 
 }

@@ -25,6 +25,7 @@ public class OxdService {
 
     private OxdConfig config;
     private CommandClient commandClient;
+    private String accessToken=null;
 
     public void setSettings(OxdConfig config) throws Exception{
         this.config=config;
@@ -44,6 +45,7 @@ public class OxdService {
         GregorianCalendar cal=new GregorianCalendar();
         cal.add(Calendar.YEAR,1);
         cmdParams.setClientSecretExpiresAt(new Date(cal.getTimeInMillis()));
+        cmdParams.setProtectionAccessToken(accessToken);
         logger.info(Labels.getLabel("app.extend_expiration_time"));
 
         Command command = new Command(CommandType.UPDATE_SITE).setParamsObject(cmdParams);
@@ -56,34 +58,61 @@ public class OxdService {
         CommandClient client=null;
         String oxdId;
         try {
-            logger.info(Labels.getLabel("app.registering_oxd"));
-            client = new CommandClient(params.getHost(), params.getPort());
+            if (params.isUseHttpsExtension()){  //Store client ID & secret if using extension
+                SetupClientParams cmdParams = new SetupClientParams();
 
-            RegisterSiteParams cmdParams = new RegisterSiteParams();
-            cmdParams.setAuthorizationRedirectUri(params.getRedirectUri());
-            cmdParams.setPostLogoutRedirectUri(params.getPostLogoutUri());
-            cmdParams.setAcrValues(new ArrayList<>(params.getAcrValues()));
+                cmdParams.setAuthorizationRedirectUri(params.getRedirectUri());
+                cmdParams.setPostLogoutRedirectUri(params.getPostLogoutUri());
+                cmdParams.setAcrValues(new ArrayList<>(params.getAcrValues()));
 
-            //These scopes should be set to default=true in LDAP (or using oxTrust). Otherwise the following will have no effect
-            cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
+                cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
 
-            cmdParams.setResponseTypes(Collections.singletonList("code"));  //Use "token","id_token" for implicit flow
-            cmdParams.setTrustedClient(true);
-            //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
-            cmdParams.setClientName(params.getClientName());
+                cmdParams.setResponseTypes(Collections.singletonList("code"));  //Use "token","id_token" for implicit flow
+                cmdParams.setTrustedClient(true);
 
-            Command command = new Command(CommandType.REGISTER_SITE).setParamsObject(cmdParams);
+                cmdParams.setClientName(params.getClientName());
 
-            RegisterSiteResponse site = client.send(command).dataAsResponse(RegisterSiteResponse.class);
-            oxdId=site.getOxdId();
+                Command command = new Command(CommandType.SETUP_CLIENT).setParamsObject(cmdParams);
 
-            logger.info(Labels.getLabel("app.register_oxd_ended"), oxdId);
+                SetupClientResponse response=client.send(command).dataAsResponse(SetupClientResponse.class);
+
+                oxdId = response.getOxdId();
+                config.setClientId(response.getClientId());
+                config.setClientSecret(response.getClientSecret());
+                //TODO: merge the if-else?
+                logger.debug("https thing registered");
+            }
+            else {
+                logger.info(Labels.getLabel("app.registering_oxd"));
+                client = new CommandClient(params.getHost(), params.getPort());
+
+                RegisterSiteParams cmdParams = new RegisterSiteParams();
+                cmdParams.setAuthorizationRedirectUri(params.getRedirectUri());
+                cmdParams.setPostLogoutRedirectUri(params.getPostLogoutUri());
+                cmdParams.setAcrValues(new ArrayList<>(params.getAcrValues()));
+
+                //These scopes should be set to default=true in LDAP (or using oxTrust). Otherwise the following will have no effect
+                cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
+
+                cmdParams.setResponseTypes(Collections.singletonList("code"));  //Use "token","id_token" for implicit flow
+                cmdParams.setTrustedClient(true);
+                //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
+                cmdParams.setClientName(params.getClientName());
+
+                Command command = new Command(CommandType.REGISTER_SITE).setParamsObject(cmdParams);
+
+                RegisterSiteResponse site = client.send(command).dataAsResponse(RegisterSiteResponse.class);
+                oxdId = site.getOxdId();
+
+                logger.info(Labels.getLabel("app.register_oxd_ended"), oxdId);
+            }
             modifyExpiration(client,oxdId);
         }
         finally {
             CommandClient.closeQuietly(client);
         }
         return oxdId;
+
     }
 
     /**
