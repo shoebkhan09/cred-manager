@@ -36,46 +36,40 @@ class PersonAuthentication(PersonAuthenticationType):
         return 1
 
     def isValidAuthenticationMethod(self, usageType, configurationAttributes):
-    	print "ACR Router. isValidAuthenticationMethod called"
+        print "ACR Router. isValidAuthenticationMethod called"
         return False
 
     def getAlternativeAuthenticationMethod(self, usageType, configurationAttributes):
         print "ACR Router. getAlternativeAuthenticationMethod"
 
         identity = CdiUtil.bean(Identity)
-        user_name = identity.getCredentials().getUsername()       
-        #user_password =identity.getCredentials().getPassword()
+        user_name = identity.getCredentials().getUsername()
         print "ACR Router. Authenticating user %s" % user_name
 
-	sessionService=CdiUtil.bean(SessionStateService)
-	attributes=sessionService.getSessionAttributes(sessionService.getSessionState())
-	attributes.put("roUserName",user_name)
-	print "session attrs %s" % str(attributes.size())
-        #authenticationService = CdiUtil.bean(AuthenticationService)
-        #logged_in = authenticationService.authenticate(user_name, user_password)
-        acr = None
-        logged_in=True
-        if logged_in:	    
-	    try:
-	        userService = CdiUtil.bean(UserService)
-	        foundUser = userService.getUserByAttribute("uid", user_name)
-	        
-	        if (foundUser == None):
-	            print "ACR Router. User does not exist"
-	            return ""
-	            
-	        acr=foundUser.getAttribute("description")
-	        #acr="u2f" 
-	        #acr="otp" 
-	        #acr="twilio_sms" 
-	        if (acr == None):
-	            acr = "basic"
-            except:
-                print "ACR Router. Error looking up user or his preferred method"        
-        else:
-            print "ACR Router. Error authenticating user"
+        sessionService=CdiUtil.bean(SessionStateService)
+        attributes=sessionService.getSessionAttributes(sessionService.getSessionState())
+        attributes.put("roUserName",user_name)
+        #print "session attrs %s" % str(attributes.size())
 
-	print "ACR Router. new acr value %s" % acr
+        acr = None
+        try:
+            userService = CdiUtil.bean(UserService)
+            foundUser = userService.getUserByAttribute("uid", user_name)
+
+            if foundUser == None:
+                print "ACR Router. User does not exist"
+                return ""
+
+            acr=foundUser.getAttribute("oxPreferredMethod")            
+            #acr="u2f" 
+            #acr="otp" 
+            #acr="twilio_sms" 
+            if acr == None:
+                acr = "basic"
+        except:
+            print "ACR Router. Error looking up user or his preferred method"        
+
+        print "ACR Router. new acr value %s" % acr
         return acr
 
     def authenticate(self, configurationAttributes, requestParameters, step):
