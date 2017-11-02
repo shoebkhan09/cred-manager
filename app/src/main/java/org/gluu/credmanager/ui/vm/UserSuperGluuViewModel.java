@@ -115,6 +115,7 @@ public class UserSuperGluuViewModel extends UserViewModel{
         Clients.response(new AuInvoke("stopPolling"));
         uiQRShown = false;
         BindUtils.postNotifyChange(null, null, this, "uiQRShown");
+        userService.cleanRandEnrollmentCode(user);
     }
 
     @Listen("onData=#readyButton")
@@ -177,10 +178,11 @@ public class UserSuperGluuViewModel extends UserViewModel{
 
     }
 
-    public void resetAddSettings(){
+    private void resetAddSettings(){
         uiQRShown=false;
         uiEnrolled=false;
         newDevice=new SuperGluuDevice();
+        userService.cleanRandEnrollmentCode(user);
     }
 
     @Command

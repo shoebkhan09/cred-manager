@@ -4,15 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.CredentialType;
-import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.core.credential.SecurityKey;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.U2fService;
-import org.gluu.credmanager.services.UserService;
 import org.zkoss.bind.BindUtils;
 import org.zkoss.bind.annotation.*;
 import org.zkoss.json.JavaScriptValue;
-import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
@@ -20,7 +17,6 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zul.Messagebox;
 
 import java.util.*;
 
@@ -132,6 +128,7 @@ public class UserSecurityKeyViewModel extends UserViewModel{
 
         uiAwaiting=false;
         BindUtils.postNotifyChange(null,	null, this, "uiAwaiting");
+        userService.cleanRandEnrollmentCode(user);
 
     }
 
@@ -155,7 +152,7 @@ public class UserSecurityKeyViewModel extends UserViewModel{
 
     }
 
-    public void resetAddSettings(){
+    private void resetAddSettings(){
         uiEnrolled=false;
         newDevice=new SecurityKey();
     }
