@@ -18,7 +18,6 @@ import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Checkbox;
@@ -44,7 +43,6 @@ public class AdminViewModel extends UserViewModel {
 
     private static final int MINLEN_SEARCH_PATTERN=3;
 
-    private String appName;
     private List<String> logLevels;
     private List<SimpleUser> users;
     private String selectedLogLevel;
@@ -159,7 +157,6 @@ public class AdminViewModel extends UserViewModel {
 
     @Init(superclass = true)
     public void childInit() {
-        appName=Executions.getCurrent().getDesktop().getWebApp().getAppName();
         myService=services.getAdminService();
 
         //This is a fixed list that remains constant all the time
@@ -205,7 +202,7 @@ public class AdminViewModel extends UserViewModel {
         if (msg==null)
             showMessageUI(true);
         else
-            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+            Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
         restoreUI();
     }
 
@@ -322,7 +319,7 @@ public class AdminViewModel extends UserViewModel {
         if (msg==null)
             showMessageUI(true);
         else
-            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+            Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
     }
 
     @Command
@@ -333,7 +330,7 @@ public class AdminViewModel extends UserViewModel {
             if (Utils.stringOptional(brandingPath).isPresent() && Files.isDirectory(Paths.get(brandingPath))) {
                 //Check directory exists
                 if (!Files.isDirectory(Paths.get(brandingPath, "images")) || !Files.isDirectory(Paths.get(brandingPath, "styles")))
-                    Messagebox.show(Labels.getLabel("adm.branding_no_subdirs"), appName, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+                    Messagebox.show(Labels.getLabel("adm.branding_no_subdirs"), null, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                             event -> {
                                 if (Messagebox.ON_YES.equals(event.getName()))
                                     storeBrandingPath();
@@ -343,11 +340,11 @@ public class AdminViewModel extends UserViewModel {
                     storeBrandingPath();
             }
             else
-                Messagebox.show(Labels.getLabel("adm.branding_no_dir"), appName, Messagebox.OK, Messagebox.INFORMATION);
+                Messagebox.show(Labels.getLabel("adm.branding_no_dir"), null, Messagebox.OK, Messagebox.INFORMATION);
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
-            Messagebox.show(Labels.getLabel("adm.branding_no_dir"), appName, Messagebox.OK, Messagebox.INFORMATION);
+            Messagebox.show(Labels.getLabel("adm.branding_no_dir"), null, Messagebox.OK, Messagebox.INFORMATION);
         }
         restoreUI();
 
@@ -364,9 +361,9 @@ public class AdminViewModel extends UserViewModel {
     public void storeOxdSettings(){
         String msg=myService.updateOxdSettings(oxdHost, oxdPort);
         if (msg==null)
-            Messagebox.show(Labels.getLabel("adm.restart_required"), appName, Messagebox.OK, Messagebox.INFORMATION);
+            Messagebox.show(Labels.getLabel("adm.restart_required"), null, Messagebox.OK, Messagebox.INFORMATION);
         else
-            Messagebox.show(Labels.getLabel("adm.oxd_fail_update"), appName, Messagebox.OK, Messagebox.EXCLAMATION);
+            Messagebox.show(Labels.getLabel("adm.oxd_fail_update"), null, Messagebox.OK, Messagebox.EXCLAMATION);
     }
 
     @Command
@@ -382,7 +379,7 @@ public class AdminViewModel extends UserViewModel {
                 logger.error(e.getMessage(), e);
             }
             if (!connected)
-                Messagebox.show(Labels.getLabel("adm.oxd_no_connection"), appName, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+                Messagebox.show(Labels.getLabel("adm.oxd_no_connection"), null, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                         event -> {
                             if (Messagebox.ON_YES.equals(event.getName()))
                                 storeOxdSettings();
@@ -397,7 +394,7 @@ public class AdminViewModel extends UserViewModel {
                 storeOxdSettings();
         }
         else
-            Messagebox.show(Labels.getLabel("adm.oxd_no_settings"), appName, Messagebox.OK, Messagebox.INFORMATION);
+            Messagebox.show(Labels.getLabel("adm.oxd_no_settings"), null, Messagebox.OK, Messagebox.INFORMATION);
         restoreUI();
     }
 
@@ -463,13 +460,13 @@ public class AdminViewModel extends UserViewModel {
             //Do the update and show success/fail message
             String msg=myService.updateEnabledMethods();
             if (msg==null)
-                Messagebox.show(Labels.getLabel("adm.methods_change_success"), appName, Messagebox.OK, Messagebox.INFORMATION);
+                Messagebox.show(Labels.getLabel("adm.methods_change_success"), null, Messagebox.OK, Messagebox.INFORMATION);
             else
-                Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+                Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
         }
         else
             Messagebox.show(Labels.getLabel("adm.methods_existing_credentials", new String[]{failed.toString()}),
-                    appName, Messagebox.OK, Messagebox.EXCLAMATION);
+                    null, Messagebox.OK, Messagebox.EXCLAMATION);
 
         restoreUI();
 
@@ -499,13 +496,13 @@ public class AdminViewModel extends UserViewModel {
                 msg=myService.updateLdapSettings();
 
                 if (msg==null)
-                    Messagebox.show(Labels.getLabel("adm.restart_required"), appName, Messagebox.OK, Messagebox.INFORMATION);
+                    Messagebox.show(Labels.getLabel("adm.restart_required"), null, Messagebox.OK, Messagebox.INFORMATION);
                 else
-                    Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+                    Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
             }
             else {
                 initLdap();    //Revert to AdminService local (working) copy of settings
-                Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+                Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
             }
             BindUtils.postNotifyChange(null, null, this, "ldapSettings");
         }
@@ -525,7 +522,7 @@ public class AdminViewModel extends UserViewModel {
         if (msg==null)
             showMessageUI(true);
         else
-            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+            Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
         restoreUI();
     }
 
@@ -548,16 +545,16 @@ public class AdminViewModel extends UserViewModel {
 
         String msg=myService.updateMinCreds(newval);
         if (msg==null)
-            Messagebox.show(Labels.getLabel("adm.methods_change_success"), appName, Messagebox.OK, Messagebox.INFORMATION);
+            Messagebox.show(Labels.getLabel("adm.methods_change_success"), null, Messagebox.OK, Messagebox.INFORMATION);
         else
-            Messagebox.show(msg, appName, Messagebox.OK, Messagebox.EXCLAMATION);
+            Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
         initMinCreds();
 
     }
 
     public void promptBeforeProceed(String message, int newval){
 
-        Messagebox.show(message, appName, Messagebox.YES | Messagebox.NO, Messagebox.EXCLAMATION,
+        Messagebox.show(message, null, Messagebox.YES | Messagebox.NO, Messagebox.EXCLAMATION,
                 event -> {
                     if (Messagebox.ON_YES.equals(event.getName()))
                         storeMinCreds(newval);
