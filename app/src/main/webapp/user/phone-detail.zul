@@ -65,10 +65,10 @@
                         <textbox placeholder="${labels.general.phonenumber}" sclass="s8 form-control" value="@bind(vm.newPhone.number)"
                                  tooltip="tooltip_format, at_pointer" focus="true"/>
                         <button label="${labels.usr.mobile_send}" sclass="btn-success form_button" onClick="@command('sendCode')"
-                                id="sendButton" w:onClick="initialize(this, 4000)" disabled="@load(vm.uiAwaitingArrival)"/>
+                                id="sendButton" w:onClick="tempDisable('sendButton', 4500, 'sentCode')" />
                     </hlayout>
                     <hlayout spacing="10px" valign="middle">
-                        <textbox placeholder="${labels.usr.mobile_code}" sclass="s6 form-control" value="@bind(vm.code)"/>
+                        <textbox placeholder="${labels.usr.mobile_code}" sclass="s6 form-control" value="@bind(vm.code)" id="sentCode"/>
                         <button label="&#160;${labels.general.validate}&#160;" sclass="btn-success form_button" onClick="@command('checkCode')" disabled="@load(vm.uiCodesMatch)"/>
                         <image src="/images/tick.png" width="32px" height="32px" visible="@load(vm.uiCodesMatch)"/>
                         <!-- <label value="${labels.usr.mobile_code_wrong}" sclass="de_emphasized" visible="@load((not empty vm.code) and (not vm.uiCodesMatch) and (not empty vm.newPhone.number))" /> -->

@@ -7,15 +7,12 @@ import org.gluu.credmanager.core.credential.RegisteredCredential;
 import org.gluu.credmanager.core.credential.VerifiedPhone;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.SmsService;
-import org.gluu.credmanager.services.UserService;
 import org.zkoss.bind.BindUtils;
 import org.zkoss.bind.annotation.*;
 import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.select.Selectors;
-import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zul.Messagebox;
 
 import java.util.*;
@@ -28,7 +25,6 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
 
     private Logger logger = LogManager.getLogger(getClass());
 
-    private boolean uiAwaitingArrival;
     private boolean uiCodesMatch;
     private boolean uiPanelOpened;
 
@@ -45,10 +41,6 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
 
     public boolean isUiPanelOpened() {
         return uiPanelOpened;
-    }
-
-    public boolean isUiAwaitingArrival() {
-        return uiAwaitingArrival;
     }
 
     public VerifiedPhone getNewPhone() {
@@ -94,15 +86,6 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
         Selectors.wireEventListeners(view, this);
     }
 
-    @Listen("onData=#sendButton")
-    public void notified(Event event) throws Exception {
-        if (uiAwaitingArrival) {
-            uiAwaitingArrival = false;
-            BindUtils.postNotifyChange(null, null, this, "uiAwaitingArrival");
-        }
-    }
-
-    @NotifyChange("uiAwaitingArrival")
     @Command
     public void sendCode(){
 
@@ -112,9 +95,6 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
                 if (!smsService.isPhoneNumberUnique(newPhone))
                     Messagebox.show(Labels.getLabel("usr.mobile_already_exists"), Labels.getLabel("general.warning"), Messagebox.OK, Messagebox.INFORMATION);
                 else {
-                    uiAwaitingArrival = true;
-                    BindUtils.postNotifyChange(null, null, this, "uiAwaitingArrival");
-
                     //Generate random in [100000, 999999]
                     realCode = Integer.toString(new Double(100000 + Math.random() * 899999).intValue());
                     //Compose SMS body
@@ -123,7 +103,8 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
                     logger.trace("sendCode. code={}", realCode);
 
                     //Send message (service bean already knows all settings to perform this step)
-                    smsService.sendSMS(newPhone.getNumber(), body);
+                    //smsService.sendSMS(newPhone.getNumber(), body);
+                    Messagebox.show(Labels.getLabel("usr.mobile_sms_sent", new String[]{newPhone.getNumber()}), null, Messagebox.OK, Messagebox.INFORMATION);
                 }
             }
             catch (Exception e) {
