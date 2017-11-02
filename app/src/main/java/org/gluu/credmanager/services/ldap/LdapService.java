@@ -35,7 +35,10 @@ import java.util.stream.Stream;
 public class LdapService {
 
     public static final String MOBILE_PHONE_ATTR="mobile";
-    public static final String PREFERRED_METHOD_ATTR="description";
+    public static final String PREFERRED_METHOD_ATTR="oxPreferredMethod";
+    public static final String OTP_DEVICES_ATTR="oxOTPDevices";
+    public static final String MOBILE_DEVICES_ATTR="oxMobileDevices";
+
     private Logger logger = LogManager.getLogger(getClass());
 
     private Properties ldapProperties;
@@ -288,6 +291,15 @@ public class LdapService {
         GluuPerson person=getGluuPerson(userRdn);
         person.setTemporaryEnrollmentCode(code);
         ldapEntryManager.merge(person);
+    }
+
+    public void cleanRandEnrollmentCode(String userRdn) throws Exception{
+        GluuPerson person=getGluuPerson(userRdn);
+
+        if (person.getTemporaryEnrollmentCode()!=null) {    //clean if it's present
+            person.setTemporaryEnrollmentCode(null);
+            ldapEntryManager.merge(person);
+        }
     }
 
     public <T> List<T> findUsersWithPreferred(String searchString, String attributes[], Class<T> cls) throws Exception{

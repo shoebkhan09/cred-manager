@@ -17,20 +17,19 @@ import java.util.List;
 @LdapObjectClass(values = {"top", "gluuPerson", "gluuCustomPerson"})
 public class GluuPerson extends Entry {
 
-    @LdapAttribute(name= LdapService.MOBILE_PHONE_ATTR)
-    private List<String> mobileNumbers;
+    @LdapAttribute(name = LdapService.PREFERRED_METHOD_ATTR)
+    private String preferredAuthMethod;
 
     @LdapAttribute(name = "oxExternalUid")
     private List<String> externalUids;
 
-    //TODO: use another LDAP attributes
-    @LdapAttribute(name = LdapService.PREFERRED_METHOD_ATTR)
-    private String preferredAuthMethod;
-
-    @LdapAttribute(name = "persistentId")
+    @LdapAttribute(name = LdapService.OTP_DEVICES_ATTR)
     private String otpDevicesJson;
 
-    @LdapAttribute(name = "transientId")
+    @LdapAttribute(name= LdapService.MOBILE_PHONE_ATTR)
+    private List<String> mobileNumbers;
+
+    @LdapAttribute(name = LdapService.MOBILE_DEVICES_ATTR)
     private String verifiedPhonesJson;
 
     @LdapAttribute(name = "userPassword")

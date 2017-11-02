@@ -253,6 +253,7 @@ public class UserService {
 
             if (enabled.contains(SECURITY_KEY) || enabled.contains(SUPER_GLUU)) {
                 ldapService.createFidoBranch(rdn);
+                cleanRandEnrollmentCode(user);
                 String appId;
 
                 if (enabled.contains(SECURITY_KEY)) {
@@ -356,6 +357,17 @@ public class UserService {
         String code=UUID.randomUUID().toString();
         ldapService.storeUserEnrollmentCode(user.getRdn(), code);
         return code;
+    }
+
+    public void cleanRandEnrollmentCode(User user){
+
+        try{
+            ldapService.cleanRandEnrollmentCode(user.getRdn());
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+
     }
 
     public boolean inManagerGroup(User user){
