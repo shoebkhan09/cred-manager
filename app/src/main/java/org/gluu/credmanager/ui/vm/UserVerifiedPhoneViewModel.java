@@ -103,7 +103,7 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
                     logger.trace("sendCode. code={}", realCode);
 
                     //Send message (service bean already knows all settings to perform this step)
-                    //smsService.sendSMS(newPhone.getNumber(), body);
+                    smsService.sendSMS(newPhone.getNumber(), body);
                     Messagebox.show(Labels.getLabel("usr.mobile_sms_sent", new String[]{newPhone.getNumber()}), null, Messagebox.OK, Messagebox.INFORMATION);
                 }
             }
