@@ -34,7 +34,7 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
     public void goForAuthorization() throws Exception{
         WebUtils.setRedirectStage(se, RedirectStage.INITIAL);
         //do Authz Redirect
-        WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getRoutingAcr()));
+        WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getDefaultAcr()));
     }
 
     private User getUserFromClaims(Map<String, List<String>> claims, UserService usrService) throws AttributeNotFoundException{

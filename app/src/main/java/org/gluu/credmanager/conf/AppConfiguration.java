@@ -53,17 +53,11 @@ public class AppConfiguration{
     public static final Pair<Integer, Integer> BOUNDS_MINCREDS_2FA =new Pair<>(1,3);
     public static final String BASE_URL_BRANDING_PATH="/custom";
 
-    /*
-     ACR value for the routing authentication script. WARNING!: this script has to be enabled in your Gluu server with
-     the same or lower level than SIMPLE_AUTH_ACR
-     */
-    //TODO: look out!
-    private static final String ROUTING_ACR="router";//"cred_manager";
-    /*
-     ACR value for user+password auth only. It is not necessarily equivalent to Gluu's default authn method which is found
-     in the oxAuthenticationMode attribute of the appliance. Anyway, SIMPLE_AUTH_ACR should be part of server's acr_supported_values
-     */
-    private static final String SIMPLE_AUTH_ACR ="basic";   //"auth_ldap_server";
+    //ACR this application will request to use to when getting an authorization URL.
+    //WARNING!: the corresponding custom script has to be enabled in Gluu server
+    private static final String DEFAULT_ACR="credmanager";//"idfirst"
+
+    //private static final String SIMPLE_AUTH_ACR ="basic";   //"auth_ldap_server";
 
     //========== Properties exposed by this service ==========
 
@@ -90,8 +84,8 @@ public class AppConfiguration{
     @Inject
     private OxdService oxdService;
 
-    public String getRoutingAcr(){
-        return ROUTING_ACR;
+    public String getDefaultAcr(){
+        return DEFAULT_ACR;
     }
 
     public String getOrgName() {
@@ -423,7 +417,7 @@ public class AppConfiguration{
         Set<String> supportedSet=retrieveServerAcrs();
 
         //Verify default and routing acr are there
-        List<String> acrList=Arrays.asList(SIMPLE_AUTH_ACR, ROUTING_ACR);
+        List<String> acrList=Arrays.asList(DEFAULT_ACR);    //SIMPLE_AUTH_ACR is not needed any longer
         if (supportedSet.containsAll(acrList)) {
 
             //Add them all to oxd configuration object. These will be a superset of methods used in practice...
