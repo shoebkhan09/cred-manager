@@ -87,6 +87,7 @@ public class OxdService {
                 client = new CommandClient(params.getHost(), params.getPort());
 
                 RegisterSiteParams cmdParams = new RegisterSiteParams();
+//cmdParams.setOpHost("https://localhost:8443/oxauth");
                 cmdParams.setAuthorizationRedirectUri(params.getRedirectUri());
                 cmdParams.setPostLogoutRedirectUri(params.getPostLogoutUri());
                 cmdParams.setAcrValues(new ArrayList<>(params.getAcrValues()));
