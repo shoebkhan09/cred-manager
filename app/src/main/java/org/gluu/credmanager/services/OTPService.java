@@ -48,7 +48,7 @@ public class OTPService{
 
     public String generateSecretKeyUri(byte[] secretKey, String displayName){
 
-        String secretKeyBase32=BaseEncoding.base32().encode(secretKey);
+        String secretKeyBase32=BaseEncoding.base32().omitPadding().encode(secretKey);
         OTPKey otpKey = new OTPKey(secretKeyBase32, conf.getType());
 
         OTPAuthURIBuilder uribe=OTPAuthURIBuilder.fromKey(otpKey).label(conf.getIssuer() + ":" + displayName);
