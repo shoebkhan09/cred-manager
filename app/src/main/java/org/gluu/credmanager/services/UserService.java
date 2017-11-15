@@ -50,9 +50,10 @@ public class UserService {
      */
     public User createUserFromClaims(Map<String, List<String>> claims){
 
-        //TODO: add logging here
         User u = new User();
         u.setUserName(getClaim(claims,"user_name"));
+        logger.trace("createUserFromClaims. Username is {}", u.getUserName());
+
         u.setGivenName(getClaim(claims,"given_name"));
         //u.setEmail(getClaim(claims,"email"));
         //u.setPhone(getClaim(claims, "phone_number_verified"));    scopes: `email`, `mobile_phone`, `phone`,
@@ -62,8 +63,10 @@ public class UserService {
         if (inum!=null)
             u.setRdn("inum=" + inum);
 
-        if (u.getRdn()==null || u.getUserName()==null)
-            u=null;
+        if (u.getRdn()==null || u.getUserName()==null) {
+            u = null;
+            logger.error("createUserFromClaims. Could not obtain user claims!");
+        }
 
         return u;
     }
@@ -283,7 +286,8 @@ public class UserService {
     public Set<CredentialType> getEffectiveMethods(User user){
         //Get those credentials types that have associated at least one item
         Stream<Map.Entry<CredentialType, List<RegisteredCredential>>> stream=user.getCredentials().entrySet().stream();
-        Set<CredentialType> set=stream.filter(e -> e.getValue().size()>0).map(e -> e.getKey()).collect(Collectors.toCollection(HashSet::new));
+        //Create a sorted set from it
+        Set<CredentialType> set=stream.filter(e -> e.getValue().size()>0).map(Map.Entry::getKey).collect(Collectors.toCollection(TreeSet::new));
         return set;
     }
 

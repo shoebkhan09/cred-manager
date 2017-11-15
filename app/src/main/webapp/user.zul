@@ -24,10 +24,11 @@
         </vlayout>
 
         <include src="user/preferred.zul" />
+        <!-- widgets are displayed by strength order: from highest to lowest -->
         <include src="@load(vm.credentialsVisibility['SECURITY_KEY'] ? 'user/u2f.zul' : '')" />
-        <include src="@load(vm.credentialsVisibility['VERIFIED_PHONE'] ? 'user/phone.zul' : '')" />
-        <include src="@load(vm.credentialsVisibility['OTP'] ? 'user/otp.zul' : '')" />
         <include src="@load(vm.credentialsVisibility['SUPER_GLUU'] ? 'user/super.zul' : '')" />
+        <include src="@load(vm.credentialsVisibility['OTP'] ? 'user/otp.zul' : '')" />
+        <include src="@load(vm.credentialsVisibility['VERIFIED_PHONE'] ? 'user/phone.zul' : '')" />
 
         <zk if="${vm.uiPassResetAvailable}">
             <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPanelOpened)">

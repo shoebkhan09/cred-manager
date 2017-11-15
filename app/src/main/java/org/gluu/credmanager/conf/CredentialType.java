@@ -12,10 +12,11 @@ import java.util.List;
  * Authenticator), and a verified phone number to receive OTPs (one-time passcodes)
  */
 public enum CredentialType {
-    SUPER_GLUU      ("super_gluu", null),
-    VERIFIED_PHONE  ("twilio_sms", "twilio"),   //Certain Gluu servers identify this method as twilio_sms or simply twilio
+    //Constants appear here in order of strenght
     SECURITY_KEY    ("u2f", null),
-    OTP             ("otp", null);
+    SUPER_GLUU      ("super_gluu", null),
+    OTP             ("otp", null),
+    VERIFIED_PHONE  ("twilio_sms", "twilio");   //Certain Gluu servers identify this method as twilio_sms or simply twilio
 
     //This is the acr value corresponding to this method (the name field of the associated interception script). It must be NON-NULL
     private String name;
