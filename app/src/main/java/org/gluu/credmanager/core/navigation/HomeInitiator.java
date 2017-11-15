@@ -31,7 +31,7 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
     private Logger logger = LogManager.getLogger(getClass());
 
     //Redirects to an authorization URL obtained with OXD
-    public void goForAuthorization() throws Exception{
+    private void goForAuthorization() throws Exception{
         WebUtils.setRedirectStage(se, RedirectStage.INITIAL);
         //do Authz Redirect
         WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getDefaultAcr()));

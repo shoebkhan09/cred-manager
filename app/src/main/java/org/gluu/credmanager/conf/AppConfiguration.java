@@ -48,14 +48,14 @@ public class AppConfiguration{
     private final String DEFAULT_GLUU_BASE="/etc/gluu";
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
     private final String OXAUTH_WAR_LOCATION= "/opt/gluu/jetty/oxauth/webapps/oxauth.war";
-    private final String DEFAULT_GLUU_VERSION="3.0.2";      //Current app version is mainly targeted at this version of Gluu Server
+    private final String DEFAULT_GLUU_VERSION="3.1.1";      //Current app version is mainly targeted at this version of Gluu Server
 
     public static final Pair<Integer, Integer> BOUNDS_MINCREDS_2FA =new Pair<>(1,3);
     public static final String BASE_URL_BRANDING_PATH="/custom";
 
     //ACR this application will request to use to when getting an authorization URL.
     //WARNING!: the corresponding custom script has to be enabled in Gluu server
-    private static final String DEFAULT_ACR="credmanager";//"idfirst"
+    private static final String DEFAULT_ACR="credmanager";//"idfirst";"auth_ldap_server"
 
     //private static final String SIMPLE_AUTH_ACR ="basic";   //"auth_ldap_server";
 
