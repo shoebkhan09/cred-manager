@@ -3,11 +3,11 @@
   "oxd_config" : {
     "host" : "localhost",
     "port" : 8099,
-    "authz_redirect_uri" : "https://cred-manager.gluu.org/cred-manager/",
+    "authz_redirect_uri" : "https://my-gluu-host.com/cred-manager/",
   },
   "ldap_settings" : {
-    "applianceInum" : "@!3358.AAC9.1B80.48BD!0002!5CEC.4E51",
-    "orgInum" : "@!3358.AAC9.1B80.48BD!0001!726E.EF58",
+    "applianceInum" : "grab appliance inum from oxTrust",
+    "orgInum" : "grab organization inum from oxTrust",
     "salt" : "/etc/gluu/conf/salt",
     "ox-ldap_location" : "/etc/gluu/conf/ox-ldap.properties"
   },
