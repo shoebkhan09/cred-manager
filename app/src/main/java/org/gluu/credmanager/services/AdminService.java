@@ -8,6 +8,7 @@ import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.jsonized.Configs;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
+import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.xdi.ldap.model.SimpleUser;
@@ -32,6 +33,9 @@ public class AdminService {
 
     @Inject
     private AppConfiguration appConfig;
+
+    @Inject
+    private OxdService oxdService;
 
     @Inject
     private LdapService ldapService;
@@ -177,23 +181,49 @@ public class AdminService {
 
     /* ========== OXD SETTINGS ========== */
 
-    //This method does not change application level settings
-    public String updateOxdSettings(String host, int port){
+    public OxdConfig copyOfWorkingOxdSettings(){
+        return copyOfOxdSettings(localSettings.getOxdConfig());
+    }
 
-        //Detect if there are changes with respect to current configuration
-        if (host.equals(localSettings.getOxdConfig().getHost()) && port==localSettings.getOxdConfig().getPort())
-            return null;
-        else{
-            //update local copy
-            localSettings.getOxdConfig().setHost(host);
-            localSettings.getOxdConfig().setPort(port);
-            localSettings.getOxdConfig().setOxdId(null);    //This will provoke re-registration after restart
+    private OxdConfig copyOfOxdSettings(OxdConfig settings){
 
-            logAdminEvent("Changed oxd host/port to " + host + "/" + port);
-            //no runtime change here, or else the app stops working well
-            return updateSettings();
+        OxdConfig oxdSettings=null;
+        try {
+            oxdSettings=mapper.readValue(mapper.writeValueAsString(settings), new TypeReference<OxdConfig>(){});
         }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return oxdSettings;
 
+    }
+
+    public String testOxdSettings(OxdConfig newSettings){
+
+        String msg=null;
+        OxdConfig backup=copyOfWorkingOxdSettings();
+        OxdConfig newSettingsCopy=copyOfOxdSettings(newSettings);   //This prevents side effects
+        try {
+            oxdService.setSettings(newSettings);
+            //If it gets here, it means the provided settings were fine, so local copy can be overwritten
+            localSettings.setOxdConfig(newSettingsCopy);
+        }
+        catch (Exception e){
+            msg=e.getMessage();
+            try {
+                //Revert to last working settings
+                oxdService.setSettings(backup);
+            }
+            catch (Exception e1){
+                logger.error(e1.getMessage(), e1);
+            }
+        }
+        return msg;
+
+    }
+
+    public String updateOxdSettings(){
+        return updateSettings();
     }
 
     /* ========== LDAP SETTINGS ========== */
@@ -220,11 +250,12 @@ public class AdminService {
 
         String msg=null;
         LdapSettings backup=copyOfWorkingLdapSettings();
+        //Cloning here is critical, or else a change in the UI may distort the real LDAP settings
         LdapSettings newSettingsCopy=copyOfLdapSettings(newSettings);
         try{
             logger.info(Labels.getLabel("adm.ldap_testing"));
             ldapService.setup(newSettingsCopy);
-            //If it gets here, it means the provided settings were fine, so local copy can be overriden
+            //If it gets here, it means the provided settings were fine, so local copy can be overwritten
             localSettings.setLdapSettings(newSettingsCopy);
         }
         catch (Exception e) {

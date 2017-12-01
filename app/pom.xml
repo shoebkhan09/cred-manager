@@ -22,6 +22,8 @@
 		<jackson.version>2.5.3</jackson.version>
         <ox.version>3.1.0.Final</ox.version>
         <oxd.version>3.1.1.Final</oxd.version>
+        <resteasy.version>3.0.21.Final</resteasy.version>
+        <jaxr.version>3.0.12.Final</jaxr.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	
@@ -262,6 +264,25 @@
             <groupId>com.lochbridge.oath</groupId>
             <artifactId>oath-otp-keyprovisioning</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!-- QUARTZ -->
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>2.2.3</version>
+        </dependency>
+
+        <!-- RIP -->
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>${resteasy.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>jaxrs-api</artifactId>
+            <version>${jaxr.version}</version>
         </dependency>
 	</dependencies>
 <!--

@@ -9,7 +9,7 @@
                     <hlayout>
                         <div children="@load(vm.methods)">
                             <template name="children">
-                                <checkbox label="${each.y}" onCheck="@command('checkMethod', cred=each.x, evt=event)"
+                                <checkbox label="${each.y}" onCheck="@command('checkMethod', cred=each.x, checked=self.checked)"
                                     disabled="@load(not vm.activeMethods.get(each.x))" checked="@load(vm.enabledMethods.contains(each.x))" />
                                 <space width="@load(vm.methods.indexOf(each) eq (vm.methods.size()-1) ? '0px' : '15px')"/>
                             </template>

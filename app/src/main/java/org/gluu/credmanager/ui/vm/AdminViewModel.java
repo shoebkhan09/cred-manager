@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
+import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.AdminService;
@@ -49,12 +50,11 @@ public class AdminViewModel extends UserViewModel {
     private String subpage;
     private String searchPattern;
     private String brandingPath;
-    private String oxdHost;
-    private int oxdPort;
     private ListModelList<Pair<CredentialType, String>> methods;
     private Map<CredentialType, Boolean> activeMethods;
     private Set<CredentialType> uiSelectedMethods;
     private LdapSettings ldapSettings;
+    private OxdConfig oxdSettings;
     private boolean passResetEnabled;
     private boolean passResetImpossible;
     private int minCreds2FA;
@@ -99,20 +99,12 @@ public class AdminViewModel extends UserViewModel {
         this.brandingPath = brandingPath;
     }
 
-    public String getOxdHost() {
-        return oxdHost;
+    public OxdConfig getOxdSettings() {
+        return oxdSettings;
     }
 
-    public void setOxdHost(String oxdHost) {
-        this.oxdHost = oxdHost;
-    }
-
-    public int getOxdPort() {
-        return oxdPort;
-    }
-
-    public void setOxdPort(int oxdPort) {
-        this.oxdPort = oxdPort;
+    public void setOxdSettings(OxdConfig oxdSettings) {
+        this.oxdSettings = oxdSettings;
     }
 
     public ListModelList<Pair<CredentialType, String>> getMethods() {
@@ -353,22 +345,34 @@ public class AdminViewModel extends UserViewModel {
     /* ========== OXD SETTINGS ========== */
 
     private void initOxd(){
-        //Take immutable copy of oxd relevant settings
-        oxdHost=myService.getConfigSettings().getOxdConfig().getHost();
-        oxdPort=myService.getConfigSettings().getOxdConfig().getPort();
+        oxdSettings=myService.copyOfWorkingOxdSettings();
     }
 
-    public void storeOxdSettings(){
-        String msg=myService.updateOxdSettings(oxdHost, oxdPort);
-        if (msg==null)
-            Messagebox.show(Labels.getLabel("adm.restart_required"), null, Messagebox.OK, Messagebox.INFORMATION);
-        else
-            Messagebox.show(Labels.getLabel("adm.oxd_fail_update"), null, Messagebox.OK, Messagebox.EXCLAMATION);
+    private void storeOxdSettings(){
+        String msg=myService.testOxdSettings(oxdSettings);
+        if (msg==null){
+            msg=myService.updateOxdSettings();
+            if (msg==null)
+                showMessageUI(true);
+            else
+                Messagebox.show(Labels.getLabel("adm.oxd_fail_update"), null, Messagebox.OK, Messagebox.EXCLAMATION);
+        }
+        else{
+            initOxd();
+            Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
+        }
+    }
+
+    @Command
+    public void switchUseOxdExtension(@BindingParam("use") boolean useExtension){
+        oxdSettings.setUseHttpsExtension(useExtension);
     }
 
     @Command
     public void saveOxdSettings(){
 
+        int oxdPort=oxdSettings.getPort();
+        String oxdHost=oxdSettings.getHost();
         if (Utils.stringOptional(oxdHost).isPresent() && oxdPort>=0) {
 
             boolean connected=false;    //Try to guess if this is really an oxd-server
@@ -426,10 +430,10 @@ public class AdminViewModel extends UserViewModel {
     }
 
     @Command
-    public void checkMethod(@BindingParam("cred") CredentialType cred, @BindingParam("evt") Event evt){
-        Checkbox box=(Checkbox) evt.getTarget();
+    public void checkMethod(@BindingParam("cred") CredentialType cred, @BindingParam("checked") boolean checked){
+
         //Add or remove from set depending on whether it's checked or not
-        if (box.isChecked())
+        if (checked)
             uiSelectedMethods.add(cred);
         else
             uiSelectedMethods.remove(cred);

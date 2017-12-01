@@ -6,15 +6,23 @@
             <vlayout>
                 <label value="${labels.adm.oxd_text}"/>
                 <div align="center" sclass="padded">
-                    <hlayout valign="middle">
-                        <textbox sclass="s8 form-control" placeholder="${labels.amd.oxd_host_placeholder}" value="@bind(vm.oxdHost)" />
-                        :
-                        <textbox width="60px" sclass="form-control" placeholder="${labels.amd.oxd_port_placeholder}" value="@bind(vm.oxdPort)" />
-                    </hlayout>
-                    <separator />
-                    <separator />
+                    <vlayout spacing="13px">
+                        <hlayout valign="middle">
+                            <textbox sclass="s8 form-control" placeholder="${labels.adm.oxd_host_placeholder}" value="@bind(vm.oxdSettings.host)" />
+                            :
+                            <textbox width="60px" sclass="form-control" placeholder="${labels.adm.oxd_port_placeholder}"
+                                     value="@bind(vm.oxdSettings.port)" tooltip="tooltip_port, at_pointer" />
+                        </hlayout>
+                        <hlayout>
+                            <space sclass="s5" />
+                            <checkbox label="${labels.adm.oxd_use_extension}" checked="@bind(vm.oxdSettings.useHttpsExtension)" onCheck="@command('switchUseOxdExtension', use=self.checked)" />
+                            <space width="20px" />
+                        </hlayout>
+                        <separator />
+                    </vlayout>
                     <button label="&#160;${labels.general.save}&#160;" sclass="btn-success form_button" onClick="@command('saveOxdSettings')" w:onClick="showThrobber()" />
                 </div>
+                <popup id="tooltip_port">${labels.adm.oxd_port_tooltip}</popup>
             </vlayout>
         </panelchildren>
     </panel>

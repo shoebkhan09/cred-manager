@@ -12,6 +12,7 @@ import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.gluu.credmanager.conf.jsonized.U2fSettings;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
+import org.gluu.credmanager.services.ClientRefreshService;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.OxdService;
 import org.gluu.credmanager.services.ldap.pojo.CustomScript;
@@ -43,7 +44,7 @@ import java.util.zip.ZipFile;
  * member inOperableState). Most configurations are saved in the configSettings member.
  */
 @ApplicationScoped
-public class AppConfiguration{
+public class AppConfiguration {
 
     private final String DEFAULT_GLUU_BASE="/etc/gluu";
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
@@ -56,7 +57,6 @@ public class AppConfiguration{
     //ACR this application will request to use to when getting an authorization URL.
     //WARNING!: the corresponding custom script has to be enabled in Gluu server
     private static final String DEFAULT_ACR="credmanager";//"idfirst";"auth_ldap_server"
-
     //private static final String SIMPLE_AUTH_ACR ="basic";   //"auth_ldap_server";
 
     //========== Properties exposed by this service ==========
@@ -83,6 +83,9 @@ public class AppConfiguration{
 
     @Inject
     private OxdService oxdService;
+
+    @Inject
+    private ClientRefreshService clientRefreshService;
 
     public String getDefaultAcr(){
         return DEFAULT_ACR;
@@ -161,13 +164,7 @@ public class AppConfiguration{
                     configSettings=mapper.readValue(srcConfigFile, Configs.class);
 
                     //Check settings consistency, infer some, and override others
-                    if (computeSettings(configSettings))
-                        try {
-                            updateConfigFile(configSettings);
-                        }
-                        catch (Exception e) {
-                            logger.error(Labels.getLabel("app.conf_update_error"), e);
-                        }
+                    computeSettings(configSettings);
                 }
                 catch (Exception e){
                     inOperableState=false;
@@ -185,9 +182,8 @@ public class AppConfiguration{
         mapper.writeValue(srcConfigFile, configs);
     }
 
-    private boolean computeSettings(Configs settings) {
+    private void computeSettings(Configs settings) {
 
-        boolean update=false;
         Optional<String> oxLdapOpt=Utils.stringOptional(settings.getLdapSettings().getOxLdapLocation());
 
         if (oxLdapOpt.isPresent() && Files.exists(Paths.get(oxLdapOpt.get()))){
@@ -221,7 +217,7 @@ public class AppConfiguration{
                         computeSuperGluuSettings(settings);
                         computeTwilioSettings(settings);
 
-                        update=computeOxdSettings(settings);
+                        computeOxdSettings(settings);
                     }
                     catch (Exception e){
                         logger.error(e.getMessage(),e);
@@ -233,8 +229,6 @@ public class AppConfiguration{
         }
         else
             logger.error(Labels.getLabel("app.inexistent_ox-ldap"));
-
-        return update;
 
     }
 
@@ -417,11 +411,9 @@ public class AppConfiguration{
         Set<String> supportedSet=retrieveServerAcrs();
 
         //Verify default and routing acr are there
-        List<String> acrList=Arrays.asList(DEFAULT_ACR);    //SIMPLE_AUTH_ACR is not needed any longer
+        List<String> acrList=Collections.singletonList(DEFAULT_ACR);
         if (supportedSet.containsAll(acrList)) {
 
-            //Add them all to oxd configuration object. These will be a superset of methods used in practice...
-            settings.getOxdConfig().setAcrValues(new HashSet<>(supportedSet));
             //Now, keep the interesting ones. This will filter things like "basic", "auth_ldap_server", etc.
             supportedSet.retainAll(possibleMethods);
 
@@ -444,9 +436,7 @@ public class AppConfiguration{
 
     }
 
-    private boolean computeOxdSettings(Configs settings) throws Exception{
-
-        boolean update=false;
+    private void computeOxdSettings(Configs settings) throws Exception{
 
         OxdConfig oxdConfig = settings.getOxdConfig();
         if (oxdConfig==null)
@@ -462,30 +452,24 @@ public class AppConfiguration{
                 tmp=tmp.endsWith("/") ? tmp.substring(0, tmp.length()-1) : tmp;
                 oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
 
-                Optional<String> oxdIdOpt=Utils.stringOptional(oxdConfig.getOxdId());
-                if (oxdIdOpt.isPresent()) {
-                    oxdService.setSettings(oxdConfig);
-                    inOperableState = true;
-                }
-                else{
-                    try{
-                        //TODO: delete previous existing client?
-                        //Do registration
-                        oxdConfig.setClientName("cred-manager");
-                        oxdConfig.setOxdId(oxdService.doRegister(oxdConfig));
-                        oxdService.setSettings(oxdConfig);
+                //TODO: bug 3.1.1?  https://github.com/GluuFederation/oxd/issues/124
+                oxdConfig.setOpHost(issuerUrl);
+                //END
+                oxdConfig.setAcrValues(Collections.singletonList(DEFAULT_ACR));
 
-                        update=true;
-                        inOperableState = true;
-                    }
-                    catch (Exception e) {
-                        logger.fatal(Labels.getLabel("app.oxd_registration_failed"), e.getMessage());
-                        throw e;
-                    }
+                int expTime=ldapService.getDynamicClientExpirationTime();
+                if (expTime>=0) {
+                    //trigger registration
+                    oxdService.setSettings(oxdConfig);
+                    //If registration was effective save reference to the settings
+                    inOperableState = true;
+                    //and prepare timer to repeat registration based on default clientExpirationTime
+                    clientRefreshService.schedule(expTime);
                 }
+                else
+                    throw new Exception(Labels.getLabel("app.dynamic_registration_disabled"));
             }
         }
-        return update;
     }
 
     private String guessGluuVersion(){
@@ -497,7 +481,7 @@ public class AppConfiguration{
         {
             version=war.getManifest().getMainAttributes().getValue("Implementation-Version");
             if (version!=null) {
-                version=version.toLowerCase().replaceFirst("-snapshot", "");
+                version=version.toLowerCase().replaceFirst("-snapshot", "").replaceFirst(".final","");
                 logger.info(Labels.getLabel("app.gluu_version_guessed"), version);
             }
         }

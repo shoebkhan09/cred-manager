@@ -50,6 +50,7 @@ public class LdapService {
     private OxTrustConfiguration oxTrustConfig=null;
     private JsonNode oxAuthConfDynamic;
     private String usersDN;
+    private int dynamicClientExpirationTime=-1;
 
     /**
      * Initializes and LdapEntryManager instance for operation
@@ -103,12 +104,19 @@ public class LdapService {
             throw new IOException();
 
         oxAuthConfDynamic = mapper.readTree(authConfig.getStrConfDynamic());
+        boolean dynRegEnabled =oxAuthConfDynamic.get("dynamicRegistrationEnabled").asBoolean();
+        dynamicClientExpirationTime= dynRegEnabled ? oxAuthConfDynamic.get("dynamicRegistrationExpirationTime").asInt() : -1;
+
         oxTrustConfig=ldapEntryManager.find(OxTrustConfiguration.class, "ou=oxtrust," + dn);
 
     }
 
     public String getOrganizationName() throws Exception{
         return organization.getName();
+    }
+
+    public int getDynamicClientExpirationTime() {
+        return dynamicClientExpirationTime;
     }
 
     public boolean belongsToManagers(String userRdn) throws Exception{
