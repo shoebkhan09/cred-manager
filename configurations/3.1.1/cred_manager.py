@@ -475,7 +475,7 @@ class PersonAuthentication(PersonAuthenticationType):
             moving_factor = StringHelper.toInteger(user_enrollment_data[1])
             otp_secret_key = self.fromBase64Url(otp_secret_key_encoded)
 
-            # Validate TOTP
+            # Validate HOTP
             validation_result = self.validateHotpKey(otp_secret_key, moving_factor, otpCode)
             if (validation_result != None) and validation_result["result"]:
                 print "processHotpAuthentication. otpCode is valid"
@@ -529,11 +529,12 @@ class PersonAuthentication(PersonAuthenticationType):
         
         return result
 
-    def validateHotpKey(self, secretKey, movingFactor, totpKey):
+    def validateHotpKey(self, secretKey, movingFactor, otpKey):
         hotpConfig=self.scriptsConfig.get("hotpConfiguration")
         digits = hotpConfig["digits"]
-
-        htopValidationResult = HOTPValidator.lookAheadWindow(1).validate(secretKey, movingFactor, digits, totpKey)
+        law=hotpConfig["lookAheadWindow"]
+        
+        htopValidationResult = HOTPValidator.lookAheadWindow(law).validate(secretKey, movingFactor, digits, otpKey)
         if htopValidationResult.isValid():
             return { "result": True, "movingFactor": htopValidationResult.getNewMovingFactor() }
         return { "result": False, "movingFactor": None }
