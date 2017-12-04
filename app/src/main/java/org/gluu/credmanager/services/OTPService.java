@@ -62,8 +62,8 @@ public class OTPService{
 
     public Pair<Boolean, Long> validateHOTPKey(byte secretKey[], int movingFactor, String otpCode) {
         int digits=conf.getDigits();
-        HOTPValidationResult result = HOTPValidator.lookAheadWindow(1).validate(secretKey, movingFactor, digits, otpCode);
-        return result.isValid() ? new Pair<>(true, result.getNewMovingFactor()) : new Pair(false, null);
+        HOTPValidationResult result = HOTPValidator.lookAheadWindow(conf.getLookAheadWindow()).validate(secretKey, movingFactor, digits, otpCode);
+        return result.isValid() ? new Pair<>(true, result.getNewMovingFactor()) : new Pair<>(false, null);
     }
 
     public boolean validateTOTPKey(byte secretKey[], String otpCode) {
