@@ -13,6 +13,7 @@ import org.zkoss.zk.ui.*;
 import org.zkoss.zk.ui.util.Initiator;
 
 import javax.management.AttributeNotFoundException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,7 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
     private void goForAuthorization() throws Exception{
         WebUtils.setRedirectStage(se, RedirectStage.INITIAL);
         //do Authz Redirect
+        //WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getDefaultAcr()));
         WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getDefaultAcr()));
     }
 

@@ -59,7 +59,7 @@ public class OxdService {
     public void doRegister() throws Exception{
 
         //TODO: delete previous existing client?
-        logger.info(Labels.getLabel("app.refreshing_clients"), config.getHost(), config.getPort(), config.isUseHttpsExtension());
+        logger.info(Labels.getLabel("app.updating_oxd_settings"), config.getHost(), config.getPort(), config.isUseHttpsExtension());
 
         try {
             if (config.isUseHttpsExtension()) {
@@ -106,11 +106,13 @@ public class OxdService {
                 oxdId = site.getOxdId();
             }
             consecutive++;
-            logger.info(Labels.getLabel("app.register_oxd_ended"), oxdId);
+            logger.info(Labels.getLabel("app.updated_oxd_settings"), oxdId);
         }
         catch (Exception e){
-            logger.fatal(Labels.getLabel("app.refresh_clients_error"), e.getMessage());
-            throw e;
+            consecutive++;
+            String msg=Labels.getLabel("app.oxd_settings_error");
+            logger.fatal(msg, e);
+            throw new Exception(msg, e);
         }
 
     }
@@ -141,7 +143,7 @@ public class OxdService {
     }
 
     public String getAuthzUrl(String acrValues) throws Exception {
-        return getAuthzUrl(Collections.singletonList(acrValues), null);
+        return getAuthzUrl(Collections.singletonList(acrValues), "login");  //null
     }
 
     public String getAccessToken(String code, String state) throws Exception{
@@ -187,7 +189,7 @@ public class OxdService {
 
         LogoutResponse resp;
         if (config.isUseHttpsExtension())
-            resp = restResponse(cmdParams, "", getPAT(), LogoutResponse.class);
+            resp = restResponse(cmdParams, "get-logout-uri", getPAT(), LogoutResponse.class);
         else {
             Command command = new Command(CommandType.GET_LOGOUT_URI).setParamsObject(cmdParams);
             resp = commandClient.send(command).dataAsResponse(LogoutResponse.class);

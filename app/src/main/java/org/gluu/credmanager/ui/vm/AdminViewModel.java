@@ -115,8 +115,8 @@ public class AdminViewModel extends UserViewModel {
         return activeMethods;
     }
 
-    public Set<CredentialType> getEnabledMethods(){
-        return myService.getEnabledMethods();
+    public Set<CredentialType> getUiSelectedMethods() {
+        return uiSelectedMethods;
     }
 
     public LdapSettings getLdapSettings() {
@@ -152,16 +152,16 @@ public class AdminViewModel extends UserViewModel {
         myService=services.getAdminService();
 
         //This is a fixed list that remains constant all the time
-        logLevels=Arrays.asList(Level.values()).stream().sorted().map(levl -> levl.name()).collect(Collectors.toList());
+        logLevels=Arrays.stream(Level.values()).sorted().map(Level::name).collect(Collectors.toList());
     }
 
-    @Command
-    @NotifyChange({"subpage"})
     /**
      * Changes the page loaded in the content area. Also sets values needed in the UI (these are taken directly from
      * calls to AdminService's getConfigSettings method.
      * @param page The (string) url of the page that must be loaded (by default /admin/default.zul is being shown)
      */
+    @Command
+    @NotifyChange({"subpage"})
     public void loadSubPage(@BindingParam("page") String page){
         subpage=page;
         users=null;
@@ -181,7 +181,7 @@ public class AdminViewModel extends UserViewModel {
         initMinCreds();
     }
 
-    private void restoreUI(){
+    private void hideThrobber(){
         Clients.response(new AuInvoke("hideThrobber"));
     }
 
@@ -195,7 +195,7 @@ public class AdminViewModel extends UserViewModel {
             showMessageUI(true);
         else
             Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
-        restoreUI();
+        hideThrobber();
     }
 
     /* ========== RESET CREDENTIALS ========== */
@@ -228,7 +228,7 @@ public class AdminViewModel extends UserViewModel {
             //triggers update of interface
             BindUtils.postNotifyChange(null, null, this, "users");
         }
-        restoreUI();
+        hideThrobber();
     }
 
     @NotifyChange({"users"})
@@ -261,7 +261,7 @@ public class AdminViewModel extends UserViewModel {
         }
         else
             showMessageUI(false, Labels.getLabel("adm.resets_noselection"));
-        restoreUI();
+        hideThrobber();
 
     }
 
@@ -338,7 +338,7 @@ public class AdminViewModel extends UserViewModel {
             logger.error(e.getMessage(), e);
             Messagebox.show(Labels.getLabel("adm.branding_no_dir"), null, Messagebox.OK, Messagebox.INFORMATION);
         }
-        restoreUI();
+        hideThrobber();
 
     }
 
@@ -355,11 +355,11 @@ public class AdminViewModel extends UserViewModel {
             if (msg==null)
                 showMessageUI(true);
             else
-                Messagebox.show(Labels.getLabel("adm.oxd_fail_update"), null, Messagebox.OK, Messagebox.EXCLAMATION);
+                Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
         }
         else{
             initOxd();
-            Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
+            Messagebox.show(msg + "\n" + Labels.getLabel("admin.reverted"), null, Messagebox.OK, Messagebox.EXCLAMATION);
         }
     }
 
@@ -375,9 +375,12 @@ public class AdminViewModel extends UserViewModel {
         String oxdHost=oxdSettings.getHost();
         if (Utils.stringOptional(oxdHost).isPresent() && oxdPort>=0) {
 
-            boolean connected=false;    //Try to guess if this is really an oxd-server
+            boolean connected=false;    //Try to guess if it looks like an oxd-server
             try {
-                connected=WebUtils.hostAvailabilityCheck(new InetSocketAddress(oxdHost, oxdPort), 3500);
+                if (oxdSettings.isUseHttpsExtension())
+                    connected=true;     //Check not implemented yet
+                else
+                    connected=WebUtils.hostAvailabilityCheck(new InetSocketAddress(oxdHost, oxdPort), 3500);
             }
             catch (Exception e){
                 logger.error(e.getMessage(), e);
@@ -396,10 +399,12 @@ public class AdminViewModel extends UserViewModel {
                 );
             else
                 storeOxdSettings();
+
+            BindUtils.postNotifyChange(null, null, this, "oxdSettings");
         }
         else
             Messagebox.show(Labels.getLabel("adm.oxd_no_settings"), null, Messagebox.OK, Messagebox.INFORMATION);
-        restoreUI();
+        hideThrobber();
     }
 
     /* ========== ENABLED AUTHN METHODS ========== */
@@ -419,8 +424,7 @@ public class AdminViewModel extends UserViewModel {
 
             //uiSelectedMethods is a set that is being sync whenever the user selects/deselects a method in the UI
             //Here it is initialized to the have the same items as the global AppConfiguration enabledMethods member
-            uiSelectedMethods=new HashSet<>();
-            getEnabledMethods().stream().forEach(ct -> uiSelectedMethods.add(ct));
+            uiSelectedMethods=new HashSet<>(myService.getEnabledMethods());
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -429,17 +433,27 @@ public class AdminViewModel extends UserViewModel {
 
     }
 
+    @NotifyChange("uiSelectedMethods")
     @Command
     public void checkMethod(@BindingParam("cred") CredentialType cred, @BindingParam("checked") boolean checked){
 
         //Add or remove from set depending on whether it's checked or not
-        if (checked)
-            uiSelectedMethods.add(cred);
+        if (checked) {
+            if (myService.reloadMethodConfig(cred))
+                uiSelectedMethods.add(cred);
+            else {
+                String msg=Labels.getLabel("adm.method_reload_error", new String[]{cred.getUIName()});
+                Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
+            }
+        }
         else
             uiSelectedMethods.remove(cred);
+
+        hideThrobber();
+
     }
 
-    @NotifyChange("enabledMethods")
+    @NotifyChange("uiSelectedMethods")
     @Command
     //This method changes the application level configuration for enabled methods
     public void saveMethods(){
@@ -449,11 +463,11 @@ public class AdminViewModel extends UserViewModel {
         Stream<CredentialType> stream=activeMethods.entrySet().stream().filter(entry -> entry.getValue()).map(entry -> entry.getKey());
         for (CredentialType method : stream.collect(Collectors.toList())){
             if (uiSelectedMethods.contains(method))
-                getEnabledMethods().add(method);
+                myService.getEnabledMethods().add(method);
             else {
                 //Check if it's allowed to uncheck this method
                 if (myService.zeroPreferences(method))
-                    getEnabledMethods().remove(method);
+                    myService.getEnabledMethods().remove(method);
                 else {
                     uiSelectedMethods.add(method);  //Turn it on again
                     failed.add(method.getUIName());
@@ -472,7 +486,7 @@ public class AdminViewModel extends UserViewModel {
             Messagebox.show(Labels.getLabel("adm.methods_existing_credentials", new String[]{failed.toString()}),
                     null, Messagebox.OK, Messagebox.EXCLAMATION);
 
-        restoreUI();
+        hideThrobber();
 
     }
 
@@ -506,13 +520,13 @@ public class AdminViewModel extends UserViewModel {
             }
             else {
                 initLdap();    //Revert to AdminService local (working) copy of settings
-                Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
+                Messagebox.show(msg + "\n" + Labels.getLabel("admin.reverted"), null, Messagebox.OK, Messagebox.EXCLAMATION);
             }
             BindUtils.postNotifyChange(null, null, this, "ldapSettings");
         }
         else
             showMessageUI(false, Labels.getLabel("adm.ldap_nonempty"));
-        restoreUI();
+        hideThrobber();
 
     }
 
@@ -527,7 +541,7 @@ public class AdminViewModel extends UserViewModel {
             showMessageUI(true);
         else
             Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
-        restoreUI();
+        hideThrobber();
     }
 
     /* ========== MINIMUM CREDENTIALS FOR STRONG AUTHENTICATION ========== */
@@ -581,7 +595,7 @@ public class AdminViewModel extends UserViewModel {
             promptBeforeProceed(Labels.getLabel("adm.strongauth_warning_up", new Integer[]{minCreds2FA}), val);
         else
             storeMinCreds(val);
-        restoreUI();
+        hideThrobber();
 
     }
 

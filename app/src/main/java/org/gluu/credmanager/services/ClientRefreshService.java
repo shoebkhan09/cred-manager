@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+import org.zkoss.util.resource.Labels;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
@@ -55,6 +56,7 @@ public class ClientRefreshService implements Job {
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
+            logger.warn(Labels.getLabel("app.refresh_clients_warn"));
         }
 
     }

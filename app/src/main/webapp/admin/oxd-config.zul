@@ -11,7 +11,7 @@
                             <textbox sclass="s8 form-control" placeholder="${labels.adm.oxd_host_placeholder}" value="@bind(vm.oxdSettings.host)" />
                             :
                             <textbox width="60px" sclass="form-control" placeholder="${labels.adm.oxd_port_placeholder}"
-                                     value="@bind(vm.oxdSettings.port)" tooltip="tooltip_port, at_pointer" />
+                                     value="@bind(vm.oxdSettings.port)" tooltip="tooltip_port, after_pointer" />
                         </hlayout>
                         <hlayout>
                             <space sclass="s5" />
