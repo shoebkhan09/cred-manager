@@ -211,11 +211,18 @@ public class AppConfiguration {
                         computeMinCredsForStrongAuth(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
+
                         //The following 4 statements are executed only after computeEnabledMethods and computeGluuVersion are called
-                        computeU2fSettings(settings);
-                        computeOTPSettings(settings);
-                        computeSuperGluuSettings(settings);
-                        computeTwilioSettings(settings);
+                        if (enabledMethods.contains(SECURITY_KEY))
+                            computeU2fSettings(settings);
+                        if (enabledMethods.contains(OTP))
+                            computeOTPSettings(settings);
+                        if (enabledMethods.contains(SUPER_GLUU))
+                            computeSuperGluuSettings(settings);
+                        if (enabledMethods.contains(VERIFIED_PHONE))
+                            computeTwilioSettings(settings);
+
+                        logger.warn(Labels.getLabel("app.effective_acrs"), enabledMethods, enabledMethods.size());
 
                         computeOxdSettings(settings);
                     }
@@ -307,82 +314,105 @@ public class AppConfiguration {
 
     }
 
-    private void computeOTPSettings(Configs settings) throws Exception{
+    public boolean computeOTPSettings(Configs settings) {
 
-        if (enabledMethods.contains(OTP)) {
+        boolean failure=true;
+        try{
             CustomScript script=ldapService.getCustomScript(OTP.getName());
             OTPConfig config=OTPConfig.get(script);
-            if (config==null) {
+            failure= config==null;
+
+            if (failure) {
                 enabledMethods.remove(OTP);
                 logger.error(Labels.getLabel("app.otp_settings_error"));
             }
             else
                 settings.setOtpConfig(config);
         }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return !failure;
 
     }
 
-    private void computeSuperGluuSettings(Configs settings) throws Exception{
+    public boolean computeSuperGluuSettings(Configs settings) {
 
-        if (enabledMethods.contains(SUPER_GLUU)){
-            CustomScript script=ldapService.getCustomScript(SUPER_GLUU.getName());
-            SGConfig config=SGConfig.get(script);
-            if (config==null){
+        boolean failure=true;
+        try {
+            CustomScript script = ldapService.getCustomScript(SUPER_GLUU.getName());
+            SGConfig config = SGConfig.get(script);
+            failure = config==null;
+
+            if (failure) {
                 enabledMethods.remove(SUPER_GLUU);
                 logger.error(Labels.getLabel("app.sg_settings_error"));
             }
             else
                 settings.setSgConfig(config);
         }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return !failure;
 
     }
 
-    private void computeTwilioSettings(Configs settings) throws Exception{
-        if (enabledMethods.contains(VERIFIED_PHONE)){
+    public boolean computeTwilioSettings(Configs settings) {
+
+        boolean failure=true;
+        try{
             CustomScript script=ldapService.getCustomScript(VERIFIED_PHONE.getName());
             TwilioConfig config=TwilioConfig.get(script);
-            if (config==null){
+            failure =config==null;
+
+            if (failure){
                 enabledMethods.remove(VERIFIED_PHONE);
                 logger.error(Labels.getLabel("app.sms_settings_error"));
             }
             else
                 settings.setTwilioConfig(config);
         }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+        return !failure;
+
     }
 
-    private void computeU2fSettings(Configs settings) {
+    public boolean computeU2fSettings(Configs settings) {
 
-        if (enabledMethods.contains(SECURITY_KEY))
-            try {
-                U2fSettings u2fCfg = settings.getU2fSettings();
-                boolean nocfg = u2fCfg == null;
-                boolean guessAppId = nocfg || u2fCfg.getAppId() == null;
-                boolean guessUri = nocfg || u2fCfg.getRelativeMetadataUri() == null;
+        U2fSettings u2fCfg = settings.getU2fSettings();
+        boolean nocfg = u2fCfg == null;
+        boolean guessAppId = nocfg || u2fCfg.getAppId() == null;
+        boolean guessUri = nocfg || u2fCfg.getRelativeMetadataUri() == null;
 
-                if (nocfg)
-                    u2fCfg = new U2fSettings();
+        if (nocfg)
+            u2fCfg = new U2fSettings();
 
-                if (guessAppId) {
-                    u2fCfg.setAppId(issuerUrl);
-                    logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F app ID", issuerUrl);
-                }
+        if (guessAppId) {
+            u2fCfg.setAppId(issuerUrl);
+            logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F app ID", issuerUrl);
+        }
 
-                String endpointUrl = u2fCfg.getRelativeMetadataUri();
-                if (guessUri) {
-                    endpointUrl = ".well-known/fido-u2f-configuration";
+        String endpointUrl = u2fCfg.getRelativeMetadataUri();
+        if (guessUri) {
+            endpointUrl = ".well-known/fido-u2f-configuration";
 
-                    u2fCfg.setRelativeMetadataUri(endpointUrl);
-                    logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F relative endpoint URL", endpointUrl);
-                }
-                u2fCfg.setEndpointUrl(String.format("%s/%s", issuerUrl, endpointUrl));
+            u2fCfg.setRelativeMetadataUri(endpointUrl);
+            logger.warn(Labels.getLabel("app.metadata_guessed"), "U2F relative endpoint URL", endpointUrl);
+        }
+        u2fCfg.setEndpointUrl(String.format("%s/%s", issuerUrl, endpointUrl));
 
-                settings.setU2fSettings(u2fCfg);
-                logger.info(Labels.getLabel("app.u2f_settings"), mapper.writeValueAsString(u2fCfg));
-            }
-            catch (Exception e){
-                enabledMethods.remove(SECURITY_KEY);
-                logger.error(Labels.getLabel("app.u2f_settings_error"));
-            }
+        try {
+            settings.setU2fSettings(u2fCfg);
+            logger.info(Labels.getLabel("app.u2f_settings"), mapper.writeValueAsString(u2fCfg));
+        }
+        catch (Exception e){
+            logger.error(e.getMessage(), e);
+        }
+
+        return true;    //There is no way to fail really since no LDAP lookup is being done
 
     }
 
@@ -424,9 +454,6 @@ public class AppConfiguration {
             //From enabled methods in config file, keep only those really supported by server
             enabledSet.retainAll(supportedSet);
 
-            //log result so far
-            logger.warn(Labels.getLabel("app.effective_acrs"), enabledSet, enabledSet.size());
-
             //Put it on this bean...
             Stream<CredentialType> stream = enabledSet.stream().map(CredentialType::get);
             enabledMethods = stream.collect(Collectors.toCollection(HashSet::new));
@@ -458,9 +485,15 @@ public class AppConfiguration {
                 oxdConfig.setAcrValues(Collections.singletonList(DEFAULT_ACR));
 
                 int expTime=ldapService.getDynamicClientExpirationTime();
-                if (expTime>=0) {
-                    //trigger registration
-                    oxdService.setSettings(oxdConfig);
+                if (expTime>0) {
+                    try {
+                        //trigger registration
+                        oxdService.setSettings(oxdConfig);
+                    }
+                    catch (Exception e){
+                        logger.warn(Labels.getLabel("app.refresh_clients_warn"));
+                        throw e;
+                    }
                     //If registration was effective save reference to the settings
                     inOperableState = true;
                     //and prepare timer to repeat registration based on default clientExpirationTime

@@ -1,7 +1,7 @@
 package org.gluu.credmanager.services;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
@@ -51,11 +51,11 @@ public class AdminService {
     @PostConstruct
     public void setup(){
         try {
-            mapper=new ObjectMapper();
-            //Is this a way to clone-deep a bean? ... NO
-            //localSettings = (Configs) BeanUtils.cloneBean(appConfig.getConfigSettings()); Neither the following:
+            //ways to clone-deep a bean?
+            localSettings = (Configs) BeanUtils.cloneBean(appConfig.getConfigSettings());
+            //mapper=new ObjectMapper();
             //localSettings = mapper.convertValue(appConfig.getConfigSettings(), Configs.class);
-            localSettings=mapper.readValue(mapper.writeValueAsString(appConfig.getConfigSettings()), new TypeReference<Configs>(){});
+            //localSettings=mapper.readValue(mapper.writeValueAsString(appConfig.getConfigSettings()), new TypeReference<Configs>(){});
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -189,7 +189,7 @@ public class AdminService {
 
         OxdConfig oxdSettings=null;
         try {
-            oxdSettings=mapper.readValue(mapper.writeValueAsString(settings), new TypeReference<OxdConfig>(){});
+            oxdSettings=(OxdConfig) BeanUtils.cloneBean(settings);
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -211,10 +211,12 @@ public class AdminService {
         catch (Exception e){
             msg=e.getMessage();
             try {
+                logger.warn(Labels.getLabel("adm.oxd_revert_conf"));
                 //Revert to last working settings
                 oxdService.setSettings(backup);
             }
             catch (Exception e1){
+                msg=Labels.getLabel("admin.error_reverting");
                 logger.error(e1.getMessage(), e1);
             }
         }
@@ -236,7 +238,7 @@ public class AdminService {
 
         LdapSettings ldapSettings=null;
         try {
-            ldapSettings=mapper.readValue(mapper.writeValueAsString(settings), new TypeReference<LdapSettings>(){});
+            ldapSettings=(LdapSettings) BeanUtils.cloneBean(settings);
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -267,7 +269,7 @@ public class AdminService {
             ldapService.setup(backup);
         }
         catch (Exception e1){
-            //FATAL! :O
+            msg=Labels.getLabel("admin.error_reverting");
             logger.fatal(e1.getMessage(), e1);
         }
         return msg;
@@ -311,6 +313,27 @@ public class AdminService {
         List<String> list=set.stream().map(CredentialType::getName).collect(Collectors.toList());
         localSettings.setEnabledMethods(list);
         return updateSettings();
+
+    }
+
+    public boolean reloadMethodConfig(CredentialType cred){
+
+        boolean success=false;
+        switch (cred){
+            case OTP:
+                success=appConfig.computeOTPSettings(appConfig.getConfigSettings());
+                break;
+            case SECURITY_KEY:
+                success=appConfig.computeU2fSettings(appConfig.getConfigSettings());
+                break;
+            case VERIFIED_PHONE:
+                success=appConfig.computeTwilioSettings(appConfig.getConfigSettings());
+                break;
+            case SUPER_GLUU:
+                success=appConfig.computeSuperGluuSettings(appConfig.getConfigSettings());
+                break;
+        }
+        return success;
 
     }
 
