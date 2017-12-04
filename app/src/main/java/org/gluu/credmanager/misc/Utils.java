@@ -109,7 +109,7 @@ public class Utils {
     //Takes a list of SimpleCustomProperty instances, and creates a Map of (key,val) pairs where key is value1 and val is value2
     public static Map<String, String> getScriptProperties(List<SimpleCustomProperty> properties) {
         Map<String, String> propsMap = new HashMap<>();
-        properties.stream().forEach(prop -> propsMap.put(prop.getValue1().toLowerCase(), prop.getValue2()));
+        properties.forEach(prop -> propsMap.put(prop.getValue1().toLowerCase(), prop.getValue2()));
         return propsMap;
     }
 

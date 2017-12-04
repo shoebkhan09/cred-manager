@@ -52,7 +52,7 @@ public class TwilioConfig {
         this.fromNumber = fromNumber;
     }
 
-    public static TwilioConfig get(CustomScript smsScript) throws Exception{
+    public static TwilioConfig get(CustomScript smsScript) {
 
         Map<String, String> propsMap=Utils.getScriptProperties(smsScript.getProperties());
 
@@ -63,7 +63,12 @@ public class TwilioConfig {
 
         List<String> values= Arrays.asList(tc.getAccountSID(), tc.getAuthToken(), tc.getFromNumber());
         if (values.stream().map(Utils::stringOptional).allMatch(Optional::isPresent)) {
-            logger.info(Labels.getLabel("app.sms_settings"), mapper.writeValueAsString(tc));
+            try {
+                logger.info(Labels.getLabel("app.sms_settings"), mapper.writeValueAsString(tc));
+            }
+            catch (Exception e){
+                logger.error(e.getMessage(), e);
+            }
             return tc;
         }
         else

@@ -147,7 +147,7 @@ public class SGService {
         String uiid=dev.getDeviceData().getUuid();
         List<String> uuids=ldapService.getSGDevicesIDs(appConfig.getConfigSettings().getOxdConfig().getRedirectUri());
 
-        logger.trace("All sg devices {}", uuids.toString());
+        logger.trace("isSGDeviceUnique. All SG devices {}", uuids.toString());
         int size=(int) uuids.stream().filter(uuid -> uuid.equals(uiid)).count();
         if (size==0)
             throw new Exception(Labels.getLabel("app.error_uniqueness", new String[]{uiid}));
