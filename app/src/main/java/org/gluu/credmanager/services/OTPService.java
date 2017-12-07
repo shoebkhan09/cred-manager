@@ -51,7 +51,7 @@ public class OTPService{
         String secretKeyBase32=BaseEncoding.base32().omitPadding().encode(secretKey);
         OTPKey otpKey = new OTPKey(secretKeyBase32, conf.getType());
 
-        OTPAuthURIBuilder uribe=OTPAuthURIBuilder.fromKey(otpKey).label(conf.getIssuer() + ":" + displayName);
+        OTPAuthURIBuilder uribe=OTPAuthURIBuilder.fromKey(otpKey).label(displayName);
         uribe=uribe.issuer(conf.getIssuer()).digits(conf.getDigits());
         if (conf.getType().equals(OTPType.TOTP))
             uribe=uribe.timeStep(TimeUnit.SECONDS.toMillis(conf.getTimeStep()));
