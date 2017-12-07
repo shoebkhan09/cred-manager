@@ -218,7 +218,7 @@ public class UserSecurityKeyViewModel extends UserViewModel{
 
     @Command
     public void delete(@BindingParam("device") SecurityKey device){
-        processFidoDeviceRemoval(device, this);
+        processFidoDeviceRemoval(device, devices.size(), this);
     }
 
 }

@@ -239,10 +239,10 @@ public class UserOTPViewModel extends UserViewModel{
     @Command
     public void delete(@BindingParam("device") OTPDevice device){
 
-        boolean flag=mayTriggerResetPreference();
+        boolean flag=mayTriggerResetPreference(CredentialType.OTP, devices.size());
         Pair<String, String> delMessages=getDelMessages(flag, device.getNickName());
 
-        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, flag ? Messagebox.EXCLAMATION : Messagebox.QUESTION,
                 event -> {
                         if (Messagebox.ON_YES.equals(event.getName())){
                             try {

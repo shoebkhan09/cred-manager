@@ -244,7 +244,7 @@ public class UserSuperGluuViewModel extends UserViewModel{
 
     @Command
     public void delete(@BindingParam("device") SuperGluuDevice device){
-        processFidoDeviceRemoval(device, this);
+        processFidoDeviceRemoval(device, devices.size(), this);
     }
 
 }

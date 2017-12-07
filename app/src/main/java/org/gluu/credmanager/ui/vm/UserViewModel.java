@@ -2,11 +2,12 @@ package org.gluu.credmanager.ui.vm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.gluu.credmanager.conf.AppConfiguration;
+import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.core.credential.RegisteredCredential;
 import org.gluu.credmanager.core.credential.FidoDevice;
+import org.gluu.credmanager.core.credential.SecurityKey;
 import org.gluu.credmanager.services.ServiceMashup;
 import org.gluu.credmanager.services.UserService;
 import org.zkoss.bind.BindUtils;
@@ -23,6 +24,8 @@ import org.zkoss.zul.Messagebox;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.gluu.credmanager.conf.CredentialType.*;
 
 /**
  * Created by jgomer on 2017-08-04.
@@ -61,13 +64,15 @@ public class UserViewModel {
         userService=services.getUserService();
 
         devicesMap =new HashMap<>();
-        user.getCredentials().entrySet().stream().forEach(entry -> devicesMap.put(entry.getKey().toString(), entry.getValue()));
+        user.getCredentials().entrySet().forEach(entry -> devicesMap.put(entry.getKey().toString(), entry.getValue()));
     }
 
     @Command
     public void logoutFromAuthzServer(){
         try {
-            Executions.sendRedirect(services.getOxdService().getLogoutUrl());
+            Session se= Sessions.getCurrent();
+            String idToken=WebUtils.getIdToken(se);
+            Executions.sendRedirect(services.getOxdService().getLogoutUrl(idToken));
         }
         catch (Exception e){
             logger.error(e.getMessage(), e);
@@ -90,20 +95,21 @@ public class UserViewModel {
             Clients.showNotification(msg, Clients.NOTIFICATION_TYPE_WARNING, null, position, FEEDBACK_DELAY_ERR);
     }
 
-    //Second factor authentication will be available to users having at least this number of enrolled creds
+    //Second factor authentication will be available to users having at least this number of enrolled creds. Do not change visibility (it's used by .zul file)
     public int getMinimumCredsFor2FA(){     //this is public since it's called from zul templates
         return services.getAppConfig().getConfigSettings().getMinCredsFor2FA();
     }
 
-    boolean mayTriggerResetPreference(){
+    boolean mayTriggerResetPreference(CredentialType credType, int nCredsOfType){
         int total=devicesMap.values().stream().mapToInt(List::size).sum();
-        return total==getMinimumCredsFor2FA() && user.getPreference()!=null;
+        return (total==getMinimumCredsFor2FA() && user.getPreference()!=null)
+                || (nCredsOfType==1 && credType.equals(user.getPreference()));
     }
 
     Pair<String, String> getDelMessages(boolean flag, String nick){
 
         String title;
-        StringBuffer text=new StringBuffer();
+        StringBuilder text=new StringBuilder();
 
         if (flag) {
             text.append(Labels.getLabel("usr.del_conflict_preference", new Object[]{getMinimumCredsFor2FA()}));
@@ -118,12 +124,13 @@ public class UserViewModel {
 
     }
 
-    void processFidoDeviceRemoval(FidoDevice device, Object bean){
+    void processFidoDeviceRemoval(FidoDevice device, int nCreds, Object bean){
 
-        boolean flag=mayTriggerResetPreference();
+        CredentialType type=device.getClass().equals(SecurityKey.class) ? SECURITY_KEY : SUPER_GLUU;
+        boolean flag=mayTriggerResetPreference(type, nCreds);
         Pair<String, String> delMessages=getDelMessages(flag, device.getNickName());
 
-        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, flag ? Messagebox.EXCLAMATION : Messagebox.QUESTION,
                 event -> {
                     if (Messagebox.ON_YES.equals(event.getName())) {
                         try {

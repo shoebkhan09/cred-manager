@@ -195,10 +195,10 @@ public class UserVerifiedPhoneViewModel extends UserViewModel{
     @Command
     public void delete(@BindingParam("phone") VerifiedPhone phone){
 
-        boolean flag=mayTriggerResetPreference();
+        boolean flag=mayTriggerResetPreference(CredentialType.VERIFIED_PHONE, devices.size());
         Pair<String, String> delMessages=getDelMessages(flag, phone.getNickName());
 
-        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+        Messagebox.show(delMessages.getY(), delMessages.getX(), Messagebox.YES | Messagebox.NO, flag ? Messagebox.EXCLAMATION : Messagebox.QUESTION,
                 event ->  {
                     if (Messagebox.ON_YES.equals(event.getName())) {
                         try {
