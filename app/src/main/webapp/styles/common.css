@@ -46,3 +46,6 @@ input[type="radio"], input[type="checkbox"]{
 .minspace{
     width:0px;
 }
+.z-errorbox-content{
+   font-size:13px;
+}
