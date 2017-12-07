@@ -5,6 +5,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
+import org.gluu.credmanager.conf.ComputedOxdSettings;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.jsonized.Configs;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
@@ -180,6 +181,10 @@ public class AdminService {
     }
 
     /* ========== OXD SETTINGS ========== */
+
+    public ComputedOxdSettings getComputedOxdSettings(){
+        return oxdService.getComputedSettings();
+    }
 
     public OxdConfig copyOfWorkingOxdSettings(){
         return copyOfOxdSettings(localSettings.getOxdConfig());

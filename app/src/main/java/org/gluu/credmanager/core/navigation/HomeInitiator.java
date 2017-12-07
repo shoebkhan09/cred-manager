@@ -8,6 +8,7 @@ import static org.gluu.credmanager.core.WebUtils.RedirectStage;
 import org.gluu.credmanager.services.ServiceMashup;
 import org.gluu.credmanager.services.UserService;
 import org.gluu.credmanager.services.OxdService;
+import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.*;
 import org.zkoss.zk.ui.util.Initiator;
@@ -25,7 +26,6 @@ import java.util.Map;
 public class HomeInitiator extends CommonInitiator implements Initiator {
 
     private ServiceMashup services;
-    private String code;
     private Session se;
     private OxdService oxdService;
 
@@ -84,17 +84,20 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
                         if (errorsParsed(page))
                             WebUtils.purgeSession(se);
                         else {
-                            code = WebUtils.getQueryParam("code");
+                            String code = WebUtils.getQueryParam("code");
                             if (code == null)
                                 //This may happen when user did not ever entered his username at IDP, and tries accessing the app again
                                 goForAuthorization();
                             else {
-                                String accessToken = oxdService.getAccessToken(code, WebUtils.getQueryParam("state"));
-                                logger.debug(Labels.getLabel("app.authz_codes"), code, accessToken);
+                                Pair<String, String> tokens=oxdService.getTokens(code, WebUtils.getQueryParam("state"));
+                                String accessToken = tokens.getX();
+                                String idToken=tokens.getY();
+                                logger.debug(Labels.getLabel("app.authz_codes"), code, accessToken, idToken);
 
                                 User user = getUserFromClaims(oxdService.getUserClaims(accessToken), services.getUserService());
                                 //Store in session
                                 WebUtils.setUser(se, user);
+                                WebUtils.setIdToken(se, idToken);
 
                                 WebUtils.setRedirectStage(se, RedirectStage.BYPASS);
                                 //This flow continues at index.zul

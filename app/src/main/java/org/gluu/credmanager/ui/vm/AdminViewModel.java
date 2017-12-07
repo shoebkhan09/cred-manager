@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
+import org.gluu.credmanager.conf.ComputedOxdSettings;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
@@ -101,6 +102,10 @@ public class AdminViewModel extends UserViewModel {
 
     public OxdConfig getOxdSettings() {
         return oxdSettings;
+    }
+
+    public ComputedOxdSettings getComputedOxdSettings(){
+        return myService.getComputedOxdSettings();
     }
 
     public void setOxdSettings(OxdConfig oxdSettings) {
@@ -363,17 +368,28 @@ public class AdminViewModel extends UserViewModel {
         }
     }
 
+    @NotifyChange("oxdSettings")
     @Command
     public void switchUseOxdExtension(@BindingParam("use") boolean useExtension){
         oxdSettings.setUseHttpsExtension(useExtension);
+        oxdSettings.setHost(null);
+        oxdSettings.setPort(0);
     }
 
+    @NotifyChange("oxdSettings")
+    @Command
+    public void cancel(){
+        initOxd();
+        hideThrobber();
+    }
+
+    @NotifyChange({"oxdSettings", "computedOxdSettings"})
     @Command
     public void saveOxdSettings(){
 
         int oxdPort=oxdSettings.getPort();
         String oxdHost=oxdSettings.getHost();
-        if (Utils.stringOptional(oxdHost).isPresent() && oxdPort>=0) {
+        if (Utils.stringOptional(oxdHost).isPresent() && oxdPort>=0 && oxdPort<65536) {
 
             boolean connected=false;    //Try to guess if it looks like an oxd-server
             try {
@@ -390,21 +406,18 @@ public class AdminViewModel extends UserViewModel {
                         event -> {
                             if (Messagebox.ON_YES.equals(event.getName()))
                                 storeOxdSettings();
-                            else {  //Revert to last known working (or accepted)
+                            else
                                 initOxd();
-                                BindUtils.postNotifyChange(null, null, AdminViewModel.this, "oxdHost");
-                                BindUtils.postNotifyChange(null, null, AdminViewModel.this, "oxdPort");
-                            }
                         }
                 );
             else
                 storeOxdSettings();
-
-            BindUtils.postNotifyChange(null, null, this, "oxdSettings");
         }
         else
             Messagebox.show(Labels.getLabel("adm.oxd_no_settings"), null, Messagebox.OK, Messagebox.INFORMATION);
+
         hideThrobber();
+
     }
 
     /* ========== ENABLED AUTHN METHODS ========== */

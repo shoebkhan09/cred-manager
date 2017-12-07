@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.gluu.credmanager.conf.ComputedOxdSettings;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -15,6 +16,7 @@ import org.xdi.oxd.common.CommandType;
 import org.xdi.oxd.common.ResponseStatus;
 import org.xdi.oxd.common.params.*;
 import org.xdi.oxd.common.response.*;
+import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 
 import javax.annotation.PreDestroy;
@@ -38,8 +40,12 @@ public class OxdService {
     private CommandClient commandClient;
     private ResteasyClient client;
 
-    private String oxdId, clientId, clientSecret;
     private ObjectMapper mapper = new ObjectMapper();
+    private ComputedOxdSettings computedSettings;
+
+    public ComputedOxdSettings getComputedSettings() {
+        return computedSettings;
+    }
 
     public void setSettings(OxdConfig config) throws Exception{
         this.config=config;
@@ -59,16 +65,19 @@ public class OxdService {
     public void doRegister() throws Exception{
 
         //TODO: delete previous existing client?
+        String clientName;
         logger.info(Labels.getLabel("app.updating_oxd_settings"), config.getHost(), config.getPort(), config.isUseHttpsExtension());
 
         try {
             if (config.isUseHttpsExtension()) {
+                clientName="cred-manager-extension-" + consecutive;
+
                 SetupClientParams cmdParams = new SetupClientParams();
                 cmdParams.setOpHost(config.getOpHost());
                 cmdParams.setAuthorizationRedirectUri(config.getRedirectUri());
                 cmdParams.setPostLogoutRedirectUri(config.getPostLogoutUri());
                 cmdParams.setAcrValues(config.getAcrValues());
-                cmdParams.setClientName("cred-manager-extension-"+consecutive);
+                cmdParams.setClientName(clientName);
 
                 //TODO: bug 3.1.1?
                 List<String> scopes=new ArrayList<>(Arrays.asList(UserService.requiredOpenIdScopes));
@@ -81,18 +90,17 @@ public class OxdService {
                 //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
 
                 SetupClientResponse setup = restResponse(cmdParams, "setup-client", null, SetupClientResponse.class);
-                oxdId = setup.getOxdId();
-                //Store client ID & secret when using extension
-                clientSecret=setup.getClientSecret();
-                clientId=setup.getClientId();
+                computedSettings=new ComputedOxdSettings(clientName, setup.getOxdId(), setup.getClientId(), setup.getClientSecret());
             }
             else{
+                clientName="cred-manager-" + consecutive;
+
                 RegisterSiteParams cmdParams = new RegisterSiteParams();
                 cmdParams.setOpHost(config.getOpHost());
                 cmdParams.setAuthorizationRedirectUri(config.getRedirectUri());
                 cmdParams.setPostLogoutRedirectUri(config.getPostLogoutUri());
                 cmdParams.setAcrValues(config.getAcrValues());
-                cmdParams.setClientName("cred-manager-"+consecutive);
+                cmdParams.setClientName(clientName);
 
                 //These scopes should be set to default=true in LDAP (or using oxTrust). Otherwise the following will have no effect
                 cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
@@ -103,10 +111,10 @@ public class OxdService {
 
                 Command command = new Command(CommandType.REGISTER_SITE).setParamsObject(cmdParams);
                 RegisterSiteResponse site = commandClient.send(command).dataAsResponse(RegisterSiteResponse.class);
-                oxdId = site.getOxdId();
+                computedSettings=new ComputedOxdSettings(clientName, site.getOxdId(), null, null);
             }
             consecutive++;
-            logger.info(Labels.getLabel("app.updated_oxd_settings"), oxdId);
+            logger.info(Labels.getLabel("app.updated_oxd_settings"), computedSettings.getOxdId());
         }
         catch (Exception e){
             consecutive++;
@@ -127,7 +135,7 @@ public class OxdService {
     private String getAuthzUrl(List<String> acrValues, String prompt) throws Exception{
 
         GetAuthorizationUrlParams cmdParams = new GetAuthorizationUrlParams();
-        cmdParams.setOxdId(oxdId);
+        cmdParams.setOxdId(computedSettings.getOxdId());
         cmdParams.setAcrValues(acrValues);
         cmdParams.setPrompt(prompt);
 
@@ -146,10 +154,10 @@ public class OxdService {
         return getAuthzUrl(Collections.singletonList(acrValues), "login");  //null
     }
 
-    public String getAccessToken(String code, String state) throws Exception{
+    public Pair<String, String> getTokens(String code, String state) throws Exception{
 
         GetTokensByCodeParams cmdParams = new GetTokensByCodeParams();
-        cmdParams.setOxdId(oxdId);
+        cmdParams.setOxdId(computedSettings.getOxdId());
         cmdParams.setCode(code);
         cmdParams.setState(state);
 
@@ -161,13 +169,13 @@ public class OxdService {
             resp = commandClient.send(command).dataAsResponse(GetTokensByCodeResponse.class);
         }
         //TODO: validate accessToken with at_hash inside idToken: resp.getIdToken();
-        return resp.getAccessToken();
+        return new Pair<>(resp.getAccessToken(), resp.getIdToken());
     }
 
     public Map<String, List<String>> getUserClaims(String accessToken) throws Exception{
 
         GetUserInfoParams cmdParams = new GetUserInfoParams();
-        cmdParams.setOxdId(oxdId);
+        cmdParams.setOxdId(computedSettings.getOxdId());
         cmdParams.setAccessToken(accessToken);
 
         GetUserInfoResponse resp;
@@ -181,11 +189,12 @@ public class OxdService {
 
     }
 
-    public String getLogoutUrl() throws Exception{
+    public String getLogoutUrl(String idTokenHint) throws Exception{
 
         GetLogoutUrlParams cmdParams = new GetLogoutUrlParams();
-        cmdParams.setOxdId(oxdId);
+        cmdParams.setOxdId(computedSettings.getOxdId());
         cmdParams.setPostLogoutRedirectUri(config.getPostLogoutUri());
+        cmdParams.setIdTokenHint(idTokenHint);
 
         LogoutResponse resp;
         if (config.isUseHttpsExtension())
@@ -202,8 +211,8 @@ public class OxdService {
 
         GetClientTokenParams cmdParams = new GetClientTokenParams();
         cmdParams.setOpHost(config.getOpHost());
-        cmdParams.setClientId(clientId);
-        cmdParams.setClientSecret(clientSecret);
+        cmdParams.setClientId(computedSettings.getClientId());
+        cmdParams.setClientSecret(computedSettings.getClientSecret());
         cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
 
         GetClientTokenResponse resp = restResponse(cmdParams, "get-client-token", null, GetClientTokenResponse.class);

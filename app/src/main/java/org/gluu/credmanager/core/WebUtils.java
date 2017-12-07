@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
+//TODO: instead of setting an retrieving properties in session this should be handled using a session scoped bean, a problem for zk?
 /**
  * Created by jgomer on 2017-07-16.
  * Web utility class. It contains methods to be able to get session attributes, query headers, do URL redirections, etc.
@@ -50,6 +50,7 @@ public class WebUtils {
     public static final String USER_ATTRIBUTE="USR";
     public static final String REDIRECT_STAGE_ATTRIBUTE="REDIR_ST";
     private static final String OFFSET_ATTRIBUTE ="TZ";
+    private static final String IDTOKEN_ATTRIBUTE="IDTOKEN";
 
     private static Logger logger = LogManager.getLogger(WebUtils.class);
 
@@ -67,6 +68,14 @@ public class WebUtils {
 
     public static void setUserOffset(Session session, ZoneOffset zone){
         session.setAttribute(OFFSET_ATTRIBUTE, zone);
+    }
+
+    public static String getIdToken(Session session){
+        return (String) session.getAttribute(IDTOKEN_ATTRIBUTE);
+    }
+
+    public static void setIdToken(Session session, String idToken){
+        session.setAttribute(IDTOKEN_ATTRIBUTE, idToken);
     }
 
     public static RedirectStage getRedirectStage(Session session){
