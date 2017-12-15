@@ -391,7 +391,7 @@ class PersonAuthentication(PersonAuthenticationType):
 
         u2f_server_uri = configs.get("u2f_server_uri")
         #u2f_server_metadata_uri = u2f_server_uri + "/.well-known/fido-u2f-configuration"
-        u2f_server_metadata_uri = u2f_server_uri + "/restv1/fido-u2f-configuration"
+        u2f_server_metadata_uri = u2f_server_uri + "/oxauth/restv1/fido-u2f-configuration"
 
         u2fClient=FidoU2fClientFactory.instance()
         metaDataConfigurationService = u2fClient.createMetaDataConfigurationService(u2f_server_metadata_uri)

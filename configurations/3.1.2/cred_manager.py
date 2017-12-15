@@ -345,26 +345,26 @@ class PersonAuthentication(PersonAuthenticationType):
 
     def getAvailMethodsUser(self, user, skip):
         methods=ArrayList()
-
+        
         if (self.scriptsConfig.get(self.ACR_SMS)!=None) and (user.getAttribute("mobile")!=None):
             methods.add(self.ACR_SMS)
-            
+        
         if (self.scriptsConfig.get(self.ACR_OTP)!=None) and (user.getAttribute("oxExternalUid")!=None):
             methods.add(self.ACR_OTP)
-
+        
         inum = user.getAttribute("inum")
         
         u2fConfig=self.scriptsConfig.get(self.ACR_U2F)
         if (u2fConfig!=None) and (self.hasFidoEnrollments(inum, self.u2f_app_id)):
             methods.add(self.ACR_U2F)
-    
+        
         sgConfig=self.scriptsConfig.get(self.ACR_SG)
         if (sgConfig!=None) and (self.hasFidoEnrollments(inum, self.supergluu_app_id)):
             methods.add(self.ACR_SG)
         
         if methods.size()>0:
             methods.remove(skip)
-            
+        
         print "Cred-manager. getAvailMethodsUser %s" % methods.toString()
         return methods
         
@@ -391,7 +391,7 @@ class PersonAuthentication(PersonAuthenticationType):
 
         u2f_server_uri = configs.get("u2f_server_uri")
         #u2f_server_metadata_uri = u2f_server_uri + "/.well-known/fido-u2f-configuration"
-        u2f_server_metadata_uri = u2f_server_uri + "/restv1/fido-u2f-configuration"
+        u2f_server_metadata_uri = u2f_server_uri + "/oxauth/restv1/fido-u2f-configuration"
 
         u2fClient=FidoU2fClientFactory.instance()
         metaDataConfigurationService = u2fClient.createMetaDataConfigurationService(u2f_server_metadata_uri)

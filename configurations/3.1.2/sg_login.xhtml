@@ -168,6 +168,9 @@
 
     <ui:define name="body">
 
+        <form method="post" id="response" action="#{request.contextPath}/postlogin">
+            <input type="hidden" id="auth_result" name="auth_result" />
+        </form>
     <h:panelGroup id="subsequent">
      <header class="bs-docs-nav navbar navbar-static-top" id="top"> 
 		<div class="container">
@@ -194,7 +197,7 @@
 		  			<a onclick="$( '#dialog' ).dialog({ width: 550 });"  style="cursor: pointer;" target="_blank"  class="sigin-a">Scan QR code instead</a>
 		  			<span class="contactadmin">
 		  				If you no longer control the device you registered,<br/>
- <a href="#">contact your Gluu server admin</a> to enroll a new device
+ contact your Gluu server admin to enroll a new device
 		  			</span>
 		  		</div>
 
@@ -205,6 +208,9 @@
 		</div>
 	</div>
 	
+		<ui:include src="/cm/cred-manager.xhtml">
+			    <ui:param name="methods" value="${identity.getWorkingParameter('methods')}"/>
+	</ui:include>
 	<div class="foot_bor">
 		<div class="container">
 			<div class="row">
