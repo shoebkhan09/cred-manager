@@ -330,6 +330,7 @@ public class AppConfiguration {
                 settings.setOtpConfig(config);
         }
         catch (Exception e){
+            enabledMethods.remove(OTP);
             logger.error(e.getMessage(), e);
         }
         return !failure;
@@ -352,6 +353,7 @@ public class AppConfiguration {
                 settings.setSgConfig(config);
         }
         catch (Exception e){
+            enabledMethods.remove(SUPER_GLUU);
             logger.error(e.getMessage(), e);
         }
         return !failure;
@@ -374,6 +376,7 @@ public class AppConfiguration {
                 settings.setTwilioConfig(config);
         }
         catch (Exception e){
+            enabledMethods.remove(VERIFIED_PHONE);
             logger.error(e.getMessage(), e);
         }
         return !failure;
