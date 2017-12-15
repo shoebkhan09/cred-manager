@@ -168,6 +168,9 @@
 
     <ui:define name="body">
 
+        <form method="post" id="response" action="#{request.contextPath}/postlogin">
+            <input type="hidden" id="auth_result" name="auth_result" />
+        </form>
     <h:panelGroup id="subsequent">
      <header class="bs-docs-nav navbar navbar-static-top" id="top"> 
 		<div class="container">
