@@ -20,7 +20,7 @@
 		<weld.version>3.0.0.Final</weld.version>
         <jsf.version>2.2.14</jsf.version>
 		<jackson.version>2.5.3</jackson.version>
-        <ox.version>3.1.0.Final</ox.version>
+        <ox.version>3.1.1.Final</ox.version>
         <oxd.version>3.1.1.Final</oxd.version>
         <resteasy.version>3.0.21.Final</resteasy.version>
         <jaxr.version>3.0.12.Final</jaxr.version>
