@@ -419,6 +419,29 @@ public class AppConfiguration {
 
     }
 
+    private Set<String> retrieveServerAcrs(int retries, int sleepTime) throws Exception {
+
+        String errRetry=Labels.getLabel("app.retry_retrieve_acr");
+        Set<String> acrs = null;
+
+        for (int i = 0; i < retries && acrs == null; i++){
+            try {
+                acrs=retrieveServerAcrs();
+            }
+            catch (Exception e) {
+                acrs=null;
+                logger.error(errRetry);
+                logger.warn("retries remaining: {}", retries-i-1);
+                Thread.sleep(sleepTime);
+            }
+        }
+        if (acrs==null)
+            throw new Exception(errRetry);
+        else
+            return acrs;
+
+    }
+
     /**
      * Performs a GET to the OIDC metadata URL and extracts the ACR values supported by the server
      * @return A Set of String values
@@ -441,7 +464,7 @@ public class AppConfiguration {
     private void computeEnabledMethods(Configs settings) throws Exception{
 
         Set<String> possibleMethods=new HashSet<>(CredentialType.ACR_NAMES_SUPPORTED);
-        Set<String> supportedSet=retrieveServerAcrs();
+        Set<String> supportedSet=retrieveServerAcrs(5, 10000);
 
         //Verify default and routing acr are there
         List<String> acrList=Collections.singletonList(DEFAULT_ACR);
