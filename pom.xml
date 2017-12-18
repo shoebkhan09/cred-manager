@@ -63,8 +63,8 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>2.3.2</version>
 					<configuration>
-						<source>${maven.compiler.source}</source>
-						<target>${maven.compiler.target}</target>
+						<source>1.8</source>
+						<target>1.8</target>
 						<encoding>UTF-8</encoding>
 					</configuration>
 				</plugin>
@@ -112,27 +112,6 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-site-plugin</artifactId>
 					<version>2.1.1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.19.1</version>
-					<configuration>
-						<!-- Needed as we have both junit and testng -->
-						<failIfNoTests>false</failIfNoTests>
-						<trimStackTrace>false</trimStackTrace>
-
-						<!-- Exclude selenium tests -->
-						<excludes>
-							<exclude>**/selenium/*</exclude>
-							<exclude>**/webdriver/*</exclude>
-							<exclude>**/xml/*</exclude>
-						</excludes>
-
-						<suiteXmlFiles>
-							<suiteXmlFile>target/test-classes/testng.xml</suiteXmlFile>
-						</suiteXmlFiles>
-					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
