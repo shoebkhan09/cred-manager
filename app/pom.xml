@@ -108,7 +108,13 @@
 		<dependency>
 			<groupId>org.zkoss.addons</groupId>
 			<artifactId>zk-bootstrap</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.0</version>            
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.zkoss.common</groupId>
