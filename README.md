@@ -1,3 +1,5 @@
+**Official documentation and installation instructions on the way--ETA: January 8, 2018.**
+
 # cred-manager
 Application for a person to manage their trusted 2FA credentials that can be used to access resources protected by the Gluu Server. Supported authentication mechanisms include:
 
