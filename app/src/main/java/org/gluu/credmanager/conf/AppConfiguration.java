@@ -426,7 +426,7 @@ public class AppConfiguration {
 
     private Set<String> retrieveServerAcrs(int retries, int sleepTime) throws Exception {
 
-        String errRetry=Labels.getLabel("app.retry_retrieve_acr");
+        String errRetry=null;
         Set<String> acrs = null;
 
         for (int i = 0; i < retries && acrs == null; i++){
@@ -434,9 +434,10 @@ public class AppConfiguration {
                 acrs=retrieveServerAcrs();
             }
             catch (Exception e) {
-                acrs=null;
+                errRetry=Labels.getLabel("app.retry_retrieve_acr", new String[]{e.getMessage()});
                 logger.error(errRetry);
-                logger.warn("retries remaining: {}", retries-i-1);
+                logger.warn("Retries remaining: {}", retries-i-1);
+                acrs=null;
                 Thread.sleep(sleepTime);
             }
         }
