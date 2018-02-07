@@ -470,7 +470,7 @@ public class AppConfiguration {
     private void computeEnabledMethods(Configs settings) throws Exception{
 
         Set<String> possibleMethods=new HashSet<>(CredentialType.ACR_NAMES_SUPPORTED);
-        Set<String> supportedSet=retrieveServerAcrs(7, 8500);
+        Set<String> supportedSet=retrieveServerAcrs(30, 10000);
 
         //Verify default and routing acr are there
         List<String> acrList=Collections.singletonList(DEFAULT_ACR);
