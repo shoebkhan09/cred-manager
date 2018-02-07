@@ -23,8 +23,6 @@ import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.util.Clients;
 
-import java.util.*;
-
 /**
  * Created by jgomer on 2017-07-23.
  * This is the ViewModel of page u2f-detail.zul. It controls the CRUD of security keys
@@ -117,7 +115,7 @@ public class UserSecurityKeyViewModel extends UserViewModel{
             u2fService.finishRegistration(user.getUserName(), JsonStr);
             //To know exactly which entry is, we pass the current timestamp so we can pick the most suitable
             //entry by inspecting the creationDate attribute among all existing entries
-            newDevice=u2fService.getLatestSecurityKey(user, new Date().getTime());
+            newDevice=u2fService.getLatestSecurityKey(user, System.currentTimeMillis());
 
             if (newDevice!=null) {
                 uiEnrolled = true;

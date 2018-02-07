@@ -24,8 +24,6 @@ import org.zkoss.zk.ui.select.Selectors;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.util.Clients;
 
-import java.util.Date;
-
 /**
  * Created by jgomer on 2017-09-06.
  * This is the ViewModel of page super-detail.zul. It controls the CRUD of supergluu devices
@@ -109,6 +107,7 @@ public class UserSuperGluuViewModel extends UserViewModel{
             showMessageUI(false);
             logger.error(e.getMessage(), e);
         }
+
     }
 
     @AfterCompose
@@ -134,7 +133,7 @@ public class UserSuperGluuViewModel extends UserViewModel{
                     stopPolling();
                     break;
                 case "poll":
-                    newDevice = sgService.getLatestSuperGluuDevice(user, new Date().getTime());
+                    newDevice = sgService.getLatestSuperGluuDevice(user, System.currentTimeMillis());
                     if (newDevice != null) {    //New device detected, stop polling
                         stopPolling();
                         try {

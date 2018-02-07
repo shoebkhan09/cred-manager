@@ -279,7 +279,7 @@ public class LdapService {
 
     public <T extends FidoDevice> T getFidoDevice(String userRdn, long time, String oxApp, Class<T> clazz) throws Exception{
         List<T> list=getU2FDevices(userRdn, oxApp, clazz);
-        logger.debug("getFidoDevice. list is {}", list.stream().map(d -> d.getId()).collect(Collectors.toList()).toString());
+        logger.debug("getFidoDevice. list is {}", list.stream().map(FidoDevice::getId).collect(Collectors.toList()).toString());
         return Utils.getRecentlyCreatedDevice(list, time);
     }
 

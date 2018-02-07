@@ -212,7 +212,7 @@ public class OxdService {
 
     }
 
-    private String getPAT() throws Exception{
+    private String getPAT() throws Exception {
 
         GetClientTokenParams cmdParams = new GetClientTokenParams();
         cmdParams.setOpHost(config.getOpHost());
@@ -221,7 +221,7 @@ public class OxdService {
         cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
 
         GetClientTokenResponse resp = restResponse(cmdParams, "get-client-token", null, GetClientTokenResponse.class);
-        String token=token=resp.getAccessToken();
+        String token=resp.getAccessToken();
         logger.trace("getPAT. token={}", token);
 
         return token;
