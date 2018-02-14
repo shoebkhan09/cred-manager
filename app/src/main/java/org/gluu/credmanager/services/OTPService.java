@@ -78,11 +78,11 @@ public class OTPService{
     }
 
     public String getExternalHOTPUid(byte secretKey[], long factor){
-        return String.format("hotp:%s;%s", BaseEncoding.base64Url().encode(secretKey), factor);
+        return String.format("%s:%s;%s", OTPType.HOTP.getName().toLowerCase(), BaseEncoding.base64Url().encode(secretKey), factor);
     }
 
     public String getExternalTOTPUid(byte secretKey[]){
-        return String.format("totp:%s", BaseEncoding.base64Url().encode(secretKey));
+        return String.format("%s:%s", OTPType.TOTP.getName().toLowerCase(), BaseEncoding.base64Url().encode(secretKey));
     }
 
 }
