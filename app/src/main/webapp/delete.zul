@@ -1,33 +1,32 @@
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client"
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/basic.zul"?>
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <script>
-        function pana(){
-        setTimeout(pana2,1000);
-        }
-        function pana2(){
-        var offset=new Date().getTimezoneOffset()*60000;
-        zAu.send(new zk.Event(null, "onFoo", {offset: -offset}, {toServer:true}));
-        alert(offset);
-        }
-        function change(w){
-        alert(w);
-        alert(zk.Desktop.widgetName);
-        }
-    </script>
+    <div self="@define(content)">
 
-    <zscript>
-        import org.zkoss.zk.au.out.AuInvoke;
-        import org.zkoss.zk.ui.util.Clients;
-
-        void _do(obj){
-        //alert(obj);
-        Clients.response(new AuInvoke("pana",null));
-        }
-
-    </zscript>
-    <vlayout onCreate='mybutton.visible=true;'>
-        <textbox w:onClick="change(this)" value="1" id="mybutton" />
-    </vlayout>
+        <div sclass="btn-group btn-group-lg"  viewModel="@id('vm') @init('org.gluu.credmanager.ui.delete')">
+            <button sclass="btn-danger" label="1" />
+            <button sclass="btn-primary" label="Middle" />
+            <button label="upload" upload="true,maxsize=1024,multiple=false,accept=image" onUpload="@command('uploaded', uplEvent = event)"  />
+            <vlayout>
+                <panel title="This is the title" border="normal" collapsible="true" width="500px">
+                    <panelchildren sclass="padded">
+                        <vlayout>
+                            <hlayout spacing="10px" valign="bottom">
+                                <label value="hi" />
+                                <textbox value="hi" />
+                            </hlayout>
+                            <button label="x" />
+                        </vlayout>
+                    </panelchildren>
+                </panel>
+            </vlayout>
+        </div>
+    </div>
 
 </zk>
+<!--div viewModel="@id('vm') @inorg.gluu.credmanager.ui.deletelete')">
+    <button label="Rand" onClick="@command('rand')"/>
+</div-->
+<!--label value="${desktop.webApp.servletContext.getContextPath()}" />
+<button label="Rand" onClick="@command('rand')"/-->

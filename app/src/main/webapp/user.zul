@@ -1,18 +1,15 @@
-<?init class="org.gluu.credmanager.core.navigation.PageInitiator"?>
-<?init class="org.zkoss.zk.ui.util.Composition" arg0="/basic.zul"?>
-<?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
-<?page title="${applicationScope['appName']} - ${labels.usr.title}"?>
-<?link rel="icon" type="image/x-icon" href="${sessionScope.custdir}/images/favicon.ico" ?>
-<?style src="${c:cat3(sessionScope.custdir, '/styles/', pageScope.onMobile ? 'mobile.css' : 'desktop.css')}"?>
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/general.zul"?>
+<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
+<?page title="${applicationScope.appName} - ${labels.usr.title}"?>
+<?link rel="icon" type="image/x-icon" href="${sessionContext.custdir}/images/favicon.ico" ?>
 <?script src="/scripts/zxcvbn.js"?>
 <?script src="/scripts/main-util.js"?>
 
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:w="client"
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul" xmlns:w="client" xmlns:n="native"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserMainViewModel')"
+    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.user.UserMainViewModel')"
              self="@define(content)">
-
         <div align="center"><label value="${labels.usr.title}" sclass="titled" /></div>
         <vlayout sclass="padded">
             <div sclass="dpadded">
@@ -24,27 +21,63 @@
         </vlayout>
 
         <include src="user/preferred.zul" />
-        <!-- widgets are displayed by strength order: from highest to lowest -->
-        <include src="@load(vm.credentialsVisibility['SECURITY_KEY'] ? 'user/u2f.zul' : '')" />
-        <include src="@load(vm.credentialsVisibility['SUPER_GLUU'] ? 'user/super.zul' : '')" />
-        <include src="@load(vm.credentialsVisibility['OTP'] ? 'user/otp.zul' : '')" />
-        <include src="@load(vm.credentialsVisibility['VERIFIED_PHONE'] ? 'user/phone.zul' : '')" />
 
-        <zk if="${vm.uiPassResetAvailable}">
-            <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPanelOpened)">
+        <div children="@load(vm.widgets)">
+            <template name="children">
+
+                <panel title="${c:l(each.panelTitleKey)}" sclass="padded" border="normal">
+                    <panelchildren sclass="padded">
+                        <vlayout>
+                            <label value="${c:l(each.panelTextKey)}"/>
+
+                            <zk if="${not empty each.getEnrolledCreds(sessionContext.user.id)}">
+                                <separator />
+                                <label value="${labels.usr.you_added}" />
+
+                                <vlayout sclass="summary" children="@load(each.getEnrolledCreds(sessionContext.user.id))">
+                                    <template name="children">
+                                        <hlayout sclass="de_emphasized">
+                                            <label sclass="bold" value="@load(empty each.nickName ? c:l('general.no_named') : each.nickName)" />
+                                            <zk if="${not empty each.addedOn}">
+                                                <label value=" -" />
+                                                <label value="@load(c:toLowerCase(c:l('general.added_on')))" />
+                                                <label value="@load(each.addedOn) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d yyyy', offset = sessionContext.zoneOffset)" />
+                                            </zk>
+                                        </hlayout>
+                                    </template>
+                                </vlayout>
+                            </zk>
+
+                            <div sclass="padded" align="center">
+                                <vlayout>
+                                    <button label="${c:l(each.panelButtonKey)}" sclass="btn-success" href="${each.pageUrl}"/>
+                                    <zk if="${not empty each.panelBottomTextKey}">
+                                        <n:span class="de_emphasized">${c:l(each.panelBottomTextKey)}</n:span>
+                                    </zk>
+                                </vlayout>
+                            </div>
+                        </vlayout>
+                    </panelchildren>
+                </panel>
+
+            </template>
+        </div>
+
+        <zk if="${configurationHandler.passwordResetable}">
+            <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPwdResetOpened)">
                 <panelchildren sclass="padded">
                     <vlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_current}"/></div>
+                            <div sclass="form_element ${desktopScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_current}"/></div>
                             <textbox type="password" sclass="s8 form-control" value="@bind(vm.currentPassword)"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_newpass}"/></div>
+                            <div sclass="form_element ${desktopScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_newpass}"/></div>
                             <textbox id="new_pass" type="password" sclass="s8 form-control" tooltip="tooltip_pass_hint, after_center"
                                      w:onBlur="updateStrength(this)" value="@bind(vm.newPassword)"/>
                         </hlayout>
                         <hlayout spacing="3px" sclass="dpadded">
-                            <div sclass="${pageScope.onMobile? 's6' : 's8'}"> </div>
+                            <div sclass="${desktopScope.onMobile? 's6' : 's8'}"> </div>
                             <label sclass="de_emphasized" visible="@load(not empty vm.strengthText)"
                                    style="padding-left:7px" value="${labels.usr.pass.strength.title}" />
                             <label sclass="de_emphasized bold" value="@load(vm.strengthText)"/>
@@ -54,7 +87,7 @@
                             </vlayout-->
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_confirm}"/></div>
+                            <div sclass="form_element ${desktopScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_confirm}"/></div>
                             <textbox type="password" sclass="s8 form-control" value="@bind(vm.newPasswordConfirm)" />
                         </hlayout>
                         <div align="center">
@@ -70,7 +103,6 @@
             </panel>
             <popup id="tooltip_pass_hint">${labels.usr.passreset_hint}</popup>
         </zk>
-
     </vlayout>
 
 </zk>

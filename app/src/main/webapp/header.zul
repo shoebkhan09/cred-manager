@@ -1,23 +1,24 @@
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <hlayout width="100%" sclass="header" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserViewModel')">
+    <hlayout width="100%" sclass="header" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.user.UserViewModel')">
         <hlayout hflex="1" valign="middle">
             <image sclass="logo" src="/images/logo.png"/>
         </hlayout>
         <zk choose="">
-            <zk when="${pageScope.onMobile}">
+            <zk when="${desktopScope.onMobile}">
                 <div width="50px">
                     <button sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
-                            style="padding-left:0px" image="${sessionScope.custdir}/images/hamburger.png" label="" />
+                            style="padding-left:0px" image="${sessionContext.custdir}/images/hamburger.png" label="" />
                 </div>
             </zk>
             <zk>
                 <div width="185px">
                     <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" iconSclass="caret"
-                            popup="pop, after_start, type=toggle" image="${sessionScope.custdir}/images/shadowed_man.png"
-                            label="@load(c:cat3(c:l('general.welcome'),' ', vm.user.givenName))" />
+                            popup="pop, after_start, type=toggle" image="${sessionContext.custdir}/images/shadowed_man.png"
+                            label="@load(c:cat3(c:l('general.welcome'),' ', sessionContext.user.givenName))" />
+                    <!--span class="glyphicon glyphicon-user" aria-hidden="true"></span-->
                 </div>
             </zk>
         </zk>
@@ -25,7 +26,7 @@
         <menupopup id="pop">
             <!-- LANGUAGE SELECTOR>
             <menuitem label="${labels.general.change_lang}"/ -->
-            <menuitem label="${labels.general.help}" href="https://gluu.org/docs/credmanager/user-guide/" target="_blank"/>
+            <menuitem label="${labels.general.help}" href="https://gluu.org/docs/creds/3.1.2/user-guide/" target="_blank"/>
             <menuseparator/>
             <menuitem label="${labels.general.logout}" onClick="@command('logoutFromAuthzServer')"/>
         </menupopup>

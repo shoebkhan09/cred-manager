@@ -1,23 +1,21 @@
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
+<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
 <?init class="org.gluu.credmanager.core.navigation.PageInitiator"?>
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
     <zscript>
         void onClientInfo(ClientInfoEvent evt) {
-            Executions.getCurrent().getDesktop().setAttribute("pageWidth", evt.getDesktopWidth());
+        Executions.getCurrent().getDesktop().setAttribute("pageWidth", evt.getDesktopWidth());
         }
     </zscript>
-
-    <style src="${c:cat3(sessionScope.custdir, '/styles/', pageScope.onMobile ? 'mobile.css' : 'desktop.css')}">
-    </style>
 
     <zk choose="">
         <zk when="${empty pageScope.error}">
             <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)" spacing="0px">
                 <include src="/header.zul"/>
-                <include src="/back.zul" withHome="true" />
-                <div self="@insert(content)" />
+                <include src="/menubuttons.zul" />
+                <div self="@insert(content)" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.BasicViewModel')" />
             </vlayout>
         </zk>
         <zk>
@@ -25,4 +23,22 @@
         </zk>
     </zk>
 
+    <style src="${c:cat(sessionContext.custdir, '/styles/bootstrap.min.css')}" />
+    <style src="${c:cat3(sessionContext.custdir, '/styles/', desktopScope.onMobile ? 'mobile.css' : 'desktop.css')}" />
+
+    <zk if="${empty sessionContext.custdir}">
+        <!--style src="/styles/bootstrap-theme.min.css" /-->
+
+        <zk if="${not empty configurationHandler.extraCssSnippet}">
+            <style>${configurationHandler.extraCssSnippet}</style>
+        </zk>
+    </zk>
+
+    <script src="/scripts/bootstrap/bootstrap.min.js" />
+    <script src="/scripts/bootstrap/ie10-viewport-bug-workaround.js" />
+    <script src="/scripts/bootstrap/zk.js" />
 </zk>
+<!--
+ xmlns:n="native"
+${c:cat(desktop.webApp.servletContext.getContextPath(),'/scripts/...')}
+-->

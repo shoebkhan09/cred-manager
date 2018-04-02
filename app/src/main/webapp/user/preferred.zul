@@ -1,8 +1,9 @@
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
-<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <div viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.UserPreferenceViewModel')">
+    <div viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.user.UserPreferenceViewModel')">
         <panel title="${labels.usr.preferred_title}" sclass="padded" border="normal" if="${vm.availMethods.size() gt 1}">
             <panelchildren sclass="padded">
                 <vlayout>
@@ -10,11 +11,11 @@
                     <vlayout sclass="padded">
                         <hlayout valign="bottom">
                             <label sclass="bold" value="@load(vm.selectedMethodName)"/>
-                            <image visible="@load(vm.uiEditable)" src="${sessionScope.custdir}/images/edit.png" tooltip="tooltip_choose, after_pointer" sclass="icon_edit" onClick="@command('prepareUpdateMethod')" />
-                            <image visible="@load(not vm.uiEditable)" src="${sessionScope.custdir}/images/edit.png" sclass="icon_edit unactivated" />
+                            <image visible="@load(vm.uiEditable)" src="${sessionContext.custdir}/images/edit.png" tooltip="tooltip_choose, after_pointer" sclass="icon_edit" onClick="@command('prepareUpdateMethod')" />
+                            <image visible="@load(not vm.uiEditable)" src="${sessionContext.custdir}/images/edit.png" sclass="icon_edit unactivated" />
                         </hlayout>
                         <!-- if image is "unactivated", next label is visible, and viceversa -->
-                        <label value="${c:l2('usr.preferred_disabled', c:split(vm.minimumCredsFor2FA,''))}" sclass="de_emphasized" visible="@load(vm.uiNotEnoughCredsFor2FA)"/>
+                        <label value="${c:l2('usr.preferred_disabled', c:split(configurationHandler.minCredsFor2FA,''))}" sclass="de_emphasized" visible="@load(vm.uiNotEnoughCredsFor2FA)"/>
                     </vlayout>
                 </vlayout>
             </panelchildren>
