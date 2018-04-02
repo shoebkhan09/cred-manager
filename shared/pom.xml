@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>cred-manager-shared</artifactId>
+	<packaging>jar</packaging>
+
+	<parent>
+		<groupId>org.xdi</groupId>
+		<artifactId>cred-manager-base</artifactId>
+        <version>3.2.0-SNAPSHOT</version>
+	</parent>
+
+	<dependencies>
+
+        <!-- WELD -->
+        <dependency>
+            <groupId>org.jboss.weld.servlet</groupId>
+            <artifactId>weld-servlet-shaded</artifactId>
+            <version>${weld.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PLUGIN FRAMEWORK -->
+        <dependency>
+            <groupId>org.pf4j</groupId>
+            <artifactId>pf4j</artifactId>
+            <version>${pf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- LDAP SDK -->
+        <dependency>
+            <groupId>com.unboundid</groupId>
+            <artifactId>unboundid-ldapsdk</artifactId>
+            <version>${ldapsdk.version}</version>
+        </dependency>
+    </dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+</project>
