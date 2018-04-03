@@ -217,7 +217,8 @@ public class UserService {
 
             List<OTPDevice> devs=mapper.readValue(json, new TypeReference<List<OTPDevice>>(){});
 
-            Stream<OTPDevice> stream=person.getExternalUids().stream().map(uid-> getExtraOTPInfo(uid, devs));
+            Stream<OTPDevice> stream=person.getExternalUids().stream().filter(uid -> uid.startsWith("totp:") ||
+                    uid.startsWith("hotp:")).map(uid-> getExtraOTPInfo(uid, devs));
             return stream.collect(Collectors.toList());
         }
         catch (Exception e){
