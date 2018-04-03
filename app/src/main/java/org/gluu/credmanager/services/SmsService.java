@@ -63,8 +63,7 @@ public class SmsService {
 
     public boolean isPhoneNumberUnique(VerifiedPhone phone) throws Exception{
         String rawPhone = rawNumber(phone.getNumber());
-        List<String> phones=ldapService.getPhoneNumbers();
-        return phones.stream().map(SmsService::rawNumber).filter(numb -> numb.equals(rawPhone)).count()==0;
+        return !ldapService.numberIsRegistered(phone.getNumber()) && !ldapService.numberIsRegistered(rawPhone);
     }
 
     @PostConstruct

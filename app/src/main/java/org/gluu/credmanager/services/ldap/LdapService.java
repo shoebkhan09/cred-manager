@@ -294,10 +294,10 @@ public class LdapService {
 
     }
 
-    public List<String> getPhoneNumbers() throws Exception{
-        List<GluuPerson> list=ldapEntryManager.findEntries(usersDN, GluuPerson.class, new String[]{MOBILE_PHONE_ATTR},null);
-        Stream<GluuPerson> mobilePeople=list.stream().filter(person -> person.getMobileNumbers()!=null);
-        return mobilePeople.flatMap(person -> person.getMobileNumbers().stream()).collect(Collectors.toList());
+    public boolean numberIsRegistered(String mobile) throws Exception {
+        Filter filter = Filter.createEqualityFilter(MOBILE_PHONE_ATTR, mobile);
+        List<GluuPerson> list = ldapEntryManager.findEntries(usersDN, GluuPerson.class, filter, new String[]{MOBILE_PHONE_ATTR} ,1);
+        return list.size() > 0;
     }
 
     public void storeUserEnrollmentCode(String userRdn, String code) throws Exception{
