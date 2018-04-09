@@ -86,7 +86,7 @@ public class SGService {
 
         Map<String, String> reqAsMap=new HashMap<>();
         reqAsMap.put("username", userName);
-        reqAsMap.put("app", appConfig.getConfigSettings().getOxdConfig().getRedirectUri());
+        reqAsMap.put("app", appConfig.getConfigSettings().getSgConfig().getRegistrationUri());
         reqAsMap.put("issuer", appConfig.getIssuerUrl());
         reqAsMap.put("created", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         reqAsMap.put("enrollment", code);
@@ -125,7 +125,7 @@ public class SGService {
 
         SuperGluuDevice sg=null;
         try {
-            String appId = appConfig.getConfigSettings().getOxdConfig().getRedirectUri();
+            String appId = appConfig.getConfigSettings().getSgConfig().getRegistrationUri();
             sg = ldapService.getFidoDevice(user.getRdn(), time, appId, SuperGluuDevice.class);
 
             logger.debug("getLatestSuperGluuDevice. sg id is {}", sg==null ? -1 : sg.getId());
@@ -150,7 +150,7 @@ public class SGService {
 
         boolean unique=false;
         String uiid=dev.getDeviceData().getUuid();
-        List<String> uuids=ldapService.getSGDevicesIDs(appConfig.getConfigSettings().getOxdConfig().getRedirectUri());
+        List<String> uuids=ldapService.getSGDevicesIDs(appConfig.getConfigSettings().getSgConfig().getRegistrationUri());
 
         logger.trace("isSGDeviceUnique. All SG devices {}", uuids.toString());
         int size=(int) uuids.stream().filter(uuid -> uuid.equals(uiid)).count();
