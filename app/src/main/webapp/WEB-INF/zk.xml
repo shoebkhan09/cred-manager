@@ -40,10 +40,10 @@
         <value>ISO-8859-1</value>
     </library-property>
     <system-config>
-        <label-location>/WEB-INF/labels/admin.properties</label-location>
-        <label-location>/WEB-INF/labels/application.properties</label-location>
-        <label-location>/WEB-INF/labels/general.properties</label-location>
-        <label-location>/WEB-INF/labels/user.properties</label-location>
+        <label-location>/WEB-INF/classes/labels/admin.properties</label-location>
+        <label-location>/WEB-INF/classes/labels/application.properties</label-location>
+        <label-location>/WEB-INF/classes/labels/general.properties</label-location>
+        <label-location>/WEB-INF/classes/labels/user.properties</label-location>
     </system-config>
 
     <!-- tooltip settings -->
