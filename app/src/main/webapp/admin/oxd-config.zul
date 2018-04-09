@@ -13,23 +13,34 @@
                 <separator />
                 <div align="center">
                     <vlayout spacing="13px">
-                        <hlayout spacing="13px" valign="bottom">
-                            <div sclass="form_element s5"><label value="${labels.adm.oxd_conn_type}"/>&#160;</div>
-                            <radiogroup id="foolish"/>
-                            <radio label="${labels.adm.oxd_conn_server}" onCheck="@command('switchUseOxdExtension', use=false)"
-                                   selected="@load(not vm.oxdSettings.useHttpsExtension)" radiogroup="foolish" w:onClick="doFocus('uiHost')"/>
-                            <radio label="${labels.adm.oxd_conn_https}" onCheck="@command('switchUseOxdExtension', use=true)"
-                                   selected="@load(vm.oxdSettings.useHttpsExtension)" radiogroup="foolish" w:onClick="doFocus('uiHost')"/>
+                        <hlayout spacing="10px">
+                            <div sclass="form_element s5"><label value="${labels.adm.oxd_conn_type}"/></div>
+                            <vlayout sclass="${sessionScope.onMobile ? 's8' : 's16'}">
+                                <hlayout spacing="15px">
+                                    <radiogroup id="foolish"/>
+                                    <radio label="${labels.adm.oxd_conn_server}" onCheck="@command('switchUseOxdExtension', use=false)"
+                                           selected="@load(not vm.oxdSettings.useHttpsExtension)" radiogroup="foolish" w:onClick="doFocus('uiHost')"/>
+                                    <radio label="${labels.adm.oxd_conn_https}" onCheck="@command('switchUseOxdExtension', use=true)"
+                                           selected="@load(vm.oxdSettings.useHttpsExtension)" radiogroup="foolish" w:onClick="doFocus('uiHost')"/>
+                                </hlayout>
+
+                                <hlayout valign="middle" spacing="9px">
+                                    <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" placeholder="${labels.adm.oxd_host_placeholder}" value="@bind(vm.oxdSettings.host)" id="uiHost" />
+                                    <!-- constraint="no empty: ${c:l('general.validation.non_empty')}" -->
+                                    :
+                                    <intbox width="75px" sclass="form-control" placeholder="${labels.adm.oxd_port_placeholder}"
+                                            value="@bind(vm.oxdSettings.port)" tooltip="tooltip_port, after_pointer" maxlength="5" />
+                                    <!-- constraint="no negative: ${c:l('general.validation.numeric_port')}, no zero: ${c:l('general.validation.numeric_port')}, no empty: ${c:l('general.validation.numeric_port')}" -->
+                                </hlayout>
+                            </vlayout>
                         </hlayout>
-                        <hlayout valign="middle">
-                            <textbox sclass="s8 form-control" placeholder="${labels.adm.oxd_host_placeholder}" value="@bind(vm.oxdSettings.host)" id="uiHost" />
-                            <!-- constraint="no empty: ${c:l('general.validation.non_empty')}" -->
-                            :
-                            <intbox width="75px" sclass="form-control" placeholder="${labels.adm.oxd_port_placeholder}"
-                                    value="@bind(vm.oxdSettings.port)" tooltip="tooltip_port, after_pointer" maxlength="5" />
-                            <!-- constraint="no negative: ${c:l('general.validation.numeric_port')}, no zero: ${c:l('general.validation.numeric_port')}, no empty: ${c:l('general.validation.numeric_port')}" -->
+                        <hlayout spacing="10px" valign="bottom">
+                            <div sclass="form_element s5"><label value="${labels.adm.oxd_postlogout}"/></div>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's16'} form-control" value="@bind(vm.oxdSettings.postLogoutUri)"
+                                     tooltip="tooltip_logout, after_pointer" />
                         </hlayout>
-                        <hlayout spacing="15px">
+                        <hlayout spacing="25px" sclass="padded">
+                            <div sclass="form_element s5">&#160;</div>
                             <button label="&#160;${labels.general.save}&#160;" sclass="btn-success form_button" onClick="@command('saveOxdSettings')" w:onClick="showThrobber()" />
                             <button label="${labels.general.cancel}" sclass="btn-success form_button" onClick="@command('cancel')" w:onClick="showThrobber()" />
                         </hlayout>
@@ -41,35 +52,33 @@
                         <n:hr />
                         <hlayout spacing="10px" valign="bottom">
                             <div sclass="form_element s5"><label value="${labels.adm.oxd_op_host}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.oxdSettings.opHost)" readonly="true"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.oxdSettings.opHost)" readonly="true"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
                             <div sclass="form_element s5"><label value="${labels.adm.oxd_client_name}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.clientName)" readonly="true"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.clientName)" readonly="true"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
                             <div sclass="form_element s5"><label value="${labels.adm.oxd_authz_redirect}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.oxdSettings.redirectUri)" readonly="true"/>
-                        </hlayout>
-                        <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element s5"><label value="${labels.adm.oxd_postlogout}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.oxdSettings.postLogoutUri)" readonly="true"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.oxdSettings.redirectUri)" readonly="true" />
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
                             <div sclass="form_element s5"><label value="${labels.adm.oxd_oxdid}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.oxdId)" readonly="true"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.oxdId)" readonly="true"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom" visible="@load(not empty vm.computedOxdSettings.clientId)">
                             <div sclass="form_element s5"><label value="${labels.adm.oxd_client_id}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.clientId)" readonly="true"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.clientId)" readonly="true"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom" visible="@load(not empty vm.computedOxdSettings.clientSecret)">
                             <div sclass="form_element s5"><label value="${labels.adm.oxd_client_secret}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.clientSecret)" readonly="true"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.computedOxdSettings.clientSecret)" readonly="true"/>
                         </hlayout>
                     </vlayout>
                 </div>
                 <popup id="tooltip_port">${labels.adm.oxd_port_tooltip}</popup>
+                <!--popup id="tooltip_redirect">${labels.adm.oxd_redirect_uri_tooltip}</popup-->
+                <popup id="tooltip_logout">${labels.adm.oxd_postlogout_uri_tooltip}</popup>
             </vlayout>
         </panelchildren>
     </panel>

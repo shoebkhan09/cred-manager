@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Created by jgomer on 2017-07-07.
  */
-public class OxdConfig{
+public class OxdConfig {
 
     private String host;
     private int port;
@@ -39,7 +39,6 @@ public class OxdConfig{
         return useHttpsExtension;
     }
 
-    @JsonIgnore
     public String getPostLogoutUri() {
         return postLogoutUri;
     }

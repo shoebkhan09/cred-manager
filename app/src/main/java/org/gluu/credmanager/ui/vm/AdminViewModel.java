@@ -390,11 +390,14 @@ public class AdminViewModel extends UserViewModel {
 
     @NotifyChange({"oxdSettings", "computedOxdSettings"})
     @Command
-    public void saveOxdSettings(){
+    public void saveOxdSettings() {
 
-        int oxdPort=oxdSettings.getPort();
-        String oxdHost=oxdSettings.getHost();
-        if (Utils.stringOptional(oxdHost).isPresent() && oxdPort>=0 && oxdPort<65536) {
+        int oxdPort = oxdSettings.getPort();
+        String oxdHost = oxdSettings.getHost();
+        String postlogoutUrl = WebUtils.isValidUrl(oxdSettings.getPostLogoutUri()) ? oxdSettings.getPostLogoutUri() : null;
+
+        if (Stream.of(oxdHost, postlogoutUrl).map(Utils::stringOptional).allMatch(Optional::isPresent)
+                && oxdPort>=0 && oxdPort<65536) {
 
             boolean connected=false;    //Try to guess if it looks like an oxd-server
             try {
@@ -406,17 +409,19 @@ public class AdminViewModel extends UserViewModel {
             catch (Exception e){
                 logger.error(e.getMessage(), e);
             }
-            if (!connected)
+            if (!connected) {
                 Messagebox.show(Labels.getLabel("adm.oxd_no_connection"), null, Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                         event -> {
-                            if (Messagebox.ON_YES.equals(event.getName()))
+                            if (Messagebox.ON_YES.equals(event.getName())) {
                                 storeOxdSettings();
-                            else
+                            } else {
                                 initOxd();
+                            }
                         }
                 );
-            else
+            } else {
                 storeOxdSettings();
+            }
         }
         else
             Messagebox.show(Labels.getLabel("adm.oxd_no_settings"), null, Messagebox.OK, Messagebox.INFORMATION);

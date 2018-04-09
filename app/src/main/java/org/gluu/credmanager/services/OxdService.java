@@ -71,7 +71,7 @@ public class OxdService {
 
         //TODO: delete previous existing client?
         String clientName;
-        logger.info(Labels.getLabel("app.updating_oxd_settings"), config.getHost(), config.getPort(), config.isUseHttpsExtension());
+        logger.info(Labels.getLabel("app.updating_oxd_settings"), config.getHost(), config.getPort(), config.isUseHttpsExtension(), config.getPostLogoutUri());
 
         try {
             if (config.isUseHttpsExtension()) {
@@ -156,7 +156,7 @@ public class OxdService {
     }
 
     public String getAuthzUrl(String acrValues) throws Exception {
-        return getAuthzUrl(Collections.singletonList(acrValues), "login");  //null
+        return getAuthzUrl(Collections.singletonList(acrValues), null);  //"login"
     }
 
     public Pair<String, String> getTokens(String code, String state) throws Exception{
@@ -212,6 +212,28 @@ public class OxdService {
 
     }
 
+    public boolean updatePostLogoutUri(String uri) {
+
+        UpdateSiteParams cmdParams = new UpdateSiteParams();
+        cmdParams.setOxdId(computedSettings.getOxdId());
+        cmdParams.setPostLogoutRedirectUri(uri);
+
+        UpdateSiteResponse resp = null;
+        try {
+            if (config.isUseHttpsExtension()) {
+                resp = restResponse(cmdParams, "update-site", getPAT(), UpdateSiteResponse.class);
+            } else {
+                Command command = new Command(CommandType.UPDATE_SITE).setParamsObject(cmdParams);
+                resp = commandClient.send(command).dataAsResponse(UpdateSiteResponse.class);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+
+        return resp != null;
+
+    }
+
     private String getPAT() throws Exception{
 
         GetClientTokenParams cmdParams = new GetClientTokenParams();
@@ -221,7 +243,7 @@ public class OxdService {
         cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
 
         GetClientTokenResponse resp = restResponse(cmdParams, "get-client-token", null, GetClientTokenResponse.class);
-        String token=token=resp.getAccessToken();
+        String token=resp.getAccessToken();
         logger.trace("getPAT. token={}", token);
 
         return token;

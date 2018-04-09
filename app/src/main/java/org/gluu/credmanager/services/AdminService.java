@@ -214,6 +214,12 @@ public class AdminService {
         OxdConfig backup=copyOfWorkingOxdSettings();
         OxdConfig newSettingsCopy=copyOfOxdSettings(newSettings);   //This prevents side effects
         try {
+            //detect if there was change in post-logout uri, and update client before it gets replaced. This helps prevent
+            //after logging out of the app an error being shown when the AS is about to redirect to new post-logout uri
+            String postUri = newSettings.getPostLogoutUri();
+            if (!backup.getPostLogoutUri().equals(postUri)) {
+                oxdService.updatePostLogoutUri(postUri);
+            }
             oxdService.setSettings(newSettings);
             //If it gets here, it means the provided settings were fine, so local copy can be overwritten
             localSettings.setOxdConfig(newSettingsCopy);

@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.URL;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,7 +39,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-//TODO: instead of setting an retrieving properties in session this should be handled using a session scoped bean, a problem for zk?
+
+//TODO: instead of setting an retrieving properties in session this should be handled using a session scoped bean
 /**
  * Created by jgomer on 2017-07-16.
  * Web utility class. It contains methods to be able to get session attributes, query headers, do URL redirections, etc.
@@ -255,6 +257,22 @@ public class WebUtils {
             logger.error(e.getMessage(), e);
         }
         return available;
+    }
+
+    public static boolean isValidUrl(String strUrl) {
+
+        boolean valid = false;
+        try {
+            URL url = new URL(strUrl);
+            valid = Utils.stringOptional(url.getHost()).isPresent();
+        } catch (Exception e) {
+            //Intentionally left empty
+        }
+        if (!valid) {
+            logger.warn("Error validating url: {}", strUrl);
+        }
+        return valid;
+
     }
 
 }
