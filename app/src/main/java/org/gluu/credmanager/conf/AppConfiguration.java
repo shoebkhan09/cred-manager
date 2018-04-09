@@ -353,9 +353,13 @@ public class AppConfiguration {
             if (failure) {
                 enabledMethods.remove(SUPER_GLUU);
                 logger.error(Labels.getLabel("app.sg_settings_error"));
-            }
-            else
+            } else {
+                CustomScript cmScript = ldapService.getCustomScript(DEFAULT_ACR);
+                Map<String, String> propsMap = Utils.getScriptProperties(cmScript.getProperties());
+                //override registration_uri
+                config.setRegistrationUri(propsMap.get("supergluu_app_id"));
                 settings.setSgConfig(config);
+            }
         }
         catch (Exception e){
             enabledMethods.remove(SUPER_GLUU);
@@ -507,16 +511,19 @@ public class AppConfiguration {
             if (!(oxdConfig.getPort()>0 && oxdHostOpt.isPresent() && oxdRedirectUri.isPresent()))
                 logger.error(Labels.getLabel("app.oxd_settings_missing"));
             else{
-                String tmp=oxdRedirectUri.get();    //Remove trailing slash if any in redirect URI
-                tmp=tmp.endsWith("/") ? tmp.substring(0, tmp.length()-1) : tmp;
-                oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
+                String tmp = oxdConfig.getPostLogoutUri();
+                if (!Utils.stringOptional(tmp).isPresent()) {   //Use default post logout if not in config settings
+                    tmp = oxdRedirectUri.get();    //Remove trailing slash if any in redirect URI
+                    tmp = tmp.endsWith("/") ? tmp.substring(0, tmp.length() - 1) : tmp;
+                    oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
+                }
 
                 //TODO: bug 3.1.1?  https://github.com/GluuFederation/oxd/issues/124
                 oxdConfig.setOpHost(issuerUrl);
                 //END
                 oxdConfig.setAcrValues(Collections.singletonList(DEFAULT_ACR));
 
-                int expTime=ldapService.getDynamicClientExpirationTime();
+                int expTime=ldapService.getDynamicClientExpirationTime() - 5;
                 if (expTime>0) {
                     try {
                         //trigger registration
