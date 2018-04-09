@@ -3,7 +3,7 @@
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.title}"?>
 <?link rel="icon" type="image/x-icon" href="${sessionScope.custdir}/images/favicon.ico" ?>
-<?style src="${c:cat3(sessionScope.custdir, '/styles/', pageScope.onMobile ? 'mobile.css' : 'desktop.css')}"?>
+<?style src="${c:cat3(sessionScope.custdir, '/styles/', sessionScope.onMobile ? 'mobile.css' : 'desktop.css')}"?>
 <?script src="/scripts/zxcvbn.js"?>
 <?script src="/scripts/main-util.js"?>
 
@@ -35,16 +35,16 @@
                 <panelchildren sclass="padded">
                     <vlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_current}"/></div>
+                            <div sclass="form_element ${sessionScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_current}"/></div>
                             <textbox type="password" sclass="s8 form-control" value="@bind(vm.currentPassword)"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_newpass}"/></div>
+                            <div sclass="form_element ${sessionScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_newpass}"/></div>
                             <textbox id="new_pass" type="password" sclass="s8 form-control" tooltip="tooltip_pass_hint, after_center"
                                      w:onBlur="updateStrength(this)" value="@bind(vm.newPassword)"/>
                         </hlayout>
                         <hlayout spacing="3px" sclass="dpadded">
-                            <div sclass="${pageScope.onMobile? 's6' : 's8'}"> </div>
+                            <div sclass="${sessionScope.onMobile? 's6' : 's8'}"> </div>
                             <label sclass="de_emphasized" visible="@load(not empty vm.strengthText)"
                                    style="padding-left:7px" value="${labels.usr.pass.strength.title}" />
                             <label sclass="de_emphasized bold" value="@load(vm.strengthText)"/>
@@ -54,7 +54,7 @@
                             </vlayout-->
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${pageScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_confirm}"/></div>
+                            <div sclass="form_element ${sessionScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_confirm}"/></div>
                             <textbox type="password" sclass="s8 form-control" value="@bind(vm.newPasswordConfirm)" />
                         </hlayout>
                         <div align="center">

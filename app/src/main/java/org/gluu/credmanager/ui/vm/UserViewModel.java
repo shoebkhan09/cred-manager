@@ -77,6 +77,8 @@ public class UserViewModel {
         try {
             Session se= Sessions.getCurrent();
             String idToken=WebUtils.getIdToken(se);
+            //Do session clean up
+            WebUtils.purgeSession(se);
             Executions.sendRedirect(services.getOxdService().getLogoutUrl(idToken));
         }
         catch (Exception e){

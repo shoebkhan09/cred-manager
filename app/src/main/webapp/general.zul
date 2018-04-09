@@ -9,7 +9,7 @@
         }
     </zscript>
 
-    <style src="${c:cat3(sessionScope.custdir, '/styles/', pageScope.onMobile ? 'mobile.css' : 'desktop.css')}">
+    <style src="${c:cat3(sessionScope.custdir, '/styles/', sessionScope.onMobile ? 'mobile.css' : 'desktop.css')}">
     </style>
 
     <zk choose="">

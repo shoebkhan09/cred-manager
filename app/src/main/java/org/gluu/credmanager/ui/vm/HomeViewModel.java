@@ -5,7 +5,6 @@
  */
 package org.gluu.credmanager.ui.vm;
 
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.core.WebUtils;
@@ -31,7 +30,20 @@ public class HomeViewModel {
     @Command
     public void onClientInfo(@BindingParam("evt") ClientInfoEvent evt) {
 
-        Session se= Sessions.getCurrent();
+        Session se = Sessions.getCurrent();
+
+        if (se.getAttribute("onMobile") == null) {
+            boolean mobile = WebUtils.isCurrentBrowserMobile();
+            if (mobile) {
+                logger.trace("Session initiated in mobile device");
+            }
+            se.setAttribute("onMobileBrowser", mobile); //see u2f-detail.zul
+
+            mobile = mobile && evt.getScreenWidth() < 1024; //If screen is wide enough, behave as desktop
+            se.setAttribute("onMobile", mobile);
+
+            logger.trace("Session will {} behave as mobile", mobile ? "" : "not");
+        }
 
         if (WebUtils.getUserOffset(se)==null){
             /*
@@ -44,6 +56,7 @@ public class HomeViewModel {
             WebUtils.setUserOffset(se, zoffset);
 
             logger.info(Labels.getLabel("app.user_offset"), zoffset.toString());
+
             //reloads this page so the navigation flow proceeds (see HomeInitiator class)
             Executions.sendRedirect(null);
         }

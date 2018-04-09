@@ -10,19 +10,19 @@
                     <vlayout spacing="13px">
                         <hlayout spacing="10px" valign="bottom">
                             <div sclass="form_element s5"><label value="${labels.adm.ldap_applianceInum}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.applianceInum)"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.applianceInum)"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
                             <div sclass="form_element s5"><label value="${labels.adm.ldap_orgInum}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.orgInum)"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.orgInum)"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom">
                             <div sclass="form_element s5"><label value="${labels.adm.ldap_salt}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.saltLocation)"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.saltLocation)"/>
                         </hlayout>
                         <hlayout spacing="10px" valign="bottom" sclass="dpadded">
                             <div sclass="form_element s5"><label value="${labels.adm.ldap_ox_ldap}"/></div>
-                            <textbox sclass="${pageScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.oxLdapLocation)"/>
+                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.oxLdapLocation)"/>
                         </hlayout>
                         <button label="&#160;${labels.general.save}&#160;" sclass="btn-success form_button" onClick="@command('saveLdapSettings')" w:onClick="showThrobber()" />
                     </vlayout>

@@ -16,10 +16,10 @@
         <div hflex="1" align="right" if="${withHome or (sessionScope.USR.admin and not c:endsWith(desktop.requestPath, '/admin.zul'))}">
             <div sclass="btn-group">
                 <button if="${withHome}" image="${sessionScope.custdir}/images/go-home.png" style="opacity:0.7" href="/user.zul"
-                        sclass="${pageScope.onMobile ? 'btn-xs' : 'btn-sm'} btn-primary form_button" label="&#160;${labels.general.back_main}" />
+                        sclass="${sessionScope.onMobile ? 'btn-xs' : 'btn-sm'} btn-primary form_button" label="&#160;${labels.general.back_main}" />
                 <button if="${sessionScope.USR.admin and not c:endsWith(desktop.requestPath, '/admin.zul')}"
                         image="${sessionScope.custdir}/images/administration.png" style="opacity:0.7" href="/admin.zul"
-                        sclass="${pageScope.onMobile ? 'btn-xs' : 'btn-sm'} btn-primary form_button" label="${labels.adm.go_console}" />
+                        sclass="${sessionScope.onMobile ? 'btn-xs' : 'btn-sm'} btn-primary form_button" label="${labels.adm.go_console}" />
             </div>
         </div>
     </hlayout>

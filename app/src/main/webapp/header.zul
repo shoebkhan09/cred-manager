@@ -7,7 +7,7 @@
             <image sclass="logo" src="/images/logo.png"/>
         </hlayout>
         <zk choose="">
-            <zk when="${pageScope.onMobile}">
+            <zk when="${sessionScope.onMobile}">
                 <div width="50px">
                     <button sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
                             style="padding-left:0px" image="${sessionScope.custdir}/images/hamburger.png" label="" />

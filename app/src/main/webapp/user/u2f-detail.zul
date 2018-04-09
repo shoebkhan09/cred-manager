@@ -67,7 +67,7 @@
             <panelchildren sclass="padded">
                 <vlayout>
                     <zk choose="">
-                        <zk when="${pageScope.onMobile}">
+                        <zk when="${sessionScope.onMobileBrowser}">
                             <div align="center">
                                 <label sclass="bold" value="${labels.usr.u2f_mobile_unsupported}" />
                             </div>

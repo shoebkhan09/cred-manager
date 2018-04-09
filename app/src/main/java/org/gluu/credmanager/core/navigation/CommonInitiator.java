@@ -27,10 +27,6 @@ public class CommonInitiator {
 
         //If app is not working, just set page error
         if (WebUtils.getServices(se).getAppConfig().isInOperableState()) {
-            //This attrib should be in the session, but it's more comfortable at the page level for mobile testing purposes
-            //if (se.getAttribute("onMobile")==null)
-            page.setAttribute("onMobile", WebUtils.isCurrentBrowserMobile());
-
             se.setAttribute("custdir", WebUtils.getBrandingPath(se) == null ? "" : AppConfiguration.BASE_URL_BRANDING_PATH);
 
             if (se.getAttribute("u2fSupported") == null)

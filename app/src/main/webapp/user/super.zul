@@ -15,7 +15,7 @@
                         <template name="children">
                             <hlayout sclass="de_emphasized">
                                 <label sclass="bold" value="@load(empty each.nickName ? c:l('general.no_named') : each.nickName)" />
-                                <zk if="${not pageScope.onMobile}">
+                                <zk if="${not sessionScope.onMobile}">
                                     <label sclass="bold" value="@load(c:cat3('(', each.deviceData.platform, ')'))" />
                                 </zk>
                                 <zk if="${each.creationDate ne null}">

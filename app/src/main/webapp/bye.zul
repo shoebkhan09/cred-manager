@@ -1,8 +1,7 @@
 <?taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c"?>
 <?page title="${applicationScope['appName']} - ${labels.usr.logout.title}"?>
-<?init class="org.gluu.credmanager.core.navigation.LogoutInitiator"?>
 <?link rel="icon" type="image/x-icon" href="${sessionScope.custdir}/images/favicon.ico" ?>
-<?style src="${c:cat3(sessionScope.custdir, '/styles/', pageScope.onMobile ? 'mobile.css' : 'desktop.css')}"?>
+<?style src="${c:cat3(sessionScope.custdir, '/styles/', sessionScope.onMobile ? 'mobile.css' : 'desktop.css')}"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
