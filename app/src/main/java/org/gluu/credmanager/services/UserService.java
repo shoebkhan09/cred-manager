@@ -180,48 +180,35 @@ public class UserService {
         return phone;
     }
 
-    private List<VerifiedPhone> getVerifiedPhones(GluuPerson person){
+    private List<VerifiedPhone> getVerifiedPhones(GluuPerson person) {
 
         try{
-            String json=person.getVerifiedPhonesJson();
-            Optional<String> optJson= Utils.stringOptional(json);
+            String json = person.getVerifiedPhonesJson();
+            Optional<String> optJson = Utils.stringOptional(json);
+            json = optJson.isPresent() ? mapper.readTree(json).get("phones").toString() : "[]";
 
-            if (optJson.isPresent())
-                json=mapper.readTree(json).get("phones").toString();
-            else
-                json="[]";
-
-            List<VerifiedPhone> vphones=mapper.readValue(json, new TypeReference<List<VerifiedPhone>>(){});
-
+            List<VerifiedPhone> vphones = mapper.readValue(json, new TypeReference<List<VerifiedPhone>>() { });
             logger.trace("getVerifiedPhones. Phones from ldap: {}", vphones);
-            Stream<VerifiedPhone> stream=person.getMobileNumbers().stream().map(str -> getExtraPhoneInfo(str, vphones));
 
-            return stream.collect(Collectors.toList());
-        }
-        catch (Exception e){
+            return person.getMobileNumbers().stream().map(str -> getExtraPhoneInfo(str, vphones)).collect(Collectors.toList());
+        } catch (Exception e){
             logger.error(e.getMessage(), e);
             return new ArrayList<>();
         }
     }
 
-    private List<OTPDevice> getOtpDevices(GluuPerson person){
+    private List<OTPDevice> getOtpDevices(GluuPerson person) {
 
         try {
             String json = person.getOtpDevicesJson();
             Optional<String> optJson = Utils.stringOptional(json);
+            json = optJson.isPresent() ? mapper.readTree(json).get("devices").toString() : "[]";
 
-            if (optJson.isPresent())
-                json = mapper.readTree(json).get("devices").toString();
-            else
-                json = "[]";
+            List<OTPDevice> devs = mapper.readValue(json, new TypeReference<List<OTPDevice>>() { });
 
-            List<OTPDevice> devs=mapper.readValue(json, new TypeReference<List<OTPDevice>>(){});
-
-            Stream<OTPDevice> stream=person.getExternalUids().stream().filter(uid -> uid.startsWith("totp:") ||
-                    uid.startsWith("hotp:")).map(uid-> getExtraOTPInfo(uid, devs));
-            return stream.collect(Collectors.toList());
-        }
-        catch (Exception e){
+            return person.getExternalUids().stream().filter(uid -> uid.startsWith("totp:") || uid.startsWith("hotp:"))
+                    .map(uid-> getExtraOTPInfo(uid, devs)).collect(Collectors.toList());
+        } catch (Exception e){
             logger.error(e.getMessage(), e);
             return new ArrayList<>();
         }
@@ -270,7 +257,7 @@ public class UserService {
                     allCreds.put(SECURITY_KEY, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SecurityKey.class), RegisteredCredential.class::cast));
                 }
                 if (enabled.contains(SUPER_GLUU)) {
-                    appId = appConfiguration.getConfigSettings().getOxdConfig().getRedirectUri();
+                    appId = appConfiguration.getConfigSettings().getSgConfig().getRegistrationUri();
                     allCreds.put(SUPER_GLUU, Utils.mapSortCollectList(getFidoDevices(rdn, appId, SuperGluuDevice.class), RegisteredCredential.class::cast));
                 }
             }
@@ -307,22 +294,22 @@ public class UserService {
      *                 appended to the list mobiles
      * @throws Exception
      */
-    public void updateMobilePhonesAdd(User user, List<RegisteredCredential> mobiles, VerifiedPhone newPhone) throws Exception{
+    public void updateMobilePhonesAdd(User user, List<RegisteredCredential> mobiles, VerifiedPhone newPhone) throws Exception {
 
         //See getVerifiedPhones() above
-        List<VerifiedPhone> vphones=new ArrayList<>(Utils.mapCollectList(mobiles, VerifiedPhone.class::cast));
-        if (newPhone!=null)
+        List<VerifiedPhone> vphones = new ArrayList<>(Utils.mapCollectList(mobiles, VerifiedPhone.class::cast));
+        if (newPhone != null) {
             vphones.add(newPhone);
+        }
 
-        String json=null;
-        List<String> strPhones=vphones.stream().map(VerifiedPhone::getNumber).collect(Collectors.toList());
-        if (strPhones.size()>0)
-            json=String.format("{%sphones%s: %s}", "\"", "\"", mapper.writeValueAsString(vphones));
+        List<String> strPhones = vphones.stream().map(VerifiedPhone::getNumber).collect(Collectors.toList());
+        String json = strPhones.size() > 0 ? mapper.writeValueAsString(Collections.singletonMap("phones", vphones)) : null;
 
         ldapService.updateMobilePhones(user.getRdn(), strPhones, json);
-        if (newPhone!=null)
+        if (newPhone != null) {
             //modify list only if LDAP update took place
             mobiles.add(newPhone);
+        }
 
     }
 
@@ -336,22 +323,22 @@ public class UserService {
      *                 appended to the list devs
      * @throws Exception
      */
-    public void updateOTPDevicesAdd(User user, List<RegisteredCredential> devs, OTPDevice newDevice) throws Exception{
+    public void updateOTPDevicesAdd(User user, List<RegisteredCredential> devs, OTPDevice newDevice) throws Exception {
 
         //See getOTPDDevices() above
-        List<OTPDevice> vdevices=new ArrayList<>(Utils.mapCollectList(devs, OTPDevice.class::cast));
-        if (newDevice!=null)
+        List<OTPDevice> vdevices = new ArrayList<>(Utils.mapCollectList(devs, OTPDevice.class::cast));
+        if (newDevice != null) {
             vdevices.add(newDevice);
+        }
 
-        String json=null;
-        List<String> strDevs=vdevices.stream().map(OTPDevice::getUid).collect(Collectors.toList());
-        if (strDevs.size()>0)
-            json=String.format("{%sdevices%s: %s}", "\"", "\"", mapper.writeValueAsString(vdevices));
+        List<String> strDevs = vdevices.stream().map(OTPDevice::getUid).collect(Collectors.toList());
+        String json = strDevs.size() > 0 ? mapper.writeValueAsString(Collections.singletonMap("devices", vdevices)) : null;
 
         ldapService.updateOTPDevices(user.getRdn(), strDevs, json);
-        if (newDevice!=null)
+        if (newDevice != null) {
             //modify list only if LDAP update took place
             devs.add(newDevice);
+        }
 
     }
 
