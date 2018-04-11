@@ -14,7 +14,7 @@
 
     <zk choose="">
         <zk when="${empty pageScope.error}">
-            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)" spacing="0px">
+            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)" spacing="0px" style="${sessionScope.onMobile ? 'width:100%' : 'width:950px'}">
                 <include src="/header.zul"/>
                 <include src="/back.zul" withHome="true" />
                 <div self="@insert(content)" />

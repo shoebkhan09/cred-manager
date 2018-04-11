@@ -1,3 +1,7 @@
+.mainDiv{
+    margin:0 auto;
+    border:1px #00BE79 solid;
+}
 .header{
     background:#00BE79;
     color: #fff;

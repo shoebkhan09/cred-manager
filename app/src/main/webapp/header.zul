@@ -14,7 +14,7 @@
                 </div>
             </zk>
             <zk>
-                <div width="185px">
+                <div style="padding-right:5px">
                     <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" iconSclass="caret"
                             popup="pop, after_start, type=toggle" image="${sessionScope.custdir}/images/shadowed_man.png"
                             label="@load(c:cat3(c:l('general.welcome'),' ', vm.user.givenName))" />
