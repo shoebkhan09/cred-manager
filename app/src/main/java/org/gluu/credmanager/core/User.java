@@ -6,10 +6,12 @@
 package org.gluu.credmanager.core;
 
 import org.gluu.credmanager.conf.CredentialType;
+import org.gluu.credmanager.conf.sndfactor.TrustedDevice;
 import org.gluu.credmanager.core.credential.RegisteredCredential;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by jgomer on 2017-07-16.
@@ -25,8 +27,50 @@ public class User {
     private boolean admin;
 
     private Map<CredentialType, List<RegisteredCredential>> credentials;
+    private Set<String> enforcementPolicies;
+    private List<TrustedDevice> trustedDevices;
 
     public User(){
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getGivenName() {
+        return givenName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getRdn() {
+        return rdn;
+    }
+
+    public CredentialType getPreference() {
+        return preference;
+    }
+
+    public Map<CredentialType, List<RegisteredCredential>> getCredentials() {
+        return credentials;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public Set<String> getEnforcementPolicies() {
+        return enforcementPolicies;
+    }
+
+    public List<TrustedDevice> getTrustedDevices() {
+        return trustedDevices;
+    }
+
+    public void setTrustedDevices(List<TrustedDevice> trustedDevices) {
+        this.trustedDevices = trustedDevices;
     }
 
     public void setUserName(String userName) {
@@ -57,32 +101,8 @@ public class User {
         this.admin = admin;
     }
 
-    public String getUserName() {
-        return userName;
-    }
-
-    public String getGivenName() {
-        return givenName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getRdn() {
-        return rdn;
-    }
-
-    public CredentialType getPreference() {
-        return preference;
-    }
-
-    public Map<CredentialType, List<RegisteredCredential>> getCredentials() {
-        return credentials;
-    }
-
-    public boolean isAdmin() {
-        return admin;
+    public void setEnforcementPolicies(Set<String> enforcementPolicies) {
+        this.enforcementPolicies = enforcementPolicies;
     }
 
 }

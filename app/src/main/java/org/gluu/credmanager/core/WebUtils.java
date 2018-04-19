@@ -5,6 +5,8 @@
  */
 package org.gluu.credmanager.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.http.HttpEntity;
@@ -19,7 +21,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ServiceMashup;
-import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.Execution;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Session;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,15 +53,16 @@ public class WebUtils {
     public static final String USER_PAGE_URL ="user.zul";
     public static final String ADMIN_PAGE_URL ="admin.zul";
     public static final String LOGOUT_PAGE_URL ="bye.zul";
-    //public static final String HOME_PAGE_URL ="index.zul";
 
     public static final String SERVICES_ATTRIBUTE="SRV";
-    public static final String USER_ATTRIBUTE="USR";
-    public static final String REDIRECT_STAGE_ATTRIBUTE="REDIR_ST";
+
+    private static final String USER_ATTRIBUTE="USR";
+    private static final String REDIRECT_STAGE_ATTRIBUTE="REDIR_ST";
     private static final String OFFSET_ATTRIBUTE ="TZ";
     private static final String IDTOKEN_ATTRIBUTE="IDTOKEN";
 
     private static Logger logger = LogManager.getLogger(WebUtils.class);
+    private static ObjectMapper mapper = new ObjectMapper();
 
     public static User getUser(Session session){
         return (User)session.getAttribute(USER_ATTRIBUTE);
@@ -117,7 +120,7 @@ public class WebUtils {
             Execution exec = Executions.getCurrent();
             HttpServletResponse response = (HttpServletResponse) exec.getNativeResponse();
 
-            logger.debug(Labels.getLabel("app.redirecting_to"),url);
+            logger.debug("Redirecting to URL={}", url);
             response.sendRedirect(response.encodeRedirectURL(url));
             if (voidUI)
                 exec.setVoided(voidUI); //no need to create UI since redirect will take place
@@ -257,6 +260,34 @@ public class WebUtils {
             logger.error(e.getMessage(), e);
         }
         return available;
+    }
+
+
+    /**
+     * Executes a geolocation call the to ip-api.com service
+     * @param ip String representing an IP address
+     * @param urlPattern
+     * @param timeout
+     * @return A JsonNode with the respone. Null if there was an error issuing or parsing the contents
+     */
+    public static JsonNode getGeoLocation(String ip, String urlPattern, int timeout){
+
+        JsonNode node=null;
+        try{
+            String ipApiResponse = WebUtils.getUrlContents(MessageFormat.format(urlPattern, ip), timeout);
+            logger.debug("Response from ip-api.com was: {}", ipApiResponse);
+            if (ipApiResponse!=null){
+                node=mapper.readTree(ipApiResponse);
+                if (!node.get("status").asText().equals("success"))
+                    node=null;
+            }
+        }
+        catch (Exception e){
+            node=null;
+            logger.info("An error occurred determining remote location: {}", e.getMessage());
+            logger.error(e.getMessage(), e);
+        }
+        return node;
     }
 
     public static boolean isValidUrl(String strUrl) {

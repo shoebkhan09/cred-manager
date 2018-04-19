@@ -9,7 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.gluu.credmanager.conf.ComputedOxdSettings;
+import org.gluu.credmanager.conf.jsonized.OxdClientSettings;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -46,29 +46,30 @@ public class OxdService {
     private ResteasyClient client;
 
     private ObjectMapper mapper = new ObjectMapper();
-    private ComputedOxdSettings computedSettings;
 
-    public ComputedOxdSettings getComputedSettings() {
-        return computedSettings;
+    public void setSettings(OxdConfig config) throws Exception {
+        setSettings(config, false);
     }
 
-    public void setSettings(OxdConfig config) throws Exception{
-        this.config=config;
+    public void setSettings(OxdConfig config, boolean triggerRegistration) throws Exception {
+        this.config = config;
 
         if (config.isUseHttpsExtension()) {
             client = new ResteasyClientBuilder().build();
             closeCommandClient();
-        }
-        else {
+        } else {
             commandClient=new CommandClient(config.getHost(), config.getPort());
             closeRSClient();
         }
-        doRegister();
+        if (triggerRegistration) {
+            config.setClient(doRegister());
+        }
 
     }
 
-    public void doRegister() throws Exception{
+    public OxdClientSettings doRegister() throws Exception {
 
+        OxdClientSettings computedSettings;
         //TODO: delete previous existing client?
         String clientName;
         logger.info(Labels.getLabel("app.updating_oxd_settings"), config.getHost(), config.getPort(), config.isUseHttpsExtension(), config.getPostLogoutUri());
@@ -95,7 +96,7 @@ public class OxdService {
                 //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
 
                 SetupClientResponse setup = restResponse(cmdParams, "setup-client", null, SetupClientResponse.class);
-                computedSettings=new ComputedOxdSettings(clientName, setup.getOxdId(), setup.getClientId(), setup.getClientSecret());
+                computedSettings=new OxdClientSettings(clientName, setup.getOxdId(), setup.getClientId(), setup.getClientSecret());
             }
             else{
                 clientName="cred-manager-" + consecutive;
@@ -116,7 +117,7 @@ public class OxdService {
 
                 Command command = new Command(CommandType.REGISTER_SITE).setParamsObject(cmdParams);
                 RegisterSiteResponse site = commandClient.send(command).dataAsResponse(RegisterSiteResponse.class);
-                computedSettings=new ComputedOxdSettings(clientName, site.getOxdId(), null, null);
+                computedSettings=new OxdClientSettings(clientName, site.getOxdId(), null, null);
             }
             consecutive++;
             logger.info(Labels.getLabel("app.updated_oxd_settings"), computedSettings.getOxdId());
@@ -127,6 +128,7 @@ public class OxdService {
             logger.fatal(msg, e);
             throw new Exception(msg, e);
         }
+        return computedSettings;
 
     }
 
@@ -140,7 +142,7 @@ public class OxdService {
     private String getAuthzUrl(List<String> acrValues, String prompt) throws Exception{
 
         GetAuthorizationUrlParams cmdParams = new GetAuthorizationUrlParams();
-        cmdParams.setOxdId(computedSettings.getOxdId());
+        cmdParams.setOxdId(config.getClient().getOxdId());
         cmdParams.setAcrValues(acrValues);
         cmdParams.setPrompt(prompt);
 
@@ -162,7 +164,7 @@ public class OxdService {
     public Pair<String, String> getTokens(String code, String state) throws Exception{
 
         GetTokensByCodeParams cmdParams = new GetTokensByCodeParams();
-        cmdParams.setOxdId(computedSettings.getOxdId());
+        cmdParams.setOxdId(config.getClient().getOxdId());
         cmdParams.setCode(code);
         cmdParams.setState(state);
 
@@ -173,14 +175,14 @@ public class OxdService {
             Command command = new Command(CommandType.GET_TOKENS_BY_CODE).setParamsObject(cmdParams);
             resp = commandClient.send(command).dataAsResponse(GetTokensByCodeResponse.class);
         }
-        //TODO: validate accessToken with at_hash inside idToken: resp.getIdToken();
+        //validate accessToken with at_hash inside idToken: resp.getIdToken();
         return new Pair<>(resp.getAccessToken(), resp.getIdToken());
     }
 
     public Map<String, List<String>> getUserClaims(String accessToken) throws Exception{
 
         GetUserInfoParams cmdParams = new GetUserInfoParams();
-        cmdParams.setOxdId(computedSettings.getOxdId());
+        cmdParams.setOxdId(config.getClient().getOxdId());
         cmdParams.setAccessToken(accessToken);
 
         GetUserInfoResponse resp;
@@ -197,7 +199,7 @@ public class OxdService {
     public String getLogoutUrl(String idTokenHint) throws Exception{
 
         GetLogoutUrlParams cmdParams = new GetLogoutUrlParams();
-        cmdParams.setOxdId(computedSettings.getOxdId());
+        cmdParams.setOxdId(config.getClient().getOxdId());
         cmdParams.setPostLogoutRedirectUri(config.getPostLogoutUri());
         cmdParams.setIdTokenHint(idTokenHint);
 
@@ -215,8 +217,32 @@ public class OxdService {
     public boolean updatePostLogoutUri(String uri) {
 
         UpdateSiteParams cmdParams = new UpdateSiteParams();
-        cmdParams.setOxdId(computedSettings.getOxdId());
+        cmdParams.setOxdId(config.getClient().getOxdId());
         cmdParams.setPostLogoutRedirectUri(uri);
+        return doUpdate(cmdParams);
+
+    }
+
+    public boolean extendSiteLifeTime() {
+        /*
+        //Extending the life time cannot take place since scopes are changed by those defaulted in Gluu Server
+        //Unfortunately, the custom script that turns on the scopes is only run upon registration (not updates)
+        //On the other hand, oxd site registration does not allow to set the expiration. To workaround it, the
+        //associated client registration cust script is in charge of extending the lifetime
+        GregorianCalendar cal=new GregorianCalendar();
+        cal.add(Calendar.YEAR, 1);
+
+        UpdateSiteParams cmdParams = new UpdateSiteParams();
+        cmdParams.setOxdId(config.getClient().getOxdId());
+        cmdParams.setClientSecretExpiresAt(new Date(cal.getTimeInMillis()));
+
+        return doUpdate(cmdParams);
+        */
+        return true;
+
+    }
+
+    private boolean doUpdate(UpdateSiteParams cmdParams) {
 
         UpdateSiteResponse resp = null;
         try {
@@ -238,8 +264,8 @@ public class OxdService {
 
         GetClientTokenParams cmdParams = new GetClientTokenParams();
         cmdParams.setOpHost(config.getOpHost());
-        cmdParams.setClientId(computedSettings.getClientId());
-        cmdParams.setClientSecret(computedSettings.getClientSecret());
+        cmdParams.setClientId(config.getClient().getClientId());
+        cmdParams.setClientSecret(config.getClient().getClientSecret());
         cmdParams.setScope(Arrays.asList(UserService.requiredOpenIdScopes));
 
         GetClientTokenResponse resp = restResponse(cmdParams, "get-client-token", null, GetClientTokenResponse.class);

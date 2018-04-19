@@ -28,7 +28,7 @@
 
                 <div align="center">
                     <vlayout visible="@load(not empty vm.users)" spacing="14px">
-                        <grid model="@load(vm.users)" mold="paging" pageSize="10" width="${sessionScope.onMobile ? '280px' : '420px'}">
+                        <grid model="@load(vm.users)" mold="paging" pageSize="10" sclass="grid_users">
                             <columns sizable="true" >
                                 <column width="25px" label="" />
                                 <column width="${sessionScope.onMobile ? '80px' : '90px'}" label="Username" />

@@ -7,8 +7,8 @@ package org.gluu.credmanager.ui.vm;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.gluu.credmanager.conf.AppConfiguration;
 import org.gluu.credmanager.conf.CredentialType;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.ui.model.UIModel;
 import org.zkoss.bind.annotation.*;
 import org.zkoss.util.Pair;
@@ -36,9 +36,26 @@ public class UserPreferenceViewModel extends UserViewModel {
     private boolean uiEditing;
     private boolean uiEditable;
     private boolean uiNotEnoughCredsFor2FA;
+    private boolean uiAllowedToSetPolicy;
+
+    public boolean isUiEditing() {
+        return uiEditing;
+    }
+
+    public boolean isUiEditable() {
+        return uiEditable;
+    }
+
+    public ListModelList<Pair<CredentialType, String>> getAvailMethods() {
+        return availMethods;
+    }
 
     public boolean isUiNotEnoughCredsFor2FA(){
         return uiNotEnoughCredsFor2FA;
+    }
+
+    public boolean isUiAllowedToSetPolicy() {
+        return uiAllowedToSetPolicy;
     }
 
     @Init(superclass = true)
@@ -59,6 +76,7 @@ public class UserPreferenceViewModel extends UserViewModel {
         uiNotEnoughCredsFor2FA = totalCreds < getMinimumCredsFor2FA() && enabledMethods.size()>0;
 
         availMethods.add(new Pair<>(null, noMethodName));
+        uiAllowedToSetPolicy = services.getAppConfig().getConfigSettings().getEnforcement2FA().contains(EnforcementPolicy.CUSTOM);
 
     }
 
@@ -70,18 +88,6 @@ public class UserPreferenceViewModel extends UserViewModel {
     public String getSelectedMethodName() {
         Optional<String> optCred = Optional.ofNullable(selectedMethod).map(CredentialType::getUIName);
         return optCred.orElse(noMethodName);
-    }
-
-    public boolean isUiEditing() {
-        return uiEditing;
-    }
-
-    public boolean isUiEditable() {
-        return uiEditable;
-    }
-
-    public ListModelList<Pair<CredentialType, String>> getAvailMethods() {
-        return availMethods;
     }
 
     @NotifyChange({"uiEditing","selectedMethod"})

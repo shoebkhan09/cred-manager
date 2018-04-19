@@ -13,11 +13,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.gluu.credmanager.conf.jsonized.Configs;
+import org.gluu.credmanager.conf.jsonized.OxdClientSettings;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
 import org.gluu.credmanager.conf.jsonized.U2fSettings;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
-import org.gluu.credmanager.services.ClientRefreshService;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.OxdService;
 import org.gluu.credmanager.services.ldap.pojo.CustomScript;
@@ -88,9 +89,6 @@ public class AppConfiguration {
 
     @Inject
     private OxdService oxdService;
-
-    @Inject
-    private ClientRefreshService clientRefreshService;
 
     public String getDefaultAcr(){
         return DEFAULT_ACR;
@@ -216,6 +214,7 @@ public class AppConfiguration {
                         computeMinCredsForStrongAuth(settings);
                         computePassReseteable(settings, ldapService.isBackendLdapEnabled());
                         computeEnabledMethods(settings);
+                        compute2FAEnforcementPolicy(settings);
 
                         //The following 4 statements are executed only after computeEnabledMethods and computeGluuVersion are called
                         if (enabledMethods.contains(SECURITY_KEY))
@@ -242,6 +241,12 @@ public class AppConfiguration {
         else
             logger.error(Labels.getLabel("app.inexistent_ox-ldap"));
 
+    }
+
+    private void compute2FAEnforcementPolicy(Configs settings) {
+        if (!Utils.listOptional(settings.getEnforcement2FA()).isPresent()) {
+            settings.setEnforcement2FA(Collections.singletonList(EnforcementPolicy.EVERY_LOGIN));
+        }
     }
 
     private void computeGluuVersion(Configs settings){
@@ -523,20 +528,35 @@ public class AppConfiguration {
                 //END
                 oxdConfig.setAcrValues(Collections.singletonList(DEFAULT_ACR));
 
-                int expTime=ldapService.getDynamicClientExpirationTime() - 5;
-                if (expTime>0) {
+                if (ldapService.getDynamicClientExpirationTime() > 0) {
                     try {
-                        //trigger registration
-                        oxdService.setSettings(oxdConfig);
-                    }
-                    catch (Exception e){
+
+                        Optional<String> oxdIdOpt = Optional.ofNullable(oxdConfig.getClient()).map(OxdClientSettings::getOxdId);
+                        if (oxdIdOpt.isPresent()) {
+                            oxdService.setSettings(oxdConfig);
+
+                            if (!oxdService.extendSiteLifeTime()) {
+                                logger.warn("An error occured while extending the lifetime of the associated oxd client.");
+                                logger.info("Attempting a new site registration");
+                                oxdService.setSettings(oxdConfig, true);
+                            }
+                        } else {
+                            //trigger registration
+                            oxdService.setSettings(oxdConfig, true);
+
+                            if (!oxdService.extendSiteLifeTime()) {
+                                logger.warn(Labels.getLabel("app.site_update_failed"));
+                            }
+                        }
+
+                    } catch (Exception e){
                         logger.warn(Labels.getLabel("app.refresh_clients_warn"));
+                        //Rethrow the exception
                         throw e;
                     }
-                    //If registration was effective save reference to the settings
+
+                    updateConfigFile(settings);
                     inOperableState = true;
-                    //and prepare timer to repeat registration based on default clientExpirationTime
-                    clientRefreshService.schedule(expTime);
                 }
                 else
                     throw new Exception(Labels.getLabel("app.dynamic_registration_disabled"));

@@ -41,7 +41,6 @@
                         <hlayout>
                             <vlayout hflex="1" sclass="padded">
                                 <label value="@load(empty each.nickName ? c:l('general.no_named') : each.nickName)" sclass="bold"/>
-                                <!--label value="${c:cat(sessionScope.onMobile ? '' : 'Platform: ', each.deviceData.platform)}" /-->
                                 <label value="@load(c:cat5(c:l('general.platform'),' ', each.deviceData.platform, ' ', each.deviceData.osVersion))" />
                                 <label value="@load(c:cat3(c:l('general.name'),' ', each.deviceData.name))" />
                                 <hlayout>
@@ -56,7 +55,7 @@
                                     </zk>
                                 </hlayout>
                                 <hlayout>
-                                    <label value="${labels.general.added_on}"/><!--  sclass="de_emphasized" -->
+                                    <label value="${labels.general.added_on}"/>
                                     <label value="@load(each.creationDate) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
                                 </hlayout>
 
@@ -85,8 +84,6 @@
                         <button id="readyButton" label="&#160;${labels.general.ready}&#160;" sclass="btn-success"
                                 w:onClick="initialize(this);" onClick="@command('showQR')" disabled="@load(vm.uiQRShown or vm.uiEnrolled)"/>
                         <n:span class="de_emphasized">${labels.usr.supergluu_download}</n:span>
-                        <!--zk if="${sessionScope.onMobile}">
-                        </zk-->
                     </vlayout>
                 </div>
 

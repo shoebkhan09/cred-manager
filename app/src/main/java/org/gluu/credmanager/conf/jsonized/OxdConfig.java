@@ -17,10 +17,23 @@ public class OxdConfig {
 
     private String host;
     private int port;
+
+    @JsonProperty("authz_redirect_uri")
     private String redirectUri;
+
+    @JsonProperty("post_logout_uri")
     private String postLogoutUri;
+
+    @JsonProperty("use_https_extension")
     private boolean useHttpsExtension;
+
+    @JsonProperty("client")
+    private OxdClientSettings client;
+
+    @JsonIgnore
     private String opHost;
+
+    @JsonIgnore
     private List<String> acrValues;
 
     public String getHost() {
@@ -43,26 +56,30 @@ public class OxdConfig {
         return postLogoutUri;
     }
 
-    @JsonIgnore
     public String getOpHost() {
         return opHost;
     }
 
-    @JsonIgnore
     public List<String> getAcrValues() {
         return acrValues;
+    }
+
+    public OxdClientSettings getClient() {
+        return client;
+    }
+
+    public void setClient(OxdClientSettings client) {
+        this.client = client;
     }
 
     public void setOpHost(String opHost) {
         this.opHost = opHost;
     }
 
-    @JsonProperty("authz_redirect_uri")
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
     }
 
-    @JsonProperty("use_https_extension")
     public void setUseHttpsExtension(boolean useHttpsExtension) {
         this.useHttpsExtension = useHttpsExtension;
     }

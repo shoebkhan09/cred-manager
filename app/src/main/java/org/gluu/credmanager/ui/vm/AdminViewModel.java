@@ -9,10 +9,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
-import org.gluu.credmanager.conf.ComputedOxdSettings;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.AdminService;
@@ -37,6 +37,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.gluu.credmanager.conf.sndfactor.EnforcementPolicy.*;
 
 /**
  * Created by jgomer on 2017-10-03.
@@ -65,6 +67,7 @@ public class AdminViewModel extends UserViewModel {
     private boolean passResetImpossible;
     private int minCreds2FA;
     private List<Integer> minCredsList;
+    private Set<String> enforcementPolicies;
 
     private AdminService myService;
 
@@ -78,6 +81,10 @@ public class AdminViewModel extends UserViewModel {
 
     public String getSelectedLogLevel() {
         return selectedLogLevel;
+    }
+
+    public Set<String> getEnforcementPolicies() {
+        return enforcementPolicies;
     }
 
     public String getSubpage() {
@@ -107,10 +114,6 @@ public class AdminViewModel extends UserViewModel {
 
     public OxdConfig getOxdSettings() {
         return oxdSettings;
-    }
-
-    public ComputedOxdSettings getComputedOxdSettings(){
-        return myService.getComputedOxdSettings();
     }
 
     public void setOxdSettings(OxdConfig oxdSettings) {
@@ -188,7 +191,7 @@ public class AdminViewModel extends UserViewModel {
         passResetImpossible=myService.isPassResetImpossible();
         initOxd();
         initLdap();
-        initMinCreds();
+        init2FASettings();
     }
 
     private void hideThrobber(){
@@ -388,7 +391,7 @@ public class AdminViewModel extends UserViewModel {
         hideThrobber();
     }
 
-    @NotifyChange({"oxdSettings", "computedOxdSettings"})
+    @NotifyChange({"oxdSettings"})
     @Command
     public void saveOxdSettings() {
 
@@ -567,9 +570,14 @@ public class AdminViewModel extends UserViewModel {
         hideThrobber();
     }
 
-    /* ========== MINIMUM CREDENTIALS FOR STRONG AUTHENTICATION ========== */
+    /* ========== SETTINGS FOR STRONG AUTHENTICATION ========== */
 
-    public void initMinCreds(){
+    private void init2FASettings() {
+        initMinCreds();
+        initEnforcementPolicy();
+    }
+
+    private void initMinCreds(){
 
         minCreds2FA=myService.getConfigSettings().getMinCredsFor2FA();
         if (minCredsList==null) {
@@ -582,26 +590,34 @@ public class AdminViewModel extends UserViewModel {
 
     }
 
-    public void storeMinCreds(int newval){
+    private void initEnforcementPolicy() {
+        enforcementPolicies = myService.getConfigSettings().getEnforcement2FA().stream()
+                .map(EnforcementPolicy::toString).collect(Collectors.toSet());
+    }
 
-        String msg=myService.updateMinCreds(newval);
+    public void store2FASettings(int newval){
+
+        List<EnforcementPolicy> list = enforcementPolicies.stream().map(EnforcementPolicy::valueOf).collect(Collectors.toList());
+        String msg=myService.update2FASettings(newval, list);
         if (msg==null)
             Messagebox.show(Labels.getLabel("adm.methods_change_success"), null, Messagebox.OK, Messagebox.INFORMATION);
         else
             Messagebox.show(msg, null, Messagebox.OK, Messagebox.EXCLAMATION);
-        initMinCreds();
+
+        init2FASettings();
 
     }
 
-    public void promptBeforeProceed(String message, int newval){
+    private void promptBefore2FAProceed(String message, int newval){
 
         Messagebox.show(message, null, Messagebox.YES | Messagebox.NO, Messagebox.EXCLAMATION,
                 event -> {
                     if (Messagebox.ON_YES.equals(event.getName()))
-                        storeMinCreds(newval);
+                        store2FASettings(newval);
                     else {  //Revert to last known working (or accepted)
-                        initMinCreds();
+                        init2FASettings();
                         BindUtils.postNotifyChange(null, null, AdminViewModel.this, "minCreds2FA");
+                        BindUtils.postNotifyChange(null, null, AdminViewModel.this, "enforcementPolicies");
                     }
                 }
         );
@@ -609,15 +625,37 @@ public class AdminViewModel extends UserViewModel {
     }
 
     @Command
-    public void changeMinCreds(@BindingParam("val") Integer val){
+    public void change2FASettings(@BindingParam("val") Integer val){
 
+        val += AppConfiguration.BOUNDS_MINCREDS_2FA.getX();
         if (val==1)     //only one sucks
-            promptBeforeProceed(Labels.getLabel("adm.strongauth_warning_one"), val);
+            promptBefore2FAProceed(Labels.getLabel("adm.strongauth_warning_one"), val);
         else
         if (val>minCreds2FA)   //maybe problematic...
-            promptBeforeProceed(Labels.getLabel("adm.strongauth_warning_up", new Integer[]{minCreds2FA}), val);
+            promptBefore2FAProceed(Labels.getLabel("adm.strongauth_warning_up", new Integer[]{minCreds2FA}), val);
         else
-            storeMinCreds(val);
+            store2FASettings(val);
+        hideThrobber();
+
+    }
+
+    @NotifyChange("enforcementPolicies")
+    @Command
+    public void checkPolicy(@BindingParam("evt") Event event) {
+
+        Checkbox box = (Checkbox) event.getTarget();
+        String policy = box.getId();
+        if (box.isChecked())
+            enforcementPolicies.add(policy);
+        else
+            enforcementPolicies.remove(policy);
+
+        if (enforcementPolicies.contains(EVERY_LOGIN.toString()))
+            enforcementPolicies=Stream.of(EVERY_LOGIN.toString()).collect(Collectors.toSet());
+        else
+        if (enforcementPolicies.contains(CUSTOM.toString()))
+            enforcementPolicies=Stream.of(CUSTOM.toString()).collect(Collectors.toSet());
+
         hideThrobber();
 
     }

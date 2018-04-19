@@ -39,7 +39,7 @@ public class HomeViewModel {
             }
             se.setAttribute("onMobileBrowser", mobile); //see u2f-detail.zul
 
-            mobile = mobile && evt.getScreenWidth() < 1024; //If screen is wide enough, behave as desktop
+            mobile = mobile && evt.getScreenWidth() < 992; //If screen is wide enough, behave as desktop
             se.setAttribute("onMobile", mobile);
 
             logger.trace("Session will {} behave as mobile", mobile ? "" : "not");

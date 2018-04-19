@@ -10,11 +10,11 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
-import org.gluu.credmanager.conf.ComputedOxdSettings;
 import org.gluu.credmanager.conf.CredentialType;
 import org.gluu.credmanager.conf.jsonized.Configs;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
 import org.gluu.credmanager.conf.jsonized.OxdConfig;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.xdi.ldap.model.SimpleUser;
@@ -187,10 +187,6 @@ public class AdminService {
 
     /* ========== OXD SETTINGS ========== */
 
-    public ComputedOxdSettings getComputedOxdSettings(){
-        return oxdService.getComputedSettings();
-    }
-
     public OxdConfig copyOfWorkingOxdSettings(){
         return copyOfOxdSettings(localSettings.getOxdConfig());
     }
@@ -220,7 +216,10 @@ public class AdminService {
             if (!backup.getPostLogoutUri().equals(postUri)) {
                 oxdService.updatePostLogoutUri(postUri);
             }
-            oxdService.setSettings(newSettings);
+            oxdService.setSettings(newSettings, true);
+            if (!oxdService.extendSiteLifeTime())
+                logger.warn("An error occured while extending the lifetime of the associated oxd client.");
+
             //If it gets here, it means the provided settings were fine, so local copy can be overwritten
             localSettings.setOxdConfig(newSettingsCopy);
         }
@@ -229,7 +228,7 @@ public class AdminService {
             try {
                 logger.warn(Labels.getLabel("adm.oxd_revert_conf"));
                 //Revert to last working settings
-                oxdService.setSettings(backup);
+                oxdService.setSettings(backup, false);
             }
             catch (Exception e1){
                 msg=Labels.getLabel("admin.error_reverting");
@@ -353,15 +352,18 @@ public class AdminService {
 
     }
 
-    /* ========== MINIMUM CREDENTIALS FOR STRONG AUTHENTICATION ========== */
+    /* ========== SETTINGS FOR STRONG AUTHENTICATION ========== */
 
-    public String updateMinCreds(int minCreds){
+    public String update2FASettings(int minCreds, List<EnforcementPolicy> policies){
 
         //update local copy
         localSettings.setMinCredsFor2FA(minCreds);
+        localSettings.setEnforcement2FA(policies);
         //Do runtime change
         appConfig.getConfigSettings().setMinCredsFor2FA(minCreds);
+        appConfig.getConfigSettings().setEnforcement2FA(policies);
         logAdminEvent("Changed minimum number of enrolled credentials for 2FA usage to " + minCreds);
+        logAdminEvent("Changed 2FA enforcement policy to " + policies);
 
         return updateSettings();
 

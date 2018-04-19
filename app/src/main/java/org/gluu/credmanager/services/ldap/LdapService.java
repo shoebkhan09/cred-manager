@@ -43,6 +43,8 @@ public class LdapService {
     public static final String PREFERRED_METHOD_ATTR="oxPreferredMethod";
     public static final String OTP_DEVICES_ATTR="oxOTPDevices";
     public static final String MOBILE_DEVICES_ATTR="oxMobileDevices";
+    public static final String STRONG_AUTH_POLICY_ATTR="oxStrongAuthPolicy";
+    public static final String TRUSTED_DEVICES_ATTR="oxTrustedDevicesInfo";
 
     private Logger logger = LogManager.getLogger(getClass());
 
@@ -205,6 +207,19 @@ public class LdapService {
     public void updatePreferredMethod(String userRdn, String method) throws Exception{
         GluuPerson person=getGluuPerson(userRdn);
         person.setPreferredAuthMethod(method);
+        ldapEntryManager.merge(person);
+    }
+
+    public void update2FAPolicies(String userRdn, String policies) throws Exception {
+        GluuPerson person=getGluuPerson(userRdn);
+        person.setStrongAuthPolicy(policies);
+        ldapEntryManager.merge(person);
+    }
+
+    public void updateTrustedDevices(String userRdn, String jsonDevices) throws Exception {
+        //TODO; apply encryption
+        GluuPerson person=getGluuPerson(userRdn);
+        person.setTrustedDevices(jsonDevices);
         ldapEntryManager.merge(person);
     }
 

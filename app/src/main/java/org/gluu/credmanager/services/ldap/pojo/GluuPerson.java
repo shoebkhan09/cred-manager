@@ -46,6 +46,12 @@ public class GluuPerson extends Entry {
     @LdapAttribute(name = "memberOf")
     private List<String> memberships;
 
+    @LdapAttribute(name = LdapService.STRONG_AUTH_POLICY_ATTR)
+    private String strongAuthPolicy;
+
+    @LdapAttribute(name = LdapService.TRUSTED_DEVICES_ATTR)
+    private String trustedDevices;
+
     public List<String> getMemberships() {
         return memberships;
     }
@@ -109,4 +115,21 @@ public class GluuPerson extends Entry {
     public void setExternalUids(List<String> externalUids) {
         this.externalUids = externalUids;
     }
+
+    public String getStrongAuthPolicy() {
+        return strongAuthPolicy;
+    }
+
+    public void setStrongAuthPolicy(String strongAuthPolicy) {
+        this.strongAuthPolicy = strongAuthPolicy;
+    }
+
+    public String getTrustedDevices() {
+        return trustedDevices;
+    }
+
+    public void setTrustedDevices(String trustedDevices) {
+        this.trustedDevices = trustedDevices;
+    }
+
 }

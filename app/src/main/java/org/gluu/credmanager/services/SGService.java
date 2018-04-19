@@ -18,7 +18,6 @@ import org.zkoss.util.resource.Labels;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -40,6 +39,7 @@ public class SGService {
     @Inject
     LdapService ldapService;
 
+    //See http://ip-api.com/docs/api:returned_values
     private static final String GEOLOCATION_URL_PATTERN="http://ip-api.com/json/{0}?fields=49177";
     private static final int GEO_REQ_TIMEOUT=5000;  //wait 5 secs at most
 
@@ -47,31 +47,6 @@ public class SGService {
     private ObjectMapper mapper = new ObjectMapper();
 
     public SGService(){}
-
-    /**
-     * Executes a geolocation call the to ip-api.com service
-     * @param ip String representing an IP address
-     * @return A JsonNode with the respone. Null if there was an error issuing or parsing the contents
-     */
-    public JsonNode getGeoLocation(String ip){
-
-        JsonNode node=null;
-        try{
-            String ipApiResponse= WebUtils.getUrlContents(MessageFormat.format(GEOLOCATION_URL_PATTERN, ip), GEO_REQ_TIMEOUT);
-            logger.debug(Labels.getLabel("app.ip-api_response"), ipApiResponse);
-            if (ipApiResponse!=null){
-                node=mapper.readTree(ipApiResponse);
-                if (!node.get("status").asText().equals("success"))
-                    node=null;
-            }
-        }
-        catch (Exception e){
-            node=null;
-            logger.info(Labels.getLabel("app.remote_location_error"), e.getMessage());
-            logger.error(e.getMessage(), e);
-        }
-        return node;
-    }
 
     /**
      * Builds a string that encodes information in order to display a QR code
@@ -95,7 +70,7 @@ public class SGService {
         if (remoteIp!=null) {   //Add  geolocation information only if we have an IP available
             reqAsMap.put("req_ip", remoteIp);
 
-            JsonNode geolocation = getGeoLocation(remoteIp);
+            JsonNode geolocation = WebUtils.getGeoLocation(remoteIp, GEOLOCATION_URL_PATTERN, GEO_REQ_TIMEOUT);
             if (geolocation != null) {
                 Stream<String> stream = Arrays.asList("country", "regionName", "city").stream();
                 String req_location = stream.map(key -> geolocation.get(key).asText()).reduce("", (acc, next) -> acc + ", " + next);

@@ -7,9 +7,9 @@ package org.gluu.credmanager.core.navigation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.gluu.credmanager.conf.sndfactor.TrustedDevice;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.WebUtils;
-import static org.gluu.credmanager.core.WebUtils.RedirectStage;
 import org.gluu.credmanager.services.ServiceMashup;
 import org.gluu.credmanager.services.UserService;
 import org.gluu.credmanager.services.OxdService;
@@ -19,9 +19,11 @@ import org.zkoss.zk.ui.*;
 import org.zkoss.zk.ui.util.Initiator;
 
 import javax.management.AttributeNotFoundException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static org.gluu.credmanager.core.WebUtils.RedirectStage;
 
 /**
  * Created by jgomer on 2017-07-16.
@@ -40,7 +42,6 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
     private void goForAuthorization() throws Exception{
         WebUtils.setRedirectStage(se, RedirectStage.INITIAL);
         //do Authz Redirect
-        //WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getDefaultAcr()));
         WebUtils.execRedirect(oxdService.getAuthzUrl(services.getAppConfig().getDefaultAcr()));
     }
 
@@ -57,7 +58,10 @@ public class HomeInitiator extends CommonInitiator implements Initiator {
         user.setPreference(usrService.getPreferredMethod(user));
         //Determine if belongs to manager group
         user.setAdmin(usrService.inManagerGroup(user));
-
+        //set 2fa policy
+        Pair<Set<String>, List<TrustedDevice>> police = usrService.get2FAPolicyData(user);
+        user.setEnforcementPolicies(police.getX());
+        user.setTrustedDevices(police.getY());
         return user;
 
     }

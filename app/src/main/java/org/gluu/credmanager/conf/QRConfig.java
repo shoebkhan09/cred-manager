@@ -56,7 +56,7 @@ public class QRConfig {
     public String getFormattedQROptions(int browserWidth){
 
         List<String> list=new ArrayList<>();
-        int ival=Math.min(getQrSize(), browserWidth-30);
+        int ival=Math.min(getQrSize(), browserWidth-40);
 
         if (ival>0)
             list.add("size:" + ival);

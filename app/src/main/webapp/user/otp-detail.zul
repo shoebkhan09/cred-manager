@@ -69,8 +69,6 @@
                         <button id="readyButton" label="&#160;${labels.general.ready}&#160;" sclass="btn-success"
                                 w:onClick="initialize(this)" onClick="@command('showQR')" disabled="@load(vm.uiQRShown)"/>
                         <n:span class="de_emphasized">${labels.usr.gauth_download}</n:span>
-                        <!--zk if="${sessionScope.onMobile}">
-                        </zk-->
                     </vlayout>
                 </div>
 

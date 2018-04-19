@@ -5,24 +5,29 @@
 
     <zscript>
         void onClientInfo(ClientInfoEvent evt) {
-            Executions.getCurrent().getDesktop().setAttribute("pageWidth", evt.getDesktopWidth());
+        Executions.getCurrent().getDesktop().setAttribute("pageWidth", evt.getDesktopWidth());
         }
     </zscript>
 
     <style src="${c:cat3(sessionScope.custdir, '/styles/', sessionScope.onMobile ? 'mobile.css' : 'desktop.css')}">
     </style>
 
-    <zk choose="">
-        <zk when="${empty pageScope.error}">
-            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)" spacing="0px" style="${sessionScope.onMobile ? 'width:100%' : 'width:950px'}">
-                <include src="/header.zul"/>
-                <include src="/back.zul" withHome="true" />
-                <div self="@insert(content)" />
-            </vlayout>
-        </zk>
-        <zk>
-            <include src="/error.zul" />
-        </zk>
-    </zk>
+    <div sclass="container">
+        <attribute name="onClientInfo" if="${empty pageScope.error}">onClientInfo(event)</attribute>
+        <!-- width is set explicitly (to avoid delay in CSS loading) which causes elements aligned to right become invisible -->
+        <vlayout sclass="mainDiv" width="${sessionScope.onMobile ? '100%' : '950px'}">
+            <attribute name="spacing" if="${empty pageScope.error}">0px</attribute>
+            <zk choose="">
+                <zk when="${empty pageScope.error}">
+                    <include src="/header.zul"/>
+                    <include src="/back.zul" withHome="true"/>
+                    <div self="@insert(content)"/>
+                </zk>
+                <zk>
+                    <include src="/error.zul"/>
+                </zk>
+            </zk>
+        </vlayout>
+    </div>
 
 </zk>

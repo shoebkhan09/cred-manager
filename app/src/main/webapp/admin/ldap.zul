@@ -6,26 +6,34 @@
             <vlayout>
                 <label value="${labels.adm.ldap_text}"/>
                 <separator />
-                <div align="center">
-                    <vlayout spacing="13px">
-                        <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element s5"><label value="${labels.adm.ldap_applianceInum}"/></div>
-                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.applianceInum)"/>
-                        </hlayout>
-                        <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element s5"><label value="${labels.adm.ldap_orgInum}"/></div>
-                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.orgInum)"/>
-                        </hlayout>
-                        <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element s5"><label value="${labels.adm.ldap_salt}"/></div>
-                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.saltLocation)"/>
-                        </hlayout>
-                        <hlayout spacing="10px" valign="bottom" sclass="dpadded">
-                            <div sclass="form_element s5"><label value="${labels.adm.ldap_ox_ldap}"/></div>
-                            <textbox sclass="${sessionScope.onMobile ? 's8' : 's12'} form-control" value="@bind(vm.ldapSettings.oxLdapLocation)"/>
-                        </hlayout>
+                <div sclass="form-horizontal panel5">
+                    <div sclass="form-group">
+                        <label value="${labels.adm.ldap_applianceInum}" sclass="control-label form-label col-sm-4" />
+                        <div sclass="col-sm-8">
+                            <textbox sclass="form-control" value="@bind(vm.ldapSettings.applianceInum)"/>
+                        </div>
+                    </div>
+                    <div sclass="form-group">
+                        <label value="${labels.adm.ldap_orgInum}" sclass="control-label form-label col-sm-4" />
+                        <div sclass="col-sm-8">
+                            <textbox sclass="form-control" value="@bind(vm.ldapSettings.orgInum)"/>
+                        </div>
+                    </div>
+                    <div sclass="form-group">
+                        <label value="${labels.adm.ldap_salt}" sclass="control-label form-label col-sm-4" />
+                        <div sclass="col-sm-8">
+                            <textbox sclass="form-control" value="@bind(vm.ldapSettings.saltLocation)"/>
+                        </div>
+                    </div>
+                    <div sclass="form-group">
+                        <label value="${labels.adm.ldap_ox_ldap}" sclass="control-label form-label col-sm-4" />
+                        <div sclass="col-sm-8">
+                            <textbox sclass="form-control" value="@bind(vm.ldapSettings.oxLdapLocation)"/>
+                        </div>
+                    </div>
+                    <div align="center">
                         <button label="&#160;${labels.general.save}&#160;" sclass="btn-success form_button" onClick="@command('saveLdapSettings')" w:onClick="showThrobber()" />
-                    </vlayout>
+                    </div>
                 </div>
             </vlayout>
         </panelchildren>

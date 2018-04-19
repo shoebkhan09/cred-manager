@@ -10,6 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.AppConfiguration;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
+import org.gluu.credmanager.conf.sndfactor.TrustedDevice;
+import org.gluu.credmanager.conf.sndfactor.TrustedDeviceComparator;
 import org.gluu.credmanager.core.User;
 import org.gluu.credmanager.core.credential.*;
 import org.gluu.credmanager.core.credential.FidoDevice;
@@ -17,6 +20,7 @@ import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.ldap.pojo.GluuPerson;
 import org.gluu.credmanager.conf.CredentialType;
+import org.zkoss.util.Pair;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -282,6 +286,71 @@ public class UserService {
         //Create a sorted set from it
         Set<CredentialType> set=stream.filter(e -> e.getValue().size()>0).map(Map.Entry::getKey).collect(Collectors.toCollection(TreeSet::new));
         return set;
+    }
+
+    public Pair<Set<String>, List<TrustedDevice>> get2FAPolicyData(User user) {
+
+        Set<String> list = new HashSet<>();
+        List<TrustedDevice> trustedDevices = new ArrayList<>();
+        try {
+            String rdn = user.getRdn();
+            GluuPerson person = ldapService.getGluuPerson(rdn);
+            String policy = person.getStrongAuthPolicy();
+
+            if (Utils.stringOptional(policy).isPresent()) {
+                Stream.of(policy.split(",\\s*")).forEach(str -> {
+                    try {
+                        list.add(EnforcementPolicy.valueOf(str.toUpperCase()).toString());
+                    } catch (Exception e) {
+                        logger.error("The policy '{}' is not recognized", str);
+                    }
+                });
+            }
+
+            Optional<String> optTrustedDevices = Utils.stringOptional(person.getTrustedDevices());
+            if (optTrustedDevices.isPresent()) {
+                trustedDevices = mapper.readValue(optTrustedDevices.get(), new TypeReference<List<TrustedDevice>>() { });
+                trustedDevices.forEach(TrustedDevice::sortOriginsDescending);
+
+                TrustedDeviceComparator comparator = new TrustedDeviceComparator(true);
+                trustedDevices.sort((first, second) -> comparator.compare(second, first));
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new Pair<>(list, trustedDevices);
+
+    }
+
+    public boolean update2FAPolicies(User user, Set<String> policies) {
+
+        boolean updated = false;
+        String str = policies.stream().map(String::toLowerCase).reduce("", (partial, next) -> partial + ", " + next);
+        try {
+            ldapService.update2FAPolicies(user.getRdn(), str.substring(2));
+            updated = true;
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return updated;
+
+    }
+
+    public boolean deleteTrustedDevice(User user, List<TrustedDevice> devices, int index) {
+
+        boolean updated = false;
+        List<TrustedDevice> copyOfDevices = new ArrayList<>(devices);
+        try {
+            copyOfDevices.remove(index);
+            String updatedJson = mapper.writeValueAsString(copyOfDevices);
+            ldapService.updateTrustedDevices(user.getRdn(), updatedJson);
+            devices.remove(index);
+            updated = true;
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return updated;
+
     }
 
     /**
