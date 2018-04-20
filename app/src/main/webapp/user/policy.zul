@@ -44,9 +44,10 @@
 
                     <label visible="@load(not empty vm.trustedDevices)" value="${labels.usr.trdevices_text}"/>
                     <div visible="@load(not empty vm.trustedDevices)" align="center">
-                        <div sclass="padded">
+                        <div>
                             <attribute unless="${sessionScope.onMobile}" name="width">80%</attribute>
-
+                            <attribute unless="${sessionScope.onMobile}" name="sclass">padded</attribute>
+                            <separator />
                             <grid model="@load(vm.trustedDevices)" mold="paging" pageSize="5">
                                 <template name="model">
                                     <row>
@@ -57,7 +58,13 @@
                                                     <label sclass="bold" value="${labels.usr.trdevices_on}" />
                                                     <label sclass="bold" value="@load(c:cat3(each.os.family,' ', each.os.version))"/>
                                                 </hlayout>
-                                                <label visible="@load(not empty each.origins)" value="${labels.usr.trdevices_last_location}" sclass="de_emphasized" />
+                                                <hlayout visible="@load(not empty each.origins)">
+                                                    <label value="${labels.usr.trdevices_last_location}" sclass="de_emphasized" />
+                                                    <label value="@load(c:cat4(each.origins.get(0).city,', ', each.origins.get(0).country,'.'))" />
+                                                    <label sclass="de_emphasized"
+                                                           value="@load(each.origins.get(0).timestamp) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
+                                                </hlayout>
+                                                <!--label visible="@load(not empty each.origins)" value="${labels.usr.trdevices_last_location}" sclass="de_emphasized" />
                                                 <vlayout sclass="col-sm-offset-1" visible="@load(not empty each.origins)" children="@load(each.origins)">
                                                     <template name="children">
                                                         <hlayout>
@@ -65,7 +72,7 @@
                                                             <label sclass="de_emphasized" value="@load(each.timestamp) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
                                                         </hlayout>
                                                     </template>
-                                                </vlayout>
+                                                </vlayout-->
                                             </vlayout>
                                             <image src="${sessionScope.custdir}/images/delete.png" sclass="icon_delete"
                                                    tooltip="tooltip_delete, after_pointer" onClick="@command('deleteDevice', idx = forEachStatus.index)"/>

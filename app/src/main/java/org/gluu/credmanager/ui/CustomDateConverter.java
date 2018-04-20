@@ -15,6 +15,7 @@ import org.zkoss.zk.ui.Component;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
@@ -39,11 +40,17 @@ public class CustomDateConverter implements Converter {
 
         long timeStamp=(val instanceof Date) ? ((Date) val).getTime() : (long) val;
         if (timeStamp>0) {
+            String format = (String) ctx.getConverterArg("format");
             ZoneId zid = WebUtils.getUserOffset(comp.getDesktop().getSession());
+            if (zid == null) {      //This covers the weird case in which there is no offset set
+                zid = ZoneOffset.UTC;
+                if (format.contains("hh") || format.contains("HH") || format.contains("mm"))
+                    format+=" '(GMT)'";
+            }
             Instant instant = Instant.ofEpochMilli(timeStamp);
 
             OffsetDateTime odt = OffsetDateTime.ofInstant(instant, zid);
-            return odt.format(DateTimeFormatter.ofPattern((String) ctx.getConverterArg("format"), Locale.US));
+            return odt.format(DateTimeFormatter.ofPattern(format, Locale.US));
         }
         else
             return null;

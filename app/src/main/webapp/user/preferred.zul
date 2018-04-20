@@ -16,8 +16,11 @@
                         <!-- if image is "unactivated", next label is visible, and viceversa -->
                         <label value="${c:l2('usr.preferred_disabled', c:split(vm.minimumCredsFor2FA,''))}" sclass="de_emphasized" visible="@load(vm.uiNotEnoughCredsFor2FA)"/>
                         <separator />
-                        <div visible="@load(vm.selectedMethod ne null and vm.uiAllowedToSetPolicy)">
-                            <n:span class="de_emphasized">${labels.usr.policy_default_text}</n:span>
+                        <div align="center" visible="@load(vm.selectedMethod ne null and vm.uiAllowedToSetPolicy)">
+                            <vlayout>
+                                <label sclass="de_emphasized" value="${labels.usr.policy_default_text}" />
+                                <button label="${labels.usr.policy_go_manage}" sclass="btn-success" href="/user/policy.zul" />
+                            </vlayout>
                         </div>
                     </vlayout>
                 </vlayout>
