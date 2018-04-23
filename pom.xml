@@ -6,7 +6,7 @@
 
 	<groupId>org.xdi</groupId>
 	<artifactId>cred-manager-base</artifactId>
-	<version>3.1.3-SNAPSHOT</version>
+	<version>3.1.3.Final</version>
 	<packaging>pom</packaging>
 	<url>http://www.gluu.org</url>
 
@@ -23,8 +23,8 @@
 		<weld.version>3.0.0.Final</weld.version>
 		<jsf.version>2.2.16</jsf.version>
 		<jackson.version>2.5.3</jackson.version>
-		<ox.version>3.1.3-SNAPSHOT</ox.version>
-		<oxd.version>3.1.3-SNAPSHOT</oxd.version>
+		<ox.version>3.1.3.Final</ox.version>
+		<oxd.version>3.1.3.Final</oxd.version>
 		<resteasy.version>3.0.21.Final</resteasy.version>
 		<jaxr.version>3.0.12.Final</jaxr.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
