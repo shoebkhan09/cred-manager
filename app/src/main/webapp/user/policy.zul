@@ -58,12 +58,16 @@
                                                     <label sclass="bold" value="${labels.usr.trdevices_on}" />
                                                     <label sclass="bold" value="@load(c:cat3(each.os.family,' ', each.os.version))"/>
                                                 </hlayout>
-                                                <hlayout visible="@load(not empty each.origins)">
-                                                    <label value="${labels.usr.trdevices_last_location}" sclass="de_emphasized" />
-                                                    <label value="@load(c:cat4(each.origins.get(0).city,', ', each.origins.get(0).country,'.'))" />
-                                                    <label sclass="de_emphasized"
-                                                           value="@load(each.origins.get(0).timestamp) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
-                                                </hlayout>
+                                                <div sclass="row" visible="@load(not empty each.origins)">
+                                                    <!-- a small ugly to make it look not ugly in small screens :) -->
+                                                    <label value="${labels.usr.trdevices_last_location}" sclass="de_emphasized col-sm-2"
+                                                           style="padding-right:0;padding-top:${sessionScope.onMobile? '4' : '2'}px" />
+                                                    <hlayout sclass="col-sm-10">
+                                                        <label value="@load(c:cat4(each.origins.get(0).city,', ', each.origins.get(0).country,'.'))" />
+                                                        <label sclass="de_emphasized"
+                                                               value="@load(each.origins.get(0).timestamp) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d, yyyy - hh:mm a')"/>
+                                                    </hlayout>
+                                                </div>
                                                 <!--label visible="@load(not empty each.origins)" value="${labels.usr.trdevices_last_location}" sclass="de_emphasized" />
                                                 <vlayout sclass="col-sm-offset-1" visible="@load(not empty each.origins)" children="@load(each.origins)">
                                                     <template name="children">

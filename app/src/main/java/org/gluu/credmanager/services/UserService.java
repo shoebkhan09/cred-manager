@@ -308,7 +308,7 @@ public class UserService {
             }
 
             String trustedDevicesInfo = person.getTrustedDevices();
-            if (ldapService.getStringEncrypter() != null)
+            if (ldapService.getStringEncrypter() != null && trustedDevicesInfo != null)
                 trustedDevicesInfo = ldapService.getStringEncrypter().decrypt(trustedDevicesInfo);
 
             Optional<String> optTrustedDevices = Utils.stringOptional(trustedDevicesInfo);

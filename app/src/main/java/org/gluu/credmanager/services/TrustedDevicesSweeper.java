@@ -50,7 +50,7 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
     }
 
     public void activate(long locationExpiration, long deviceExpiration) {
-logger.debug("stts {} {}",locationExpiration, deviceExpiration);
+
         this.locationExpiration=locationExpiration;
         this.deviceExpiration=deviceExpiration;
         try {
