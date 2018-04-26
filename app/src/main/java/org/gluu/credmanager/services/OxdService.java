@@ -24,6 +24,7 @@ import org.xdi.oxd.common.response.*;
 import org.zkoss.util.Pair;
 import org.zkoss.util.resource.Labels;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.client.Entity;
@@ -42,10 +43,15 @@ public class OxdService {
 
     private int consecutive=0;  //This is used only to debug and test
     private OxdConfig config;
-    private CommandClient commandClient;
     private ResteasyClient client;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper;
+
+    @PostConstruct
+    public void inited() {
+        mapper =  new ObjectMapper();
+        client = new ResteasyClientBuilder().build();
+    }
 
     public void setSettings(OxdConfig config) throws Exception {
         setSettings(config, false);
@@ -53,24 +59,14 @@ public class OxdService {
 
     public void setSettings(OxdConfig config, boolean triggerRegistration) throws Exception {
         this.config = config;
-
-        if (config.isUseHttpsExtension()) {
-            client = new ResteasyClientBuilder().build();
-            closeCommandClient();
-        } else {
-            commandClient=new CommandClient(config.getHost(), config.getPort());
-            closeRSClient();
-        }
         if (triggerRegistration) {
             config.setClient(doRegister());
         }
-
     }
 
     public OxdClientSettings doRegister() throws Exception {
 
         OxdClientSettings computedSettings;
-        //TODO: delete previous existing client?
         String clientName;
         logger.info(Labels.getLabel("app.updating_oxd_settings"), config.getHost(), config.getPort(), config.isUseHttpsExtension(), config.getPostLogoutUri());
 
@@ -115,9 +111,15 @@ public class OxdService {
                 cmdParams.setTrustedClient(true);
                 //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
 
-                Command command = new Command(CommandType.REGISTER_SITE).setParamsObject(cmdParams);
-                RegisterSiteResponse site = commandClient.send(command).dataAsResponse(RegisterSiteResponse.class);
-                computedSettings=new OxdClientSettings(clientName, site.getOxdId(), null, null);
+                CommandClient commandClient = null;
+                try {
+                    commandClient = new CommandClient(config.getHost(), config.getPort());
+                    Command command = new Command(CommandType.REGISTER_SITE).setParamsObject(cmdParams);
+                    RegisterSiteResponse site = commandClient.send(command).dataAsResponse(RegisterSiteResponse.class);
+                    computedSettings = new OxdClientSettings(clientName, site.getOxdId(), null, null);
+                } finally {
+                    CommandClient.closeQuietly(commandClient);
+                }
             }
             consecutive++;
             logger.info(Labels.getLabel("app.updated_oxd_settings"), computedSettings.getOxdId());
@@ -129,6 +131,31 @@ public class OxdService {
             throw new Exception(msg, e);
         }
         return computedSettings;
+
+    }
+
+    public void removeSite(String oxdId) {
+
+        try {
+            RemoveSiteParams cmdParams = new RemoveSiteParams(oxdId);
+            RemoveSiteResponse resp;
+
+            if (config.isUseHttpsExtension())
+                resp=restResponse(cmdParams, "remove-site", getPAT(), RemoveSiteResponse.class);
+            else {
+                CommandClient commandClient = null;
+                try {
+                    commandClient = new CommandClient(config.getHost(), config.getPort());
+                    Command command = new Command(CommandType.REMOVE_SITE).setParamsObject(cmdParams);
+                    resp = commandClient.send(command).dataAsResponse(RemoveSiteResponse.class);
+                } finally {
+                    CommandClient.closeQuietly(commandClient);
+                }
+            }
+            logger.info("Site removed {}", resp.getOxdId());
+        } catch (Exception e) {
+            logger.debug(e.getMessage(), e);
+        }
 
     }
 
@@ -150,8 +177,14 @@ public class OxdService {
         if (config.isUseHttpsExtension())
             resp=restResponse(cmdParams, "get-authorization-url", getPAT(), GetAuthorizationUrlResponse.class);
         else {
-            Command command = new Command(CommandType.GET_AUTHORIZATION_URL).setParamsObject(cmdParams);
-            resp = commandClient.send(command).dataAsResponse(GetAuthorizationUrlResponse.class);
+            CommandClient commandClient = null;
+            try {
+                commandClient = new CommandClient(config.getHost(), config.getPort());
+                Command command = new Command(CommandType.GET_AUTHORIZATION_URL).setParamsObject(cmdParams);
+                resp = commandClient.send(command).dataAsResponse(GetAuthorizationUrlResponse.class);
+            } finally {
+                CommandClient.closeQuietly(commandClient);
+            }
         }
         return resp.getAuthorizationUrl();
 
@@ -172,8 +205,14 @@ public class OxdService {
         if (config.isUseHttpsExtension())
             resp = restResponse(cmdParams, "get-tokens-by-code", getPAT(), GetTokensByCodeResponse.class);
         else {
-            Command command = new Command(CommandType.GET_TOKENS_BY_CODE).setParamsObject(cmdParams);
-            resp = commandClient.send(command).dataAsResponse(GetTokensByCodeResponse.class);
+            CommandClient commandClient = null;
+            try {
+                commandClient = new CommandClient(config.getHost(), config.getPort());
+                Command command = new Command(CommandType.GET_TOKENS_BY_CODE).setParamsObject(cmdParams);
+                resp = commandClient.send(command).dataAsResponse(GetTokensByCodeResponse.class);
+            } finally {
+                CommandClient.closeQuietly(commandClient);
+            }
         }
         //validate accessToken with at_hash inside idToken: resp.getIdToken();
         return new Pair<>(resp.getAccessToken(), resp.getIdToken());
@@ -189,8 +228,14 @@ public class OxdService {
         if (config.isUseHttpsExtension())
             resp = restResponse(cmdParams, "get-user-info", getPAT(), GetUserInfoResponse.class);
         else {
-            Command command = new Command(CommandType.GET_USER_INFO).setParamsObject(cmdParams);
-            resp = commandClient.send(command).dataAsResponse(GetUserInfoResponse.class);
+            CommandClient commandClient = null;
+            try {
+                commandClient = new CommandClient(config.getHost(), config.getPort());
+                Command command = new Command(CommandType.GET_USER_INFO).setParamsObject(cmdParams);
+                resp = commandClient.send(command).dataAsResponse(GetUserInfoResponse.class);
+            } finally {
+                CommandClient.closeQuietly(commandClient);
+            }
         }
         return resp.getClaims();
 
@@ -207,8 +252,14 @@ public class OxdService {
         if (config.isUseHttpsExtension())
             resp = restResponse(cmdParams, "get-logout-uri", getPAT(), LogoutResponse.class);
         else {
-            Command command = new Command(CommandType.GET_LOGOUT_URI).setParamsObject(cmdParams);
-            resp = commandClient.send(command).dataAsResponse(LogoutResponse.class);
+            CommandClient commandClient = null;
+            try {
+                commandClient = new CommandClient(config.getHost(), config.getPort());
+                Command command = new Command(CommandType.GET_LOGOUT_URI).setParamsObject(cmdParams);
+                resp = commandClient.send(command).dataAsResponse(LogoutResponse.class);
+            } finally {
+                CommandClient.closeQuietly(commandClient);
+            }
         }
         return resp.getUri();
 
@@ -249,8 +300,14 @@ public class OxdService {
             if (config.isUseHttpsExtension()) {
                 resp = restResponse(cmdParams, "update-site", getPAT(), UpdateSiteResponse.class);
             } else {
-                Command command = new Command(CommandType.UPDATE_SITE).setParamsObject(cmdParams);
-                resp = commandClient.send(command).dataAsResponse(UpdateSiteResponse.class);
+                CommandClient commandClient = null;
+                try {
+                    commandClient = new CommandClient(config.getHost(), config.getPort());
+                    Command command = new Command(CommandType.UPDATE_SITE).setParamsObject(cmdParams);
+                    resp = commandClient.send(command).dataAsResponse(UpdateSiteResponse.class);
+                } finally {
+                    CommandClient.closeQuietly(commandClient);
+                }
             }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -292,20 +349,11 @@ public class OxdService {
 
     }
 
-    private void closeCommandClient(){
-        if (commandClient!=null)
-            CommandClient.closeQuietly(commandClient);
-    }
-
-    private void closeRSClient(){
-        if (client!=null)
-            client.close();
-    }
-
     @PreDestroy
-    private void destroy(){
-        closeCommandClient();
-        closeRSClient();
+    private void destroy() {
+        if (client != null) {
+            client.close();
+        }
     }
 
 }

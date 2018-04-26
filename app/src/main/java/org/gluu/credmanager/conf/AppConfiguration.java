@@ -12,13 +12,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.gluu.credmanager.conf.jsonized.Configs;
-import org.gluu.credmanager.conf.jsonized.OxdClientSettings;
-import org.gluu.credmanager.conf.jsonized.OxdConfig;
-import org.gluu.credmanager.conf.jsonized.U2fSettings;
+import org.gluu.credmanager.conf.jsonized.*;
 import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.core.WebUtils;
 import org.gluu.credmanager.misc.Utils;
+import org.gluu.credmanager.services.TrustedDevicesSweeper;
 import org.gluu.credmanager.services.ldap.LdapService;
 import org.gluu.credmanager.services.OxdService;
 import org.gluu.credmanager.services.ldap.pojo.CustomScript;
@@ -36,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,7 +54,10 @@ public class AppConfiguration {
     private final String DEFAULT_GLUU_BASE="/etc/gluu";
     private final String CONF_FILE_RELATIVE_PATH="conf/cred-manager.json";
     private final String OXAUTH_WAR_LOCATION= "/opt/gluu/jetty/oxauth/webapps/oxauth.war";
-    private final String DEFAULT_GLUU_VERSION="3.1.1";      //Current app version is mainly targeted at this version of Gluu Server
+    private final String DEFAULT_GLUU_VERSION="3.1.3";      //Current app version is mainly targeted at this version of Gluu Server
+
+    private static final int TRUSTED_DEVICE_EXPIRATION_DAYS = 30;
+    private static final int TRUSTED_LOCATION_EXPIRATION_DAYS = 15;
 
     public static final Pair<Integer, Integer> BOUNDS_MINCREDS_2FA =new Pair<>(1,3);
     public static final String BASE_URL_BRANDING_PATH="/custom";
@@ -90,6 +92,9 @@ public class AppConfiguration {
     @Inject
     private OxdService oxdService;
 
+    @Inject
+    private TrustedDevicesSweeper devicesSweeper;
+
     public String getDefaultAcr(){
         return DEFAULT_ACR;
     }
@@ -101,12 +106,6 @@ public class AppConfiguration {
     public boolean isPassReseteable() {
         return passReseteable;
     }
-
-    /*
-    public String getGluuVersion() {
-        return gluuVersion;
-    }
-    */
 
     public Set<CredentialType> getEnabledMethods() {
         return enabledMethods;
@@ -168,6 +167,8 @@ public class AppConfiguration {
 
                     //Check settings consistency, infer some, and override others
                     computeSettings(configSettings);
+
+                    initDevicesSweeper(configSettings);
                 }
                 catch (Exception e){
                     inOperableState=false;
@@ -183,6 +184,20 @@ public class AppConfiguration {
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         mapper.writeValue(srcConfigFile, configs);
+    }
+
+    public void initDevicesSweeper(Configs settings) {
+
+        TrustedDevicesSettings tsettings = settings.getTrustedDevicesSettings();
+
+        long devicesExpiration = TimeUnit.DAYS.toMillis(Optional.ofNullable(tsettings)
+                .map(TrustedDevicesSettings::getDeviceExpirationDays).orElse(TRUSTED_DEVICE_EXPIRATION_DAYS));
+
+        long locationExpiration = TimeUnit.DAYS.toMillis(Optional.ofNullable(tsettings)
+                .map(TrustedDevicesSettings::getLocationExpirationDays).orElse(TRUSTED_LOCATION_EXPIRATION_DAYS));
+
+        devicesSweeper.activate(locationExpiration, devicesExpiration);
+
     }
 
     private void computeSettings(Configs settings) {
@@ -587,28 +602,13 @@ public class AppConfiguration {
     public void setLoggingLevel(String strLevel){
 
         Level newLevel=Level.toLevel(strLevel);
-        /*
-        LoggerContext loggerContext = LoggerContext.getContext(false);
-        for (org.apache.logging.log4j.core.Logger logger : loggerContext.getLoggers()) {
-            if (logger.getName().startsWith("org.gluu"))
-                logger.setLevel(newLevel);
-        }*/
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.gluu", newLevel);
         configSettings.setLogLevel(strLevel);
     }
 
     private Level getLoggingLevel(){
-
-        //Level currLevel=null;
         LoggerContext loggerContext = LoggerContext.getContext(false);
         return loggerContext.getConfiguration().getLoggerConfig("org.gluu").getLevel();
-        /*
-        for (org.apache.logging.log4j.core.Logger logger : loggerContext.getLoggers())
-            if (logger.getName().startsWith("org.gluu")) {
-                currLevel = logger.getLevel();
-                break;
-            }
-        return currLevel; */
     }
 
 }

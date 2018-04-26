@@ -50,6 +50,9 @@ public class Configs {
     @JsonProperty("policy_2fa")
     private List<EnforcementPolicy> enforcement2FA;
 
+    @JsonProperty("trusted_dev_settings")
+    private TrustedDevicesSettings trustedDevicesSettings;
+
     @JsonIgnore
     private TwilioConfig twilioConfig;
 
@@ -96,6 +99,11 @@ public class Configs {
         return brandingPath;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public TrustedDevicesSettings getTrustedDevicesSettings() {
+        return trustedDevicesSettings;
+    }
+
     public Integer getMinCredsFor2FA() {
         return minCredsFor2FA;
     }
@@ -112,6 +120,10 @@ public class Configs {
 
     public List<EnforcementPolicy> getEnforcement2FA() {
         return enforcement2FA;
+    }
+
+    public void setTrustedDevicesSettings(TrustedDevicesSettings trustedDevicesSettings) {
+        this.trustedDevicesSettings = trustedDevicesSettings;
     }
 
     public void setEnforcement2FA(List<EnforcementPolicy> enforcement2FA) {

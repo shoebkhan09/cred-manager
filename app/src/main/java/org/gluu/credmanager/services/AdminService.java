@@ -211,17 +211,22 @@ public class AdminService {
         OxdConfig newSettingsCopy=copyOfOxdSettings(newSettings);   //This prevents side effects
         try {
             //detect if there was change in post-logout uri, and update client before it gets replaced. This helps prevent
-            //after logging out of the app an error being shown when the AS is about to redirect to new post-logout uri
+            //when admin logs out of the app an error being shown when the AS is about to redirect to new post-logout uri
             String postUri = newSettings.getPostLogoutUri();
             if (!backup.getPostLogoutUri().equals(postUri)) {
                 oxdService.updatePostLogoutUri(postUri);
             }
             oxdService.setSettings(newSettings, true);
+
             if (!oxdService.extendSiteLifeTime())
                 logger.warn("An error occured while extending the lifetime of the associated oxd client.");
 
-            //If it gets here, it means the provided settings were fine, so local copy can be overwritten
+            //If it gets here, it means the provided settings were fine, so local copy can be overwritten an older site can be removed
             localSettings.setOxdConfig(newSettingsCopy);
+
+            //TODO: create clientSweeper to guarantee clients can always be removed
+            if (backup.getClient() != null && backup.getPostLogoutUri().equals(postUri))
+                oxdService.removeSite(backup.getClient().getOxdId());
         }
         catch (Exception e){
             msg=e.getMessage();

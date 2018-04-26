@@ -307,7 +307,11 @@ public class UserService {
                 });
             }
 
-            Optional<String> optTrustedDevices = Utils.stringOptional(person.getTrustedDevices());
+            String trustedDevicesInfo = person.getTrustedDevices();
+            if (ldapService.getStringEncrypter() != null)
+                trustedDevicesInfo = ldapService.getStringEncrypter().decrypt(trustedDevicesInfo);
+
+            Optional<String> optTrustedDevices = Utils.stringOptional(trustedDevicesInfo);
             if (optTrustedDevices.isPresent()) {
                 trustedDevices = mapper.readValue(optTrustedDevices.get(), new TypeReference<List<TrustedDevice>>() { });
                 trustedDevices.forEach(TrustedDevice::sortOriginsDescending);

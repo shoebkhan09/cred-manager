@@ -11,6 +11,7 @@ import com.unboundid.ldap.sdk.Filter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gluu.credmanager.conf.jsonized.LdapSettings;
+import org.gluu.credmanager.conf.sndfactor.TrustedDevice;
 import org.gluu.credmanager.core.credential.SuperGluuDevice;
 import org.gluu.credmanager.core.credential.FidoDevice;
 import org.gluu.credmanager.misc.Utils;
@@ -52,6 +53,7 @@ public class LdapService {
     private CustomEntryManager ldapEntryManager;
     private LdapSettings ldapSettings;
     private ObjectMapper mapper;
+    private StringEncrypter stringEncrypter;
 
     private GluuOrganization organization=null;
     private OxTrustConfiguration oxTrustConfig=null;
@@ -74,7 +76,8 @@ public class LdapService {
             String saltFile = ldapSettings.getSaltLocation();
             if (Utils.stringOptional(saltFile).isPresent()) {
                 String salt = new FileConfiguration(saltFile).getProperties().getProperty("encodeSalt");
-                ldapProperties = PropertiesDecrypter.decryptProperties(StringEncrypter.instance(salt), ldapProperties);
+                stringEncrypter = StringEncrypter.instance(salt);
+                ldapProperties = PropertiesDecrypter.decryptProperties(stringEncrypter, ldapProperties);
             }
             LDAPConnectionProvider connProvider = new LDAPConnectionProvider(ldapProperties);
 
@@ -90,6 +93,10 @@ public class LdapService {
             throw new Exception(Labels.getLabel("app.wrong_ldap_settings"));
         }
 
+    }
+
+    public StringEncrypter getStringEncrypter() {
+        return stringEncrypter;
     }
 
     public void loadOrganizationSettings(LdapSettings settings) throws IOException{
@@ -217,9 +224,12 @@ public class LdapService {
     }
 
     public void updateTrustedDevices(String userRdn, String jsonDevices) throws Exception {
-        //TODO; apply encryption
         GluuPerson person=getGluuPerson(userRdn);
-        person.setTrustedDevices(jsonDevices);
+        if (stringEncrypter != null)
+            person.setTrustedDevices(stringEncrypter.encrypt(jsonDevices));
+        else
+            person.setTrustedDevices(jsonDevices);
+
         ldapEntryManager.merge(person);
     }
 
@@ -354,6 +364,18 @@ public class LdapService {
         }
         return total;
 
+    }
+
+    public List<GluuPerson> getPeopleTrustedDevices() {
+
+        List<GluuPerson> list = new ArrayList<>();
+        try {
+            Filter filter = Filter.createPresenceFilter(TRUSTED_DEVICES_ATTR);
+            list = ldapEntryManager.findEntries(usersDN, GluuPerson.class, filter, new String[]{"dn", TRUSTED_DEVICES_ATTR}, 0);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return list;
     }
 
 }
