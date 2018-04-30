@@ -123,6 +123,10 @@
 			<artifactId>el-impl</artifactId>
 			<version>2.2</version>
 		</dependency>
+        <dependency>
+            <groupId>org.jboss.weld.servlet</groupId>
+            <artifactId>weld-servlet-shaded</artifactId>
+        </dependency>
 
         <!-- GREENROBOT'S EVENT BUS -->
         <dependency>
@@ -157,6 +161,14 @@
             <artifactId>zcommon</artifactId>
             <version>${zk.version}</version>
             <!--version>8.5.1-SNAPSHOT</version-->
+        </dependency>
+
+        <!-- JAVASSIST -->
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>3.18.2-GA</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -256,6 +268,12 @@
             <artifactId>oath-otp-keyprovisioning</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.pf4j</groupId>
+            <artifactId>pf4j</artifactId>
+        </dependency>
+
     </dependencies>
 
 	<build>

@@ -17,9 +17,6 @@ public class ZKInitializer implements WebAppInit {
 
     public void init(WebApp webApp) throws Exception {
         Utils.managedBean(ZKService.class).init(webApp);
-        //TODO: remove?
-        //System.setProperty("org.zkoss.lang.contextClassLoader.class", "org.gluu.credmanager.ui.init.CustomClassLoader");
-        //Classes.configureContextClassLoader();
     }
 
 }

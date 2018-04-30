@@ -9,6 +9,7 @@ import org.gluu.credmanager.conf.MainSettings;
 import org.gluu.credmanager.extension.AuthnMethod;
 import org.gluu.credmanager.extension.OpenIdFlow;
 import org.gluu.credmanager.misc.Utils;
+import org.gluu.credmanager.service.IExtensionsManager;
 import org.pf4j.DefaultPluginManager;
 import org.pf4j.PluginManager;
 import org.pf4j.PluginWrapper;
@@ -40,7 +41,7 @@ import java.util.stream.Stream;
  */
 @ApplicationScoped
 @Named
-public class ExtensionsManager {
+public class ExtensionsManager implements IExtensionsManager {
 
     public static final String ASSETS_DIR = "assets";
 

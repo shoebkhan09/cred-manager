@@ -63,35 +63,53 @@
         <module>shared</module>
     </modules>
 
-    <dependencies>
-        <!-- PLUGIN FRAMEWORK -->
-        <dependency>
-            <groupId>org.pf4j</groupId>
-            <artifactId>pf4j</artifactId>
-            <version>${pf4j.version}</version>
-        </dependency>
 
-        <!-- WELD -->
-        <!-- https://mvnrepository.com/artifact/org.jboss.weld.servlet/weld-servlet-shaded -->
-        <dependency>
-            <groupId>org.jboss.weld.servlet</groupId>
-            <artifactId>weld-servlet-shaded</artifactId>
-            <version>${weld.version}</version>
-        </dependency>
-        <!-- OXD
-        <dependency>
-            <artifactId>oxd-common</artifactId>
-            <groupId>org.xdi</groupId>
-            <version>${oxd.version}</version>
-        </dependency> -->
+    <dependencyManagement>
 
-        <!-- JACKSON -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-    </dependencies>
+        <dependencies>
+            <!-- PLUGIN FRAMEWORK -->
+            <dependency>
+                <groupId>org.pf4j</groupId>
+                <artifactId>pf4j</artifactId>
+                <version>${pf4j.version}</version>
+            </dependency>
+
+            <!-- WELD -->
+            <!-- https://mvnrepository.com/artifact/org.jboss.weld.servlet/weld-servlet-shaded -->
+            <dependency>
+                <groupId>org.jboss.weld.servlet</groupId>
+                <artifactId>weld-servlet-shaded</artifactId>
+                <version>${weld.version}</version>
+            </dependency>
+
+            <!-- LDAP SDK -->
+            <dependency>
+                <groupId>com.unboundid</groupId>
+                <artifactId>unboundid-ldapsdk</artifactId>
+                <version>${ldapsdk.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.zkoss.common</groupId>
+                <artifactId>zcommon</artifactId>
+                <version>${zk.version}</version>
+            </dependency>
+
+            <!-- OXD
+            <dependency>
+                <artifactId>oxd-common</artifactId>
+                <groupId>org.xdi</groupId>
+                <version>${oxd.version}</version>
+            </dependency> -->
+
+            <!-- JACKSON -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <pluginManagement>

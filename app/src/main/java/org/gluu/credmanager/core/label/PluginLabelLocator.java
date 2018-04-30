@@ -50,7 +50,7 @@ public class PluginLabelLocator implements LabelLocator, Closeable {
         String location = null;
 
         String suffix = DEFAULT_PROPS_FILE;
-        suffix += locale == null ? "" : locale.toString();
+        suffix += locale == null ? "" : "_" +locale.toString();
         suffix += ".properties";
 
         if (jarFile == null) {
@@ -59,11 +59,12 @@ public class PluginLabelLocator implements LabelLocator, Closeable {
                 location = path.toUri().toString();
             }
         } else {
+            suffix = subDirectory + "/" + suffix;
             if (jarFile.getEntry(suffix) != null) {
-                location = "jar:" + uri + "!/" +  subDirectory + "/" + suffix;
+                location = "jar:" + uri + "!/" + suffix;
             }
         }
-        //System.out.println("@locate " + location);
+        //System.out.println("@locate " + location + "-" +  uri + "!/" + suffix);
         return location == null ? null : new URL(location);
 
     }

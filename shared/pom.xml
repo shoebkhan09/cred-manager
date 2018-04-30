@@ -16,28 +16,36 @@
 
 	<dependencies>
 
-        <!-- WELD -->
-        <dependency>
-            <groupId>org.jboss.weld.servlet</groupId>
-            <artifactId>weld-servlet-shaded</artifactId>
-            <version>${weld.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- PLUGIN FRAMEWORK -->
         <dependency>
             <groupId>org.pf4j</groupId>
             <artifactId>pf4j</artifactId>
-            <version>${pf4j.version}</version>
-            <scope>provided</scope>
+        </dependency>
+
+        <!-- WELD -->
+        <dependency>
+            <groupId>org.jboss.weld.servlet</groupId>
+            <artifactId>weld-servlet-shaded</artifactId>
         </dependency>
 
         <!-- LDAP SDK -->
         <dependency>
             <groupId>com.unboundid</groupId>
             <artifactId>unboundid-ldapsdk</artifactId>
-            <version>${ldapsdk.version}</version>
         </dependency>
+
+        <!-- ZK -->
+        <dependency>
+            <groupId>org.zkoss.common</groupId>
+            <artifactId>zcommon</artifactId>
+        </dependency>
+
+        <!-- JACKSON -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
     </dependencies>
 
 	<build>
