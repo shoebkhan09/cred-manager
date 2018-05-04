@@ -8,13 +8,15 @@ package org.gluu.credmanager.core;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gluu.credmanager.conf.MainSettings;
-import org.gluu.credmanager.conf.U2fSettings;
+import org.gluu.credmanager.conf.TrustedDevicesSettings;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.event.AppStateChangeEvent;
 import org.gluu.credmanager.extension.AuthnMethod;
+import org.gluu.credmanager.extension.OpenIdFlow;
 import org.gluu.credmanager.misc.AppStateEnum;
 import org.gluu.credmanager.misc.Utils;
-import org.gluu.credmanager.plugins.authnmethod.SecurityKeyExtension;
 import org.gluu.credmanager.service.LdapService;
+import org.gluu.credmanager.service.TrustedDevicesSweeper;
 import org.greenrobot.eventbus.EventBus;
 import org.quartz.JobExecutionContext;
 import org.quartz.listeners.JobListenerSupport;
@@ -29,14 +31,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Date;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -47,10 +43,12 @@ import java.util.stream.Collectors;
 public class ConfigurationHandler extends JobListenerSupport {
 
     public static final Pair<Integer, Integer> BOUNDS_MINCREDS_2FA = new Pair<>(1, 3);
+    public static final String DEFAULT_ACR = "credmanager";
+    public static final List<String> DEFAULT_SUPPORTED_METHODS = Arrays.asList("u2f", "otp", "super_gluu", "twilio_sms");
 
     private static final int RETRY_INTERVAL = 10; //1
-    private static final String DEFAULT_ACR = "credmanager";
-    public static final List<String> DEFAULT_SUPPORTED_METHODS = Arrays.asList("u2f", "otp", "super_gluu", "twilio_sms");
+    private static final int TRUSTED_DEVICE_EXPIRATION_DAYS = 30;
+    private static final int TRUSTED_LOCATION_EXPIRATION_DAYS = 15;
 
     @Inject
     private Logger logger;
@@ -73,6 +71,9 @@ public class ConfigurationHandler extends JobListenerSupport {
     @Inject
     private LogService logService;
 
+    @Inject
+    private TrustedDevicesSweeper devicesSweeper;
+
     private Set<String> serverAcrs;
 
     private String acrQuartzJobName;
@@ -80,8 +81,6 @@ public class ConfigurationHandler extends JobListenerSupport {
     private ObjectMapper mapper;
 
     private AppStateEnum appState;
-
-    private String issuerUrl;
 
     @PostConstruct
     private void inited() {
@@ -96,7 +95,6 @@ public class ConfigurationHandler extends JobListenerSupport {
             //Check LDAP access to proceed with acr timer
             if (ldapService.isInService()) {
                 setAppState(AppStateEnum.LOADING);
-                issuerUrl = ldapService.getIssuerUrl();
 
                 //This is a trick so the timer event logic can be coded inside this managed bean
                 timerService.addListener(this, acrQuartzJobName);
@@ -169,19 +167,18 @@ public class ConfigurationHandler extends JobListenerSupport {
                         computeBrandingPath();
                         computeMinCredsForStrongAuth();
                         computePassResetable();
-                        if (serverAcrs.contains(SecurityKeyExtension.ACR)) {
-                            computeU2fSettings();
-                        }
+                        compute2FAEnforcementPolicy();
 
                         extManager.scan();
                         //Ensure there is an openidflow extension
-                        //TODO: remove dummy predicate
-                        if (false && extManager.getExtensionForOpenIdFlow() == null) {
-                            logger.warn("There is no extension registered for OpenId Flow.");
-                            setAppState(AppStateEnum.FAIL);
-                        } else {
+                        OpenIdFlow openIdFlowExt = extManager.getExtensionForOpenIdFlow();
+                        //TODO: uncomment
+                        if (openIdFlowExt != null /*&& openIdFlowExt.isInited()*/) {
                             refreshAcrPluginMapping();
                             setAppState(AppStateEnum.OPERATING);
+                        } else {
+                            logger.warn("OpenId Flow extension could not be initialized.");
+                            setAppState(AppStateEnum.FAIL);
                         }
                     } else {
                         logger.error("Your Gluu server is missing one critical acr value: {}.", DEFAULT_ACR);
@@ -195,7 +192,10 @@ public class ConfigurationHandler extends JobListenerSupport {
                         break;
                     case OPERATING:
                         logger.info("=== WEBAPP INITIALIZED SUCCESSFULLY ===");
+                        initDevicesSweeper();
                         break;
+                    default:
+                        //Added to pass style checker
                 }
             }
         } catch (Exception e) {
@@ -249,6 +249,20 @@ public class ConfigurationHandler extends JobListenerSupport {
         Set<String> plugged = new HashSet<>(settings.getAcrPluginMap().keySet());
         plugged.retainAll(retrieveAcrs());
         return plugged;
+    }
+
+    private void initDevicesSweeper() {
+
+        TrustedDevicesSettings tsettings = settings.getTrustedDevicesSettings();
+
+        long devicesExpiration = TimeUnit.DAYS.toMillis(Optional.ofNullable(tsettings)
+                .map(TrustedDevicesSettings::getDeviceExpirationDays).orElse(TRUSTED_DEVICE_EXPIRATION_DAYS));
+
+        long locationExpiration = TimeUnit.DAYS.toMillis(Optional.ofNullable(tsettings)
+                .map(TrustedDevicesSettings::getLocationExpirationDays).orElse(TRUSTED_LOCATION_EXPIRATION_DAYS));
+
+        devicesSweeper.activate(locationExpiration, devicesExpiration);
+
     }
 
     private void setAppState(AppStateEnum state) {
@@ -306,38 +320,10 @@ public class ConfigurationHandler extends JobListenerSupport {
 
     }
 
-    private void computeU2fSettings() {
-
-        U2fSettings u2fCfg = settings.getU2fSettings();
-        boolean nocfg = u2fCfg == null;
-        boolean guessAppId = nocfg || u2fCfg.getAppId() == null;
-        boolean guessUri = nocfg || u2fCfg.getRelativeMetadataUri() == null;
-
-        if (nocfg) {
-            u2fCfg = new U2fSettings();
+    private void compute2FAEnforcementPolicy() {
+        if (Utils.isEmpty(settings.getEnforcement2FA())) {
+            settings.setEnforcement2FA(Collections.singletonList(EnforcementPolicy.EVERY_LOGIN));
         }
-
-        if (guessAppId) {
-            u2fCfg.setAppId(issuerUrl);
-            logger.warn("Metada for {} not found. Value inferred={}", "U2F app ID", issuerUrl);
-        }
-
-        String endpointUrl = u2fCfg.getRelativeMetadataUri();
-        if (guessUri) {
-            endpointUrl = ".well-known/fido-u2f-configuration";
-
-            u2fCfg.setRelativeMetadataUri(endpointUrl);
-            logger.warn("Metada for {} not found. Value inferred={}", "U2F relative endpoint URL", endpointUrl);
-        }
-        u2fCfg.setEndpointUrl(String.format("%s/%s", issuerUrl, endpointUrl));
-
-        try {
-            settings.setU2fSettings(u2fCfg);
-            logger.info("U2f settings found were: {}", mapper.writeValueAsString(u2fCfg));
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
-
     }
 
     private void refreshAcrPluginMapping() {

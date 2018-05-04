@@ -6,6 +6,7 @@
 package org.gluu.credmanager.plugins.authnmethod.service;
 
 import org.gluu.credmanager.core.pojo.FidoDevice;
+import org.gluu.credmanager.plugins.authnmethod.SuperGluuExtension;
 import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
@@ -28,7 +29,11 @@ public class SGService extends FidoService {
 
     @PostConstruct
     private void inited() {
-        appId = settings.getOxdSettings().getRedirectUri();
+        reloadConfiguration();
+    }
+
+    public void reloadConfiguration() {
+        appId = ldapService.getCustScriptConfigProperties(SuperGluuExtension.ACR).get("supergluu_app_id");
     }
 
     public int getDevicesTotal(String userId, boolean active) {

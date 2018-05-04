@@ -170,6 +170,7 @@ public class OTPService extends BaseService {
                         uid = getExternalTOTPUid(secretKey);
                     }
                     break;
+                default:
             }
         }
         return uid;

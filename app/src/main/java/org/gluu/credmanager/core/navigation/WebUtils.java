@@ -3,11 +3,13 @@
  *
  * Copyright (c) 2018, Gluu
  */
-package org.gluu.credmanager.plugins;
+package org.gluu.credmanager.core.navigation;
 
 /**
  * @author jgomer
  */
-//@Extension
-public class OxdExtension /*implements OpenIdFlow*/ {
+//TODO: transform in a managed bean?
+public class WebUtils {
+
+    public static final String LOGOUT_PAGE_URL ="bye.zul";
 }

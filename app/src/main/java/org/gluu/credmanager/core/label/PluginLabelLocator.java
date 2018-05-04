@@ -50,7 +50,7 @@ public class PluginLabelLocator implements LabelLocator, Closeable {
         String location = null;
 
         String suffix = DEFAULT_PROPS_FILE;
-        suffix += locale == null ? "" : "_" +locale.toString();
+        suffix += locale == null ? "" : "_" + locale.toString();
         suffix += ".properties";
 
         if (jarFile == null) {

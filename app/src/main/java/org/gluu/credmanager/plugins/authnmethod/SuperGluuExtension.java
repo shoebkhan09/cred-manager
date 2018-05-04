@@ -87,4 +87,8 @@ public class SuperGluuExtension implements AuthnMethod {
         return sgService.getDevicesTotal(id, valid);
     }
 
+    public boolean mayBe2faActivationRequisite() {
+        return false;
+    }
+
 }

@@ -10,6 +10,7 @@
 
     <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.user.UserMainViewModel')"
              self="@define(content)">
+
         <div align="center"><label value="${labels.usr.title}" sclass="titled" /></div>
         <vlayout sclass="padded">
             <div sclass="dpadded">
@@ -65,40 +66,46 @@
 
         <zk if="${configurationHandler.passwordResetable}">
             <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPwdResetOpened)">
-                <panelchildren sclass="padded">
-                    <vlayout>
-                        <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${desktopScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_current}"/></div>
-                            <textbox type="password" sclass="s8 form-control" value="@bind(vm.currentPassword)"/>
-                        </hlayout>
-                        <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${desktopScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_newpass}"/></div>
-                            <textbox id="new_pass" type="password" sclass="s8 form-control" tooltip="tooltip_pass_hint, after_center"
-                                     w:onBlur="updateStrength(this)" value="@bind(vm.newPassword)"/>
-                        </hlayout>
-                        <hlayout spacing="3px" sclass="dpadded">
-                            <div sclass="${desktopScope.onMobile? 's6' : 's8'}"> </div>
-                            <label sclass="de_emphasized" visible="@load(not empty vm.strengthText)"
-                                   style="padding-left:7px" value="${labels.usr.pass.strength.title}" />
+                <panelchildren sclass="padded form-horizontal">
+                    <div sclass="panel5">
+                        <div sclass="form-group">
+                            <label value="${labels.usr.passreset_current}" sclass="control-label form-label col-sm-5"/>
+                            <div sclass="col-sm-7">
+                                <textbox type="password" sclass="form-control" value="@bind(vm.currentPassword)" />
+                            </div>
+                        </div>
+                        <div sclass="form-group">
+                            <label value="${labels.usr.passreset_newpass}" sclass="control-label form-label col-sm-5" />
+                            <div sclass="col-sm-7">
+                                <textbox id="new_pass" type="password" sclass="form-control" tooltip="tooltip_pass_hint, after_center"
+                                         w:onBlur="updateStrength(this)" value="@bind(vm.newPassword)"/>
+                            </div>
+                        </div>
+                        <div sclass="form-group" style="margin-top:-10px">
+                            <label sclass="de_emphasized col-sm-offset-5" visible="@load(not empty vm.strengthText)"
+                                   style="padding-left:20px" value="${labels.usr.pass.strength.title}" />
                             <label sclass="de_emphasized bold" value="@load(vm.strengthText)"/>
                             <!--vlayout>
                                 <label value="${labels.usr.passreset_strength_hint}" sclass="de_emphasized"/>
                                 <label sclass="de_emphasized" value="@load(vm.strengthText)"/>
                             </vlayout-->
-                        </hlayout>
-                        <hlayout spacing="10px" valign="bottom">
-                            <div sclass="form_element ${desktopScope.onMobile? 's6' : 's8'}"><label value="${labels.usr.passreset_confirm}"/></div>
-                            <textbox type="password" sclass="s8 form-control" value="@bind(vm.newPasswordConfirm)" />
-                        </hlayout>
+                        </div>
+                        <div sclass="form-group">
+                            <label value="${labels.usr.passreset_confirm}" sclass="control-label form-label col-sm-5"/>
+                            <div sclass="col-sm-7">
+                                <textbox type="password" sclass="form-control" value="@bind(vm.newPasswordConfirm)" />
+                            </div>
+                        </div>
                         <div align="center">
                             <separator />
                             <hlayout spacing="20px" valign="bottom" sclass="padded">
                                 <button label="&#160;${labels.usr.passreset_change}&#160;" sclass="btn-success"
-                                        onClick="@command('resetPass')" disabled="@load(empty vm.currentPassword or empty vm.newPassword)"/><!-- or empty vm.newPasswordConfirm -->
+                                        onClick="@command('resetPass')" disabled="@load(empty vm.currentPassword or empty vm.newPassword)"/>
+                                        <!-- or empty vm.newPasswordConfirm -->
                                 <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancel')"/>
                             </hlayout>
                         </div>
-                    </vlayout>
+                    </div>
                 </panelchildren>
             </panel>
             <popup id="tooltip_pass_hint">${labels.usr.passreset_hint}</popup>

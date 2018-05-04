@@ -90,4 +90,8 @@ public class OTPExtension extends BaseSystemExtension implements AuthnMethod {
         return otpService.getDevicesTotal(id);
     }
 
+    public boolean mayBe2faActivationRequisite() {
+        return true;
+    }
+
 }

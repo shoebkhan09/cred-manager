@@ -5,11 +5,13 @@
  */
 package org.gluu.credmanager.conf;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author jgomer
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LdapSettings {
 
     @JsonProperty("salt")

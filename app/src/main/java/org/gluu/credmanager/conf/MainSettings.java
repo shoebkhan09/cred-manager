@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 
 import java.io.File;
 import java.util.List;
@@ -40,10 +41,16 @@ public class MainSettings {
     private String logLevel;
 
     @JsonProperty("min_creds_2FA")
-    private int minCredsFor2FA;
+    private Integer minCredsFor2FA;
 
     @JsonProperty("ldap_settings")
     private LdapSettings ldapSettings;
+
+    @JsonProperty("policy_2fa")
+    private List<EnforcementPolicy> enforcement2FA;
+
+    @JsonProperty("trusted_dev_settings")
+    private TrustedDevicesSettings trustedDevicesSettings;
 
     //Maintained for backwards compatibility reasons
     @JsonProperty("enabled_methods")
@@ -55,11 +62,11 @@ public class MainSettings {
     @JsonProperty("extra_css")
     private String extraCssSnippet;
 
-    @JsonProperty("u2f_settings")
-    private U2fSettings u2fSettings;
-
     @JsonProperty("oxd_config")
     private OxdSettings oxdSettings;
+
+    @JsonProperty("u2f_settings")
+    private U2fSettings u2fSettings;
 
     MainSettings() {
         mapper = new ObjectMapper();
@@ -119,6 +126,11 @@ public class MainSettings {
         return u2fSettings;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public TrustedDevicesSettings getTrustedDevicesSettings() {
+        return trustedDevicesSettings;
+    }
+
     public OxdSettings getOxdSettings() {
         return oxdSettings;
     }
@@ -129,6 +141,10 @@ public class MainSettings {
 
     public LdapSettings getLdapSettings() {
         return ldapSettings;
+    }
+
+    public List<EnforcementPolicy> getEnforcement2FA() {
+        return enforcement2FA;
     }
 
     public void setPluginsPath(String pluginsPath) {
@@ -151,7 +167,7 @@ public class MainSettings {
         this.brandingPath = brandingPath;
     }
 
-    public void setMinCredsFor2FA(int minCredsFor2FA) {
+    public void setMinCredsFor2FA(Integer minCredsFor2FA) {
         this.minCredsFor2FA = minCredsFor2FA;
     }
 
@@ -167,12 +183,20 @@ public class MainSettings {
         this.extraCssSnippet = extraCssSnippet;
     }
 
+    public void setOxdSettings(OxdSettings oxdSettings) {
+        this.oxdSettings = oxdSettings;
+    }
+
+    public void setEnforcement2FA(List<EnforcementPolicy> enforcement2FA) {
+        this.enforcement2FA = enforcement2FA;
+    }
+
     public void setU2fSettings(U2fSettings u2fSettings) {
         this.u2fSettings = u2fSettings;
     }
 
-    public void setOxdSettings(OxdSettings oxdSettings) {
-        this.oxdSettings = oxdSettings;
+    public void setTrustedDevicesSettings(TrustedDevicesSettings trustedDevicesSettings) {
+        this.trustedDevicesSettings = trustedDevicesSettings;
     }
 
 }

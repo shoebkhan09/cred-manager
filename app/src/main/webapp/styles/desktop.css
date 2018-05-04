@@ -16,6 +16,9 @@
 .s12{
     width:300px;
 }
+.s16{
+    width:400px;
+}
 .icon_edit{
     width:22px;
     height:22px;
@@ -75,11 +78,6 @@
 .dropdown-menu > li > a{
     padding:2px 20px;
 }
-.mainDiv{
-    margin:0 auto;
-    width:950px;
-    border:1px #00BE79 solid;
-}
 .summary{
     padding-left:40px;
 }
@@ -107,4 +105,15 @@
 .z-toolbar-content span{
 	font-size:14px;
 	color:#333;
+}
+.panel5 {
+    margin:0 auto;
+    width: 500px;
+}
+.panel6 {
+    margin:0 auto;
+    width: 600px;
+}
+.grid_users{
+    width:420px;
 }

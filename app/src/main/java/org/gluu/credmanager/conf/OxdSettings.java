@@ -27,6 +27,9 @@ public class OxdSettings {
     @JsonProperty("use_https_extension")
     private boolean useHttpsExtension;
 
+    @JsonProperty("client")
+    private OxdClientSettings client;
+
     @JsonIgnore
     private String opHost;
 
@@ -61,6 +64,10 @@ public class OxdSettings {
         return acrValues;
     }
 
+    public OxdClientSettings getClient() {
+        return client;
+    }
+
     public void setOpHost(String opHost) {
         this.opHost = opHost;
     }
@@ -89,4 +96,7 @@ public class OxdSettings {
         this.acrValues = acrValues;
     }
 
+    public void setClient(OxdClientSettings client) {
+        this.client = client;
+    }
 }

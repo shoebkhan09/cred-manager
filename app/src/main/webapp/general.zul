@@ -10,21 +10,27 @@
         }
     </zscript>
 
-    <zk choose="">
-        <zk when="${empty pageScope.error}">
-            <vlayout sclass="mainDiv" onClientInfo="onClientInfo(event)" spacing="0px">
-                <include src="/header.zul"/>
-                <include src="/menubuttons.zul" />
-                <div self="@insert(content)" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.BasicViewModel')" />
-            </vlayout>
-        </zk>
-        <zk>
-            <include src="/error.zul" />
-        </zk>
-    </zk>
-
     <style src="${c:cat(sessionContext.custdir, '/styles/bootstrap.min.css')}" />
     <style src="${c:cat3(sessionContext.custdir, '/styles/', desktopScope.onMobile ? 'mobile.css' : 'desktop.css')}" />
+
+    <div sclass="container">
+        <attribute name="onClientInfo" if="${empty pageScope.error}">onClientInfo(event)</attribute>
+        <!-- width is set explicitly (to avoid delay in CSS loading) which causes elements aligned to right become invisible -->
+        <vlayout sclass="mainDiv" width="${desktopScope.onMobile ? '100%' : '950px'}">
+            <attribute name="spacing" if="${empty pageScope.error}">0px</attribute>
+
+            <zk choose="">
+                <zk when="${empty pageScope.error}">
+                    <include src="/header.zul"/>
+                    <include src="/menubuttons.zul" />
+                    <div self="@insert(content)" />
+                </zk>
+                <zk>
+                    <include src="/error.zul" />
+                </zk>
+            </zk>
+        </vlayout>
+    </div>
 
     <zk if="${empty sessionContext.custdir}">
         <!--style src="/styles/bootstrap-theme.min.css" /-->

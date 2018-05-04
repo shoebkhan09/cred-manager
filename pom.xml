@@ -25,7 +25,7 @@
         <crdmgr.version>3.2.0-SNAPSHOT</crdmgr.version>
         <eventbus.version>3.1.1</eventbus.version>
         <log4j.version>2.8.2</log4j.version>
-        <oxd.version>3.1.1.Final</oxd.version>
+        <oxd.version>3.1.3.Final</oxd.version>
         <ox.version>3.2.0-SNAPSHOT</ox.version>
         <jackson.version>2.5.3</jackson.version>
         <zk.version>8.5.0</zk.version>
@@ -63,7 +63,6 @@
         <module>shared</module>
     </modules>
 
-
     <dependencyManagement>
 
         <dependencies>
@@ -95,19 +94,13 @@
                 <version>${zk.version}</version>
             </dependency>
 
-            <!-- OXD
-            <dependency>
-                <artifactId>oxd-common</artifactId>
-                <groupId>org.xdi</groupId>
-                <version>${oxd.version}</version>
-            </dependency> -->
-
             <!-- JACKSON -->
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 

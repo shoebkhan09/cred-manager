@@ -7,22 +7,27 @@ package org.gluu.credmanager.ui.vm;
 
 import org.gluu.credmanager.core.SessionContext;
 import org.gluu.credmanager.core.UserService;
-import org.gluu.credmanager.core.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zkoss.bind.annotation.BindingParam;
-import org.zkoss.bind.annotation.Command;
-import org.zkoss.bind.annotation.Init;
+import org.zkoss.bind.annotation.*;
+import org.zkoss.json.JSONObject;
+import org.zkoss.zk.au.out.AuInvoke;
+import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zk.ui.Executions;
-import org.zkoss.zk.ui.event.ClientInfoEvent;
+import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.select.Selectors;
+import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.select.annotation.VariableResolver;
 import org.zkoss.zk.ui.select.annotation.WireVariable;
+import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zkplus.cdi.DelegatingVariableResolver;
 
 import java.time.ZoneOffset;
+import java.util.Optional;
 
 /**
- * This class is only utilized to set the user's session UTC offset (this is needed for properly showing dates in local time)
+ * This class is employed to store in session some user settings
  * @author jgomer
  */
 @VariableResolver(DelegatingVariableResolver.class)
@@ -36,30 +41,33 @@ public class HomeViewModel {
     @WireVariable
     private UserService userService;
 
-    //Sets the user location offset
-    @Command
-    public void onClientInfo(@BindingParam("evt") ClientInfoEvent evt) {
+    @AfterCompose
+    public void afterCompose(@ContextParam(ContextType.VIEW) Component view){
+        Selectors.wireEventListeners(view, this);
+    }
 
-        if (sessionContext.getZoneOffset() == null) {
-            /*
-              One might think of employing evt.getTimeZone() however, such timezone is not the real one but one created
-              from the user's browser offset. Thus, it's not associated to something like "America/Los_Angeles" but a
-              raw offset like "GMT+0010"
-             */
-            int offset = evt.getTimeZone().getRawOffset() / 1000;
-            ZoneOffset zoffset = ZoneOffset.ofTotalSeconds(offset);
-            sessionContext.setZoneOffset(zoffset);
+    @Listen("onData=#message")
+    public void notified(Event evt) {
 
-            logger.info("Time offset for session is {}", zoffset.toString());
-            //reloads this page so the navigation flow proceeds (see HomeInitiator class)
-            Executions.sendRedirect(null);
+        Optional<JSONObject> opt = Optional.ofNullable(evt.getData()).map(JSONObject.class::cast);
+        if (opt.isPresent()) {
+            JSONObject jsonObject = opt.get();
+            logger.info("Browser data is {} ", jsonObject.toJSONString());
+
+            updateOffset(jsonObject.get("offset"));
+            updateMobile(jsonObject.get("screenWidth"), evt.getPage().getDesktop());
+            updateU2fSupport(jsonObject.get("name"), jsonObject.get("version"));
         }
+        //reloads this page so the navigation flow proceeds (see HomeInitiator class)
+        //TODO: remove
+        //Executions.sendRedirect(null);
 
     }
 
     @Init
     public void init() {
-
+        Clients.response(new AuInvoke("sendBrowserData"));
+/*
         //TODO: remove this
         User user = new User();
         user.setGivenName("admin");
@@ -71,6 +79,67 @@ public class HomeViewModel {
         sessionContext.setUser(user);
 
         userService.setupRequisites(user.getId());
+*/
+    }
+
+    private void updateOffset(Object value) {
+
+        try {
+            if (sessionContext.getZoneOffset() == null) {
+                int offset = (int) value;
+                ZoneOffset zoffset = ZoneOffset.ofTotalSeconds(offset);
+                sessionContext.setZoneOffset(zoffset);
+                logger.trace("Time offset for session is {}", zoffset.toString());
+                //Ideally zone should be associated to something like "America/Los_Angeles", not a raw offset like "GMT+0010"
+                //but this is not achievable unless the user is asked to directly provide his zone
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+
+    }
+
+    private void updateMobile(Object width, Desktop desktop) {
+
+        try {
+            boolean mobile = Executions.getCurrent().getBrowser("mobile") != null;
+            sessionContext.setOnMobileBrowser(mobile);
+            logger.trace("Detected browser is {} mobile", mobile ? "" : "not");
+
+            int w = (int) width;
+            //This attrib should be in the session, but it's more comfortable at the desktop level for testing purposes
+            desktop.setAttribute("onMobile", mobile && w < 992);	//If screen is wide enough, behave as desktop
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+
+    }
+
+    private void updateU2fSupport(Object browserName, Object browserVersion) {
+
+        try {
+            if (sessionContext.getU2fSupported() == null) {
+                //Assume u2f is not supported
+                sessionContext.setU2fSupported(false);
+
+                String name = browserName.toString().toLowerCase();
+                if (name.contains("chrome")) {
+                    sessionContext.setU2fSupported(true);
+                } else {
+                    if (name.contains("opera")) {
+                        String version = browserVersion.toString();
+                        int browserVer = version.indexOf(".");
+
+                        if (browserVer > 0) {
+                            browserVer = Integer.parseInt(version.substring(0, browserVer));
+                            sessionContext.setU2fSupported(browserVer > 40);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
 
     }
 

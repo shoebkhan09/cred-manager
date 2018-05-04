@@ -92,4 +92,8 @@ public class OTPSmsExtension extends BaseSystemExtension implements AuthnMethod 
         return mobService.getPhonesTotal(id);
     }
 
+    public boolean mayBe2faActivationRequisite() {
+        return true;
+    }
+
 }

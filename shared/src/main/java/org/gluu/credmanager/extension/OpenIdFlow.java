@@ -15,6 +15,7 @@ import java.util.Map;
  */
 public interface OpenIdFlow extends ExtensionPoint {
 
+    boolean isInited();
     String getName();
     String getAuthzUrl(Map<String, String> requestParams);
     Map<String, String> getTokens(Map<String, String> requestParams);

@@ -7,10 +7,8 @@ package org.gluu.credmanager.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unboundid.ldap.sdk.DN;
-import com.unboundid.ldap.sdk.LDAPResult;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import com.unboundid.ldap.sdk.persist.PersistedObjects;
 import org.gluu.credmanager.conf.LdapSettings;
@@ -68,6 +66,8 @@ public class LdapService implements ILdapService {
 
     private ObjectMapper mapper;
 
+    private StringEncrypter stringEncrypter;
+
     public boolean isInService() {
         return inService;
     }
@@ -78,6 +78,15 @@ public class LdapService implements ILdapService {
 
     public String getIssuerUrl() {
         return oxAuthConfDynamic.get("issuer").asText();
+    }
+
+    public int getDynamicClientExpirationTime() {
+        boolean dynRegEnabled = oxAuthConfDynamic.get("dynamicRegistrationEnabled").asBoolean();
+        return dynRegEnabled ? oxAuthConfDynamic.get("dynamicRegistrationExpirationTime").asInt() : -1;
+    }
+
+    public StringEncrypter getStringEncrypter() {
+        return stringEncrypter;
     }
 
     @PostConstruct
@@ -92,7 +101,8 @@ public class LdapService implements ILdapService {
 
             if (Utils.isNotEmpty(saltFile)) {
                 String salt = new FileConfiguration(saltFile).getProperties().getProperty("encodeSalt");
-                ldapProperties = PropertiesDecrypter.decryptProperties(StringEncrypter.instance(salt), ldapProperties);
+                stringEncrypter = StringEncrypter.instance(salt);
+                ldapProperties = PropertiesDecrypter.decryptProperties(stringEncrypter, ldapProperties);
             }
             ldapOperationService = new LdapEntryManagerFactory().createEntryManager(ldapProperties).getOperationService();
 
@@ -190,17 +200,26 @@ public class LdapService implements ILdapService {
 
     }
 
+    public <T> List<T> find(Class<T> clazz, String parentDn, String filter) {
+
+        List<T> results = new ArrayList<>();
+        try {
+            LDAPPersister<T> persister = LDAPPersister.getInstance(clazz);
+            results = fromPersistedObjects(persister.search(ldapOperationService.getConnection(), parentDn, SearchScope.SUB,
+                    DereferencePolicy.NEVER, 0, 0, Filter.create(filter), null));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return results;
+
+    }
+
     public <T> List<T> find(T object, Class<T> clazz, String parentDn) {
 
-        List<T> results = null;
+        List<T> results = new ArrayList<>();
         try {
-            results = new ArrayList<>();
             LDAPPersister<T> persister = LDAPPersister.getInstance(clazz);
-            PersistedObjects<T> objects = persister.search(object, ldapOperationService.getConnection(), parentDn, SearchScope.SUB);
-
-            for (T obj = objects.next(); obj != null; obj = objects.next()) {
-                results.add(obj);
-            }
+            results = fromPersistedObjects(persister.search(object, ldapOperationService.getConnection(), parentDn, SearchScope.SUB));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -277,6 +296,7 @@ public class LdapService implements ILdapService {
         return false;
 
     }
+
     public boolean authenticate(String uid, String pass) throws Exception {
         if (oxTrustConfApplication != null) {
             return ldapOperationService.authenticate(uid, pass, oxTrustConfApplication.get("baseDN").asText());
@@ -316,6 +336,16 @@ public class LdapService implements ILdapService {
             oxTrustConfApplication = mapper.readTree(confT.getOxTrustConfApplication());
             oxTrustConfCacheRefresh = mapper.readTree(confT.getOxTrustConfCacheRefresh());
         }
+    }
+
+    private <T> List<T> fromPersistedObjects(PersistedObjects<T> objects) throws LDAPPersistException {
+
+        List<T> results = new ArrayList<>();
+        for (T obj = objects.next(); obj != null; obj = objects.next()) {
+            results.add(obj);
+        }
+        return results;
+
     }
 
 }

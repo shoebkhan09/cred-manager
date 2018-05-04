@@ -87,4 +87,8 @@ public class SecurityKeyExtension implements AuthnMethod {
         return u2fService.getDevicesTotal(id, valid);
     }
 
+    public boolean mayBe2faActivationRequisite() {
+        return false;
+    }
+
 }

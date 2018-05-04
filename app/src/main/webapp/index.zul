@@ -1,12 +1,13 @@
 <?page title="${applicationScope['appName']}"?>
 <?init class="org.gluu.credmanager.core.navigation.HomeInitiator"?>
+<?script src="/scripts/platform.js"?>
+<?script src="/scripts/main-util.js"?>
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
     <zk choose="">
         <zk when="${empty pageScope.error}">
-            <label value="${labels.general.wait}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.HomeViewModel')"
-                   onClientInfo="@command('onClientInfo', evt=event)" />
+            <label value="${labels.general.wait}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.HomeViewModel')" id="message" />
         </zk>
         <zk>
             <vlayout>

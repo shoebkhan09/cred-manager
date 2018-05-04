@@ -1,3 +1,7 @@
+.mainDiv{
+    margin:0 auto;
+    border:1px #00BE79 solid;
+}
 .header{
     background:#00BE79;
     color: #fff;
@@ -16,8 +20,10 @@
 .bold{
      font-weight:bold;
 }
-.form_element{
-    text-align:right;
+.form-label{
+    /*text-align:right;*/
+    padding-top:16px;
+    padding-right:0;
 }
 .italic{
     font-style:italic;

@@ -27,7 +27,7 @@
         <dependency>
             <groupId>org.xdi</groupId>
             <artifactId>oxd-client</artifactId>
-            <version>3.1.2.Final</version>
+            <version>${oxd.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-codec</groupId>
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.xdi</groupId>
             <artifactId>oxd-common</artifactId>
-            <version>3.1.2.Final</version>
+            <version>${oxd.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-codec</groupId>
@@ -181,11 +181,6 @@
             <artifactId>breeze</artifactId>
             <version>${zk.version}</version>
         </dependency>
-        <!--dependency>
-            <groupId>org.zkoss.zkforge.el</groupId>
-            <artifactId>zcommons-el</artifactId>
-            <version>1.1.0</version>
-        </dependency-->
 
         <!-- LOGGING -->
         <dependency>
@@ -227,16 +222,16 @@
             <artifactId>resteasy-servlet-initializer</artifactId>
             <version>${resteasy.version}</version>
         </dependency>
-        <!--dependency>
+        <dependency>
             <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jackson-provider</artifactId>
+            <artifactId>resteasy-client</artifactId>
             <version>${resteasy.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>jaxrs-api</artifactId>
             <version>${jaxr.version}</version>
-        </dependency-->
+        </dependency>
 
         <!-- LDAP SDK -->
         <dependency>
@@ -245,12 +240,7 @@
             <version>${ldapsdk.version}</version>
         </dependency>
 
-        <!-- Twilio SDK. Dependency problems with 7.x.x (specially oxd)
-        <dependency>
-            <groupId>com.twilio.sdk</groupId>
-            <artifactId>twilio</artifactId>
-            <version>7.12.0</version>
-        </dependency>-->
+        <!-- Twilio SDK. Dependency problems with 7.x.x -->
         <dependency>
             <groupId>com.twilio.sdk</groupId>
             <artifactId>twilio-java-sdk</artifactId>

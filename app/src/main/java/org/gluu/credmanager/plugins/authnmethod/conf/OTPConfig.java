@@ -40,6 +40,7 @@ public class OTPConfig extends QRConfig {
             case TOTP:
                 valid = timeStep > 0 && hmacShaAlgorithm != null;
                 break;
+            default:
         }
         return valid && keyLength > 0 && digits > 0;
     }
@@ -117,7 +118,7 @@ public class OTPConfig extends QRConfig {
             //Do not change evaluation order of these 2 predicates
             if (readFileSettings(cfg, propsMap) && cfg.isValidConfig()) {
                 config = cfg;
-                LOGGER.info("OTP settings found were: {}", mapper.writeValueAsString(cfg));
+                LOGGER.info("OTP settings found were: {}", MAPPER.writeValueAsString(cfg));
             } else {
                 config = null;
             }
@@ -140,7 +141,7 @@ public class OTPConfig extends QRConfig {
                 File f = new File(jsonFile);
 
                 if (f.exists()) {
-                    JsonNode tree = mapper.readTree(f);
+                    JsonNode tree = MAPPER.readTree(f);
                     JsonNode subNode;
 
                     switch (cfg.getType()) {

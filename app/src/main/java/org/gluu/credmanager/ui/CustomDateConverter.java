@@ -14,6 +14,7 @@ import javax.servlet.ServletRequest;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
@@ -33,27 +34,32 @@ public class CustomDateConverter implements Converter {
      * @param ctx Binding context. It holds the conversion arguments: "format" and "offset" are used here
      * @return A string with the date properly formatted or null if val parameter is not a valid date
      */
-    public Object coerceToUi(Object	val, Component comp, BindContext ctx) {
+    public Object coerceToUi(Object val, Component comp, BindContext ctx) {
 
         long timeStamp = (val instanceof Date) ? ((Date) val).getTime() : (long) val;
         if (timeStamp > 0) {
+
+            String format = (String) ctx.getConverterArg("format");
             Object offset = ctx.getConverterArg("offset");
             ZoneId zid;
 
             if (offset != null && ZoneId.class.isAssignableFrom(offset.getClass())) {
                 zid = (ZoneId) offset;
-            } else {
-                zid = TimeZone.getDefault().toZoneId();
+            } else {      //This covers the weird case in which there is no offset set
+                zid = ZoneOffset.UTC;
+                if (format.contains("hh") || format.contains("HH") || format.contains("mm"))
+                    format+=" '(GMT)'";
             }
             Instant instant = Instant.ofEpochMilli(timeStamp);
             OffsetDateTime odt = OffsetDateTime.ofInstant(instant, zid);
 
             ServletRequest request = (ServletRequest) Executions.getCurrent().getNativeRequest();
             Locale locale = request.getLocale() == null ? Locale.getDefault() : request.getLocale();
-            return odt.format(DateTimeFormatter.ofPattern((String) ctx.getConverterArg("format"), locale));
+            return odt.format(DateTimeFormatter.ofPattern(format, locale));
         } else {
             return null;
         }
+
     }
 
     public Object coerceToBean(Object val, Component comp, BindContext ctx) {

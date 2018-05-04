@@ -31,10 +31,8 @@ public class CommonInitiator {
                 setPageErrors(page, err, "Credential manager did not start properly. Contact your admin.");
                 break;
             default:
-                //This attrib should be in the session, but it's more comfortable at the desktop level for testing purposes
-                page.getDesktop().setAttribute("onMobile", Executions.getCurrent().getBrowser("mobile") != null);
+                //Added to pass the style checker :(
         }
-
 
     }
 

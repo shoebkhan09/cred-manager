@@ -62,7 +62,7 @@ public class LogService {
             if (logger.getName().startsWith("org.gluu"))
                 logger.setLevel(newLevel);
         }*/
-        org.apache.logging.log4j.core.config.Configurator.setLevel("org.gluu", newLevel);
+        org.apache.logging.log4j.core.config.Configurator.setLevel("org.gluu.credmanager", newLevel);
     }
 
     private Level getLoggingLevel() {

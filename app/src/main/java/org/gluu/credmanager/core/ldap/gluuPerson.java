@@ -42,6 +42,33 @@ public class gluuPerson {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String[] oxPreferredMethod;
 
+
+    // The field used for optional attribute oxPreferredMethod.
+    @LDAPField(attribute="oxStrongAuthPolicy",
+            objectClass="gluuPerson",
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private String[] oxStrongAuthPolicy;
+
+
+    // The field used for optional attribute oxPreferredMethod.
+    @LDAPField(attribute="oxTrustedDevicesInfo",
+            objectClass="gluuPerson",
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private String[] oxTrustedDevicesInfo;
+
+    public String getInum()
+    {
+        if ((inum == null) ||
+                (inum.length == 0))
+        {
+            return null;
+        }
+        else
+        {
+            return inum[0];
+        }
+    }
+
     public String getPreferredMethod()
     {
         if ((oxPreferredMethod == null) ||
@@ -52,6 +79,32 @@ public class gluuPerson {
         else
         {
             return oxPreferredMethod[0];
+        }
+    }
+
+    public String getStrongAuthPolicy()
+    {
+        if ((oxStrongAuthPolicy == null) ||
+                (oxStrongAuthPolicy.length == 0))
+        {
+            return null;
+        }
+        else
+        {
+            return oxStrongAuthPolicy[0];
+        }
+    }
+
+    public String getTrustedDevicesInfo()
+    {
+        if ((oxTrustedDevicesInfo == null) ||
+                (oxTrustedDevicesInfo.length == 0))
+        {
+            return null;
+        }
+        else
+        {
+            return oxTrustedDevicesInfo[0];
         }
     }
 
@@ -70,6 +123,10 @@ public class gluuPerson {
     public void setPreferredMethod(final String method)
     {
         this.oxPreferredMethod = new String[]{ method };
+    }
+
+    public void setTrustedDevices(String oxTrustedDevicesInfo) {
+        this.oxTrustedDevicesInfo = new String[] { oxTrustedDevicesInfo };
     }
 
 }

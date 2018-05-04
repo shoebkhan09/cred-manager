@@ -5,18 +5,17 @@
  */
 package org.gluu.credmanager.conf;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author jgomer
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class U2fSettings {
 
-    private String appId;
     private String relativeMetadataUri;
-    private String endpointUrl;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getRelativeMetadataUri() {
@@ -26,25 +25,6 @@ public class U2fSettings {
     @JsonProperty("u2f_relative_uri")
     public void setRelativeMetadataUri(String relativeMetadataUri) {
         this.relativeMetadataUri = relativeMetadataUri;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public String getAppId() {
-        return appId;
-    }
-
-    @JsonProperty("app_id")
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
-    @JsonIgnore
-    public String getEndpointUrl() {
-        return endpointUrl;
-    }
-
-    public void setEndpointUrl(String endpointUrl) {
-        this.endpointUrl = endpointUrl;
     }
 
 }

@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class QRConfig {
 
-    static ObjectMapper mapper = new ObjectMapper();
+    static ObjectMapper MAPPER = new ObjectMapper();
 
     private String label;
     private String registrationUri;
@@ -36,7 +36,7 @@ public class QRConfig {
             value = value.replaceFirst("mSize", "\"mSize\"").replaceFirst("size", "\"size\"");
         }
 
-        JsonNode tree = mapper.readTree(value);
+        JsonNode tree = MAPPER.readTree(value);
 
         if (tree.get("size") != null) {
             setQrSize(tree.get("size").asInt());

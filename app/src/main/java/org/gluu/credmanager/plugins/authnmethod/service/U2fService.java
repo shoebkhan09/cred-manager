@@ -5,7 +5,11 @@
  */
 package org.gluu.credmanager.plugins.authnmethod.service;
 
+import org.gluu.credmanager.conf.MainSettings;
+import org.gluu.credmanager.conf.U2fSettings;
 import org.gluu.credmanager.core.pojo.FidoDevice;
+import org.gluu.credmanager.plugins.authnmethod.SecurityKeyExtension;
+import org.gluu.credmanager.plugins.authnmethod.conf.U2FConfig;
 import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
@@ -13,6 +17,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -25,22 +31,43 @@ public class U2fService extends FidoService {
     @Inject
     private Logger logger;
 
-    private String appId;
+    @Inject
+    private MainSettings settings;
+
+    private U2FConfig conf;
 
     @PostConstruct
     private void inited() {
-        appId = settings.getU2fSettings().getAppId();
+        reloadConfiguration();
+    }
+
+    public void reloadConfiguration() {
+
+        conf = new U2FConfig();
+        String metadataUri = Optional.ofNullable(settings.getU2fSettings()).map(U2fSettings::getRelativeMetadataUri)
+                .orElse(".well-known/fido-u2f-configuration");
+        conf.setEndpointUrl(String.format("%s/%s", ldapService.getIssuerUrl(), metadataUri));
+
+        try {
+            Map<String, String> props = ldapService.getCustScriptConfigProperties(SecurityKeyExtension.ACR);
+            conf.setAppId(props.get("u2f_app_id"));
+
+            logger.info("U2f settings found were: {}", mapper.writeValueAsString(conf));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+
     }
 
     public int getDevicesTotal(String userId, boolean active) {
-        return getDevicesTotal(appId, userId, active);
+        return getDevicesTotal(conf.getAppId(), userId, active);
     }
 
     public List<FidoDevice> getDevices(String userId, boolean active) {
 
         List<FidoDevice> devices = new ArrayList<>();
         try {
-            devices = getRegistrations(appId, userId, active).stream().map(reg -> {
+            devices = getRegistrations(conf.getAppId(), userId, active).stream().map(reg -> {
                 FidoDevice device = new FidoDevice();
 
                 device.setCreationDate(reg.getCreationDate());

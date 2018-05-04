@@ -30,6 +30,11 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class UserService {
 
+    /*
+    The list of OpenId scopes required to be able to inspect the claims needed. See attributes of User class
+     */
+    public static final String[] OPEN_ID_SCOPES = new String[]{"openid","profile","user_name","clientinfo"};
+
     @Inject
     private Logger logger;
 

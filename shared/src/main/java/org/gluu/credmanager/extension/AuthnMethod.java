@@ -20,5 +20,6 @@ public interface AuthnMethod extends ExtensionPoint, UserCredentialsInfo {
     String getPanelButtonKey();
     String getPanelBottomTextKey();
     String getPageUrl();
+    boolean mayBe2faActivationRequisite();
 
 }

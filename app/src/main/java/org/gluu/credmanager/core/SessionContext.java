@@ -5,7 +5,6 @@
  */
 package org.gluu.credmanager.core;
 
-
 import org.gluu.credmanager.conf.MainSettings;
 import org.gluu.credmanager.core.pojo.User;
 
@@ -29,6 +28,8 @@ public class SessionContext implements Serializable {
     private User user;
 
     private String custdir;
+
+    private Boolean onMobileBrowser;
 
     private Boolean u2fSupported;
 
@@ -56,6 +57,10 @@ public class SessionContext implements Serializable {
         return user;
     }
 
+    public Boolean getOnMobileBrowser() {
+        return onMobileBrowser;
+    }
+
     public void setCustdir(String custdir) {
         this.custdir = custdir;
     }
@@ -70,6 +75,10 @@ public class SessionContext implements Serializable {
 
     public void setZoneOffset(ZoneOffset zoneOffset) {
         this.zoneOffset = zoneOffset;
+    }
+
+    public void setOnMobileBrowser(Boolean onMobileBrowser) {
+        this.onMobileBrowser = onMobileBrowser;
     }
 
 }
