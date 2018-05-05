@@ -17,6 +17,7 @@
         <!-- width is set explicitly (to avoid delay in CSS loading) which causes elements aligned to right become invisible -->
         <vlayout sclass="mainDiv" width="${sessionScope.onMobile ? '100%' : '950px'}">
             <attribute name="spacing" if="${empty pageScope.error}">0px</attribute>
+
             <zk choose="">
                 <zk when="${empty pageScope.error}">
                     <include src="/header.zul"/>

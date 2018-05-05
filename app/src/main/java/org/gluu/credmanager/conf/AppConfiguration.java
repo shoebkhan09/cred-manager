@@ -456,8 +456,7 @@ public class AppConfiguration {
         for (int i = 0; i < retries && acrs == null; i++){
             try {
                 acrs=retrieveServerAcrs();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 errRetry=Labels.getLabel("app.retry_retrieve_acr", new String[]{e.getMessage()});
                 logger.error(errRetry);
                 logger.warn("Retries remaining: {}", retries-i-1);
@@ -465,11 +464,21 @@ public class AppConfiguration {
                 Thread.sleep(sleepTime);
             }
         }
-        if (acrs==null)
+        if (acrs==null) {
             throw new Exception(errRetry);
-        else
+        } else {
+            //If this branch is reached, it means oxauth is running, now we should wait to for the acr list to load fully
+            if (gluuBase.equals(DEFAULT_GLUU_BASE)) {
+                //Assumes that if gluuBase and DEFAULT_GLUU_BASE are identical, this code is running inside a gluu ce
+                //chroot and we should wait longer for the complete list of acrs to be ready. In this kind of environment
+                //the start of subservices can be slow
+                Thread.sleep(sleepTime * retries / 10);
+                //waits for the maximum time reduced by an order of magnitude
+                logger.debug("Additional attempt");
+                acrs = retrieveServerAcrs();
+            }
             return acrs;
-
+        }
     }
 
     /**
@@ -494,9 +503,9 @@ public class AppConfiguration {
     private void computeEnabledMethods(Configs settings) throws Exception{
 
         Set<String> possibleMethods=new HashSet<>(CredentialType.ACR_NAMES_SUPPORTED);
-        Set<String> supportedSet=retrieveServerAcrs(30, 10000);
+        Set<String> supportedSet=retrieveServerAcrs(15, 20000);
 
-        //Verify default and routing acr are there
+        //Verify default acr is there
         List<String> acrList=Collections.singletonList(DEFAULT_ACR);
         if (supportedSet.containsAll(acrList)) {
 
@@ -513,10 +522,9 @@ public class AppConfiguration {
             //Put it on this bean...
             Stream<CredentialType> stream = enabledSet.stream().map(CredentialType::get);
             enabledMethods = stream.collect(Collectors.toCollection(HashSet::new));
-        }
-        else
+        } else {
             throw new Exception(Labels.getLabel("app.missing_acr_value", new String[]{acrList.toString()}));
-
+        }
     }
 
     private void computeOxdSettings(Configs settings) throws Exception{
@@ -560,7 +568,7 @@ public class AppConfiguration {
                             oxdService.setSettings(oxdConfig, true);
 
                             if (!oxdService.extendSiteLifeTime()) {
-                                logger.warn(Labels.getLabel("app.site_update_failed"));
+                                logger.warn("An error occured while extending the lifetime of the associated oxd client.");
                             }
                         }
 
