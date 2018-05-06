@@ -58,7 +58,7 @@
                                                     <label sclass="bold" value="${labels.usr.trdevices_on}" />
                                                     <label sclass="bold" value="@load(c:cat3(each.os.family,' ', each.os.version))"/>
                                                 </hlayout>
-                                                <div sclass="row" visible="@load(not empty each.origins)">
+                                                <div sclass="row" if="@load(not empty each.origins)">
                                                     <!-- a small ugly to make it look not ugly in small screens :) -->
                                                     <label value="${labels.usr.trdevices_last_location}" sclass="de_emphasized col-sm-2"
                                                            style="padding-right:0;padding-top:${sessionScope.onMobile? '4' : '2'}px" />

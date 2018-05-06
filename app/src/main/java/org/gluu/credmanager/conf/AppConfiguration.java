@@ -277,7 +277,7 @@ public class AppConfiguration {
         int defaultValue=(BOUNDS_MINCREDS_2FA.getX() + BOUNDS_MINCREDS_2FA.getY())/2;
         Integer providedValue=settings.getMinCredsFor2FA();
         if (providedValue==null) {
-            logger.info(Labels.getLabel("app.mincreds_defaulted"));
+            logger.info(Labels.getLabel("app.mincreds_defaulted"), defaultValue);
             settings.setMinCredsFor2FA(defaultValue);
         }
         else
@@ -473,7 +473,7 @@ public class AppConfiguration {
                 //chroot and we should wait longer for the complete list of acrs to be ready. In this kind of environment
                 //the start of subservices can be slow
                 Thread.sleep(sleepTime * retries / 10);
-                //waits for the maximum time reduced by an order of magnitude
+                //waits for the maximum time reduced to an order of magnitude
                 logger.debug("Additional attempt");
                 acrs = retrieveServerAcrs();
             }
@@ -610,13 +610,13 @@ public class AppConfiguration {
     public void setLoggingLevel(String strLevel){
 
         Level newLevel=Level.toLevel(strLevel);
-        org.apache.logging.log4j.core.config.Configurator.setLevel("org.gluu", newLevel);
+        org.apache.logging.log4j.core.config.Configurator.setLevel("org.gluu.credmanager", newLevel);
         configSettings.setLogLevel(strLevel);
     }
 
     private Level getLoggingLevel(){
         LoggerContext loggerContext = LoggerContext.getContext(false);
-        return loggerContext.getConfiguration().getLoggerConfig("org.gluu").getLevel();
+        return loggerContext.getConfiguration().getLoggerConfig("org.gluu.credmanager").getLevel();
     }
 
 }

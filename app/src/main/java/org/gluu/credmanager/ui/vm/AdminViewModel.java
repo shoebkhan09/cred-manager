@@ -400,7 +400,7 @@ public class AdminViewModel extends UserViewModel {
         String postlogoutUrl = WebUtils.isValidUrl(oxdSettings.getPostLogoutUri()) ? oxdSettings.getPostLogoutUri() : null;
 
         if (Stream.of(oxdHost, postlogoutUrl).map(Utils::stringOptional).allMatch(Optional::isPresent)
-                && oxdPort>=0 && oxdPort<65536) {
+                && oxdPort>0 && oxdPort<65536) {
 
             boolean connected=false;    //Try to guess if it looks like an oxd-server
             try {

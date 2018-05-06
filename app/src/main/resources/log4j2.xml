@@ -14,7 +14,7 @@
 
     </Appenders>
     <Loggers>
-        <Logger name="org.gluu" level="INFO">
+        <Logger name="org.gluu.credmanager" level="INFO">
             <AppenderRef ref="LOG_FILE" />
         </Logger>
         <Root level="WARN">
