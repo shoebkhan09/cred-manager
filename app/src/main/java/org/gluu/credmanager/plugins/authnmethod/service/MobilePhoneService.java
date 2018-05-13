@@ -68,12 +68,12 @@ public class MobilePhoneService extends BaseService {
 
     }
 
-    public boolean isPhoneNumberUnique(String number) {
+    public boolean isNumberRegistered(String number) {
 
         gluuPersonMobile person = new gluuPersonMobile();
         person.setMobile(number);
         List<gluuPersonMobile> matchingPeople = ldapService.find(person, gluuPersonMobile.class, ldapService.getPeopleDn());
-        return Utils.isEmpty(matchingPeople);
+        return Utils.isNotEmpty(matchingPeople);
 
     }
 
@@ -156,7 +156,7 @@ public class MobilePhoneService extends BaseService {
         int total = 0;
         try {
             gluuPersonMobile person = ldapService.get(gluuPersonMobile.class, ldapService.getPersonDn(userId));
-            total = person.getMobile().length;
+            total = person.getMobileAsList().size();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }

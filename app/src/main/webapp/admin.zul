@@ -1,0 +1,84 @@
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/general.zul"?>
+<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
+<?page title="${applicationScope['appName']} - ${labels.adm.title}"?>
+<?link rel="stylesheet" type="text/css" href="${sessionContext.cssPath}"?>
+<?link rel="icon" type="image/x-icon" href="${sessionContext.custdir}/images/favicon.ico" ?>
+
+<zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul" xmlns:w="client" xmlns:n="native"
+    xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
+
+    <style>
+        .z-toolbar {
+        border:none;
+        }
+        .z-toolbar-content {
+        width:100%;
+        }
+        .z-toolbarbutton{
+        padding:6px 5px;
+        }
+    </style>
+    <zscript>
+        <![CDATA[
+        void recheck(Event event){
+            target=event.getTarget();
+            for (Component comp : target.getParent().getChildren())
+                if (comp instanceof Toolbarbutton){
+                    tb=(Toolbarbutton)comp;
+                    if (!tb.equals(target) && tb.isChecked())
+                        tb.setChecked(false);
+                }
+        }
+
+        void goToPage(String url){
+            Executions.sendRedirect(url);
+        }
+        ]]>
+    </zscript>
+    <vlayout if="${empty pageScope.error}" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.admin.MainViewModel')"
+             self="@define(content)">
+        <hlayout width="100%" spacing="0px" style="background-color:#eee;"> <!-- TODO: review workaround so sidebar can occupying 100% of available height -->
+            <vlayout width="160px" sclass="sidebar" id="sidebar" vflex="1">
+                <!-- why the effect not working for sidebar?  action="show: slideIn({duration: 1000}); hide: slideOut({duration: 300})" -->
+                <vlayout sclass="padded titled">
+                    <separator />
+                    <separator />
+                </vlayout>
+
+                <toolbar orient="vertical">
+                    <toolbarbutton mode="toggle" label="${labels.adm.ldap_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/ldap.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.oxd_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/oxd-config.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.methods_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/methods.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.strongauth_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/strongauth.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.passreset_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/pass-reset.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.branding_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/branding.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.logging_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/logging.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.resets_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/pref-reset.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.plugins_title}" onCheck="recheck(event)"
+                                   width="100%" onClick="@command('loadSubPage', page='/admin/plugins.zul')" />
+                    <toolbarbutton mode="toggle" label="${labels.adm.own_credentials_title}" onCheck='goToPage("user.zul")'
+                                   width="100%"/>
+                </toolbar>
+
+            </vlayout>
+
+            <vlayout hflex="1" style="background-color:#fff;">
+                <hlayout sclass="padded titled" valign="bottom" spacing="10px">
+                    <button label="☰" onClick="sidebar.visible=!sidebar.visible" />
+                    <n:span>${labels.adm.main_title}</n:span>
+                </hlayout>
+                <!--include src="/menubuttons.zul" /-->
+                <include src="@load(empty vm.subpage ? '/admin/default.zul' : vm.subpage)" />
+            </vlayout>
+        </hlayout>
+    </vlayout>
+
+</zk>

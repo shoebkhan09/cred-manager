@@ -6,6 +6,8 @@
 package org.gluu.credmanager.misc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.zkoss.util.resource.Labels;
+import org.zkoss.zk.ui.util.Clients;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +23,9 @@ import javax.enterprise.inject.spi.CDI;
 public final class Utils {
 
     private static ObjectMapper MAPPER = new ObjectMapper();
+
+    private static final int FEEDBACK_DELAY_SUCC = 1500;
+    private static final int FEEDBACK_DELAY_ERR = 3000;
 
     private Utils() { }
 
@@ -82,6 +87,22 @@ public final class Utils {
         }
         return json;
 
+    }
+
+    public static void showMessageUI(boolean success) {
+        showMessageUI(success, Labels.getLabel(success ? "general.operation_completed" : "general.error.general"));
+    }
+
+    public static void showMessageUI(boolean success, String msg) {
+        showMessageUI(success, msg, "middle_center");
+    }
+
+    public static void showMessageUI(boolean success, String msg, String position) {
+        if (success) {
+            Clients.showNotification(msg, Clients.NOTIFICATION_TYPE_INFO, null, position, FEEDBACK_DELAY_SUCC);
+        } else {
+            Clients.showNotification(msg, Clients.NOTIFICATION_TYPE_WARNING, null, position, FEEDBACK_DELAY_ERR);
+        }
     }
 
 }

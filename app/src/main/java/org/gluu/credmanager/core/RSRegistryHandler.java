@@ -137,7 +137,7 @@ public class RSRegistryHandler {
 
             if (!entry.isDirectory() && entryName.endsWith(".class")
                     && skipFolders.stream().noneMatch(skip -> entryName.startsWith(skip + "/"))) {
-logger.debug("Entry {}", entryName);
+
                 String binaryName = entryName.replace("/", ".");
                 binaryName = binaryName.substring(0, binaryName.length() - ".class".length());
                 count += processClassEntry(id, binaryName, clsLoader, registeredResources.get(id)) ? 1 : 0;
@@ -148,7 +148,6 @@ logger.debug("Entry {}", entryName);
     }
 
     private int scanFolderForRSResources(String id, Path start, ClassLoader clsLoader) throws IOException {
-
 
         final class MyCounterFileVisitor extends SimpleFileVisitor<Path> {
 
@@ -164,7 +163,6 @@ logger.debug("Entry {}", entryName);
 
                 String path = file.toString().substring(offset);
                 if (Utils.isClassFile(file) && skipFolders.stream().noneMatch(skip -> path.startsWith(skip + File.separator))) {
-logger.debug("File {}", path);
                     String binaryName = path.startsWith("classes" + File.separator) ? path.substring("classes".length() + 1) : path;
                     binaryName = binaryName.replace(File.separator, ".");
                     binaryName = binaryName.substring(0, binaryName.length() - ".class".length());
@@ -208,12 +206,15 @@ logger.debug("File {}", path);
 
     public void remove(String id) {
 
-        List<Class<?>> classes = registeredResources.get(id);
-        if (classes != null) {
-            for (Class<?> cls : classes) {
-                rsRegistry.removeRegistrations(cls);
+        if (enabled) {
+            List<Class<?>> classes = registeredResources.get(id);
+            if (classes != null) {
+                for (Class<?> cls : classes) {
+                    logger.debug("Removing RestEasy registration {}", cls.getName());
+                    rsRegistry.removeRegistrations(cls, ENDPOINTS_PREFIX + "/" + id);
+                }
+                registeredResources.remove(id);
             }
-            registeredResources.remove(id);
         }
 
     }

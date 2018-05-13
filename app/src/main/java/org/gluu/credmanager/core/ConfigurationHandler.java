@@ -46,7 +46,8 @@ public class ConfigurationHandler extends JobListenerSupport {
     public static final String DEFAULT_ACR = "credmanager";
     public static final List<String> DEFAULT_SUPPORTED_METHODS = Arrays.asList("u2f", "otp", "super_gluu", "twilio_sms");
 
-    private static final int RETRY_INTERVAL = 10; //1
+    private static final int RETRIES = 15;
+    private static final int RETRY_INTERVAL = 20;
     private static final int TRUSTED_DEVICE_EXPIRATION_DAYS = 30;
     private static final int TRUSTED_LOCATION_EXPIRATION_DAYS = 15;
 
@@ -100,10 +101,10 @@ public class ConfigurationHandler extends JobListenerSupport {
                 timerService.addListener(this, acrQuartzJobName);
                 /*
                  A gap of 5 seconds is enough for the RestEasy scanning process to take place (in case oxAuth is already up and running)
-                 A value of 30 gives room of 5 min (300 seconds) to recover the acr list. This big amount of time may be required
+                 RETRIES*RETRY_INTERVAL seconds gives room to recover the acr list. This big amount of time may be required
                  in cases where cred-manager service starts too soon (even before oxAuth itself)
                 */
-                timerService.schedule(acrQuartzJobName, 5, 30, RETRY_INTERVAL);
+                timerService.schedule(acrQuartzJobName, 5, RETRIES, RETRY_INTERVAL);
             } else {
                 setAppState(AppStateEnum.FAIL);
             }
@@ -135,7 +136,6 @@ public class ConfigurationHandler extends JobListenerSupport {
             values.forEach(node -> serverAcrs.add(node.asText()));
         } catch (Exception e) {
             logger.error("Could not retrieve the list of acrs supported by this server: {}", e.getMessage());
-            logger.warn("Retrying in {} seconds", RETRY_INTERVAL);
         }
         return serverAcrs;
 
@@ -159,8 +159,18 @@ public class ConfigurationHandler extends JobListenerSupport {
                     if (nextJobExecutionAt == null) {     //Run out of attempts!
                         logger.warn("The list of supported acrs could not be obtained.");
                         setAppState(AppStateEnum.FAIL);
+                    } else {
+                        logger.warn("Retrying in {} seconds", RETRY_INTERVAL);
                     }
                 } else {
+                    //TODO: uncomment this block for production
+                    /*
+                    //This is required to guarantee the list of acrs is really complete (after oxauth starts, the list
+                    //can still contain just a few elements)
+                    Thread.sleep(RETRIES * RETRY_INTERVAL * 100);
+                    logger.debug("Additional attempt");
+                    retrieveAcrs();
+                    */
                     if (serverAcrs.contains(DEFAULT_ACR)) {
                         //Update log level
                         computeLoggingLevel();

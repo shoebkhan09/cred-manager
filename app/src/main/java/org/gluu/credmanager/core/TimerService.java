@@ -6,14 +6,7 @@
 package org.gluu.credmanager.core;
 
 import org.gluu.credmanager.misc.DumbQuartzJob;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.JobListener;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.KeyMatcher;
 import org.slf4j.Logger;
@@ -60,10 +53,10 @@ public class TimerService {
 
         JobDetail job = JobBuilder.newJob(DumbQuartzJob.class).withIdentity(name, group).build();
 
+        SimpleScheduleBuilder builder = simpleSchedule().withIntervalInSeconds(sleepTime);
+        builder = count < 0 ?  builder.repeatForever() : builder.withRepeatCount(count);
         Trigger trigger = TriggerBuilder.newTrigger().withIdentity("trigger_" + name, group)
-                .startAt(new Date(System.currentTimeMillis() + gap * 1000))
-                .withSchedule(simpleSchedule().withIntervalInSeconds(sleepTime).withRepeatCount(count))
-                .build();
+                .startAt(new Date(System.currentTimeMillis() + gap * 1000)).withSchedule(builder).build();
 
         scheduler.scheduleJob(job, trigger);
         return job.getKey();

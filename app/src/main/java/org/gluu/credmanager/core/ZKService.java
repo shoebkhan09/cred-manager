@@ -124,6 +124,7 @@ public class ZKService {
             LabelLocator locator = labelLocators.get(id);
             if (locator != null) {
                 if (CLOSEABLE_CLS.isAssignableFrom(locator.getClass())) {
+                    logger.debug("Closing label locator {}", id);
                     CLOSEABLE_CLS.cast(locator).close();
                 }
                 labelLocators.remove(id);

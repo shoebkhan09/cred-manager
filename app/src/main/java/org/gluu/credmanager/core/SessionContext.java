@@ -29,7 +29,11 @@ public class SessionContext implements Serializable {
 
     private String custdir;
 
+    private String cssPath;
+
     private Boolean onMobileBrowser;
+
+    private boolean onMobile;
 
     private Boolean u2fSupported;
 
@@ -61,6 +65,14 @@ public class SessionContext implements Serializable {
         return onMobileBrowser;
     }
 
+    public boolean getOnMobile() {
+        return onMobile;
+    }
+
+    public String getCssPath() {
+        return cssPath;
+    }
+
     public void setCustdir(String custdir) {
         this.custdir = custdir;
     }
@@ -79,6 +91,14 @@ public class SessionContext implements Serializable {
 
     public void setOnMobileBrowser(Boolean onMobileBrowser) {
         this.onMobileBrowser = onMobileBrowser;
+    }
+
+    public void setOnMobile(boolean onMobile) {
+        this.onMobile = onMobile;
+    }
+
+    public void setCssPath(String cssPath) {
+        this.cssPath = cssPath;
     }
 
 }

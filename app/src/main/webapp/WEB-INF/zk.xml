@@ -6,6 +6,26 @@
         <name>org.zkoss.zk.ui.WebApp.name</name>
         <value>Credential manager</value>
     </preference>
+
+    <system-property>
+        <name>org.gluu.credmanager.css.mobile</name>
+        <value>/styles/mobile.css</value>
+    </system-property>
+    <system-property>
+        <name>org.gluu.credmanager.css.desktop</name>
+        <value>/styles/desktop.css</value>
+    </system-property>
+
+    <!-- session timeout redirect -->
+    <session-config>
+        <device-type>ajax</device-type>
+        <timeout-uri>/index.zul</timeout-uri>
+    </session-config>
+    <session-config>
+        <device-type>mil</device-type>
+        <timeout-uri>/index.zul</timeout-uri>
+    </session-config>
+
     <library-property>
         <name>org.zkoss.util.label.web.charset</name>
         <value>UTF-8</value>
@@ -28,14 +48,16 @@
         <name>org.zkoss.zul.Paging.mold</name>
         <value>bs</value>
     </library-property>
-    <!--library-property>
-        <name>org.zkoss.zul.Panel.mold</name>
-        <value>bs</value>
-    </library-property-->
     <library-property>
         <name>org.zkoss.theme.preferred</name>
         <value>breeze</value>   <!-- preserve the theme used in first version of the app -->
     </library-property>
+
+    <!-- TODO: uncomment in production -->
+    <!-- unit: seconds -->
+    <!--desktop-config>
+        <file-check-period>600</file-check-period>
+    </desktop-config-->
 
     <!-- important listeners -->
     <listener>

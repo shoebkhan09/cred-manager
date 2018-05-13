@@ -35,6 +35,7 @@ public class MainSettingsProducer {
     private Logger logger;
 
     private String getGluuBase() {
+
         String candidateGluuBase = System.getProperty("gluu.base");
         boolean windows = System.getProperty("os.name").toLowerCase().matches(".*win.*");
 

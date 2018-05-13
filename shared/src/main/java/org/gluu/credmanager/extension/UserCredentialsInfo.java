@@ -13,10 +13,7 @@ import java.util.List;
  * @author jgomer
  */
 public interface UserCredentialsInfo {
-/*
-    int getTotal();
-    int getTotal(boolean valid);
-    */
+
     List<BasicCredential> getEnrolledCreds(String id);
     List<BasicCredential> getEnrolledCreds(String id, boolean valid);
     int getTotalUserCreds(String id);

@@ -39,6 +39,10 @@
             <groupId>org.zkoss.common</groupId>
             <artifactId>zcommon</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.zkoss.zk</groupId>
+            <artifactId>zk</artifactId>
+        </dependency>
 
         <!-- JACKSON -->
         <dependency>

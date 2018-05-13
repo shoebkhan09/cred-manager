@@ -21,7 +21,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.min-version>3.0.3</maven.min-version>
         <weld.version>3.0.0.Final</weld.version>
-        <pf4j.version>2.1.0</pf4j.version>
+        <pf4j.version>2.2.0</pf4j.version>
         <crdmgr.version>3.2.0-SNAPSHOT</crdmgr.version>
         <eventbus.version>3.1.1</eventbus.version>
         <log4j.version>2.8.2</log4j.version>
@@ -91,6 +91,11 @@
             <dependency>
                 <groupId>org.zkoss.common</groupId>
                 <artifactId>zcommon</artifactId>
+                <version>${zk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.zkoss.zk</groupId>
+                <artifactId>zk</artifactId>
                 <version>${zk.version}</version>
             </dependency>
 

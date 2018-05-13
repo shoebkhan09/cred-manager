@@ -3,10 +3,6 @@
 body{
     padding:0 !important;
 }
-.container{
-/* override bootstrap container*/
-    padding:0;
-}
 .logo{
     width:120px;
     height:47px;
@@ -100,10 +96,6 @@ body{
 .rule-sm{
     margin-top:10px;
     width: 320px;
-}
-.z-toolbar-content span{
-	font-size:12px;
-	color:#333;
 }
 .z-paging-info{
     display:none;

@@ -17,7 +17,7 @@
         <Logger name="org.gluu.credmanager" level="INFO">
             <AppenderRef ref="LOG_FILE" />
         </Logger>
-        <Root level="WARN">
+        <Root level="ERROR">
             <AppenderRef ref="Console" />
         </Root>
     </Loggers>

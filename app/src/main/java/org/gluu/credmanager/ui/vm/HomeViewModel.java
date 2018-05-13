@@ -7,13 +7,13 @@ package org.gluu.credmanager.ui.vm;
 
 import org.gluu.credmanager.core.SessionContext;
 import org.gluu.credmanager.core.UserService;
+import org.gluu.credmanager.core.pojo.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zkoss.bind.annotation.*;
 import org.zkoss.json.JSONObject;
 import org.zkoss.zk.au.out.AuInvoke;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.select.Selectors;
@@ -55,9 +55,10 @@ public class HomeViewModel {
             logger.info("Browser data is {} ", jsonObject.toJSONString());
 
             updateOffset(jsonObject.get("offset"));
-            updateMobile(jsonObject.get("screenWidth"), evt.getPage().getDesktop());
+            updateMobile(jsonObject.get("screenWidth"));
             updateU2fSupport(jsonObject.get("name"), jsonObject.get("version"));
         }
+        updateCssPath();
         //reloads this page so the navigation flow proceeds (see HomeInitiator class)
         //TODO: remove
         //Executions.sendRedirect(null);
@@ -67,7 +68,7 @@ public class HomeViewModel {
     @Init
     public void init() {
         Clients.response(new AuInvoke("sendBrowserData"));
-/*
+
         //TODO: remove this
         User user = new User();
         user.setGivenName("admin");
@@ -79,7 +80,7 @@ public class HomeViewModel {
         sessionContext.setUser(user);
 
         userService.setupRequisites(user.getId());
-*/
+/**/
     }
 
     private void updateOffset(Object value) {
@@ -99,7 +100,7 @@ public class HomeViewModel {
 
     }
 
-    private void updateMobile(Object width, Desktop desktop) {
+    private void updateMobile(Object width) {
 
         try {
             boolean mobile = Executions.getCurrent().getBrowser("mobile") != null;
@@ -108,7 +109,7 @@ public class HomeViewModel {
 
             int w = (int) width;
             //This attrib should be in the session, but it's more comfortable at the desktop level for testing purposes
-            desktop.setAttribute("onMobile", mobile && w < 992);	//If screen is wide enough, behave as desktop
+            sessionContext.setOnMobile(mobile && w < 992);	//If screen is wide enough, behave as desktop
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -140,6 +141,15 @@ public class HomeViewModel {
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
+
+    }
+
+    private void updateCssPath() {
+
+        String path = "org.gluu.credmanager.css.";
+        path += sessionContext.getOnMobile() ? "mobile" : "desktop";
+        path = sessionContext.getCustdir() + System.getProperty(path);
+        sessionContext.setCssPath(path);
 
     }
 

@@ -8,6 +8,7 @@ package org.gluu.credmanager.ui.vm.user;
 import org.gluu.credmanager.core.ConfigurationHandler;
 import org.gluu.credmanager.core.ExtensionsManager;
 import org.gluu.credmanager.extension.AuthnMethod;
+import org.gluu.credmanager.misc.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zkoss.bind.annotation.Command;
@@ -119,10 +120,10 @@ public class UserPreferenceViewModel extends UserViewModel {
         uiEditing = false;
         //saves to LDAP and updates user object afterwards
         if (userService.setPreferredMethod(user, selectedMethod)) {
-            showMessageUI(true);
+            Utils.showMessageUI(true);
         } else {
             selectedMethod = prevSelectedMethod;
-            showMessageUI(false);
+            Utils.showMessageUI(false);
         }
 
     }

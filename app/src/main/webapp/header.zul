@@ -7,14 +7,14 @@
             <image sclass="logo" src="/images/logo.png"/>
         </hlayout>
         <zk choose="">
-            <zk when="${desktopScope.onMobile}">
+            <zk when="${sessionContext.onMobile}">
                 <div width="50px">
                     <button sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
-                            style="padding-left:0px" image="${sessionContext.custdir}/images/hamburger.png" label="" />
+                            style="font-size:30px;padding-left:0px" label="☰" />
                 </div>
             </zk>
             <zk>
-                <div style="padding-right:5px">
+                <div style="padding-right:10px">
                     <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" iconSclass="caret"
                             popup="pop, after_start, type=toggle" image="${sessionContext.custdir}/images/shadowed_man.png"
                             label="@load(c:cat3(c:l('general.welcome'),' ', sessionContext.user.givenName))" />

@@ -162,20 +162,20 @@ public class UserMainViewModel extends UserViewModel {
                     logger.info(Labels.getLabel("app.pass_resetted"), user.getUserName());
                     resetPassSettings();
                     uiPwdResetOpened = false;
-                    showMessageUI(true, Labels.getLabel("usr.passreset_changed"), "bottom_center");
+                    Utils.showMessageUI(true, Labels.getLabel("usr.passreset_changed"), "bottom_center");
                 } else {
-                    showMessageUI(false);
+                    Utils.showMessageUI(false);
                 }
 
             } else {
-                showMessageUI(false, Labels.getLabel("usr.passreset_nomatch"), "bottom_center");
+                Utils.showMessageUI(false, Labels.getLabel("usr.passreset_nomatch"), "bottom_center");
                 newPasswordConfirm = null;
                 newPassword = null;
                 strength = -1;
             }
         } else {
             currentPassword = null;
-            showMessageUI(false, Labels.getLabel("usr.passreset_badoldpass"), "bottom_center");
+            Utils.showMessageUI(false, Labels.getLabel("usr.passreset_badoldpass"), "bottom_center");
         }
 
     }
