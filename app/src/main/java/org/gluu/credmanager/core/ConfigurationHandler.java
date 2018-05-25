@@ -12,7 +12,6 @@ import org.gluu.credmanager.conf.TrustedDevicesSettings;
 import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.event.AppStateChangeEvent;
 import org.gluu.credmanager.extension.AuthnMethod;
-import org.gluu.credmanager.extension.OpenIdFlow;
 import org.gluu.credmanager.misc.AppStateEnum;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.LdapService;
@@ -61,6 +60,9 @@ public class ConfigurationHandler extends JobListenerSupport {
     private LdapService ldapService;
 
     @Inject
+    private OxdService oxdService;
+
+    @Inject
     private EventBus eventBus;
 
     @Inject
@@ -93,6 +95,8 @@ public class ConfigurationHandler extends JobListenerSupport {
     void init() {
 
         try {
+            //Update log level
+            computeLoggingLevel();
             //Check LDAP access to proceed with acr timer
             if (ldapService.isInService()) {
                 setAppState(AppStateEnum.LOADING);
@@ -115,8 +119,8 @@ public class ConfigurationHandler extends JobListenerSupport {
 
     }
 
-    public Integer getMinCredsFor2FA() {
-        return settings.getMinCredsFor2FA();
+    public MainSettings getSettings() {
+        return settings;
     }
 
     /**
@@ -172,22 +176,18 @@ public class ConfigurationHandler extends JobListenerSupport {
                     retrieveAcrs();
                     */
                     if (serverAcrs.contains(DEFAULT_ACR)) {
-                        //Update log level
-                        computeLoggingLevel();
                         computeBrandingPath();
                         computeMinCredsForStrongAuth();
                         computePassResetable();
                         compute2FAEnforcementPolicy();
 
                         extManager.scan();
-                        //Ensure there is an openidflow extension
-                        OpenIdFlow openIdFlowExt = extManager.getExtensionForOpenIdFlow();
                         //TODO: uncomment
-                        if (openIdFlowExt != null /*&& openIdFlowExt.isInited()*/) {
+                        if (true /*oxdService.initialize()*/) {
                             refreshAcrPluginMapping();
                             setAppState(AppStateEnum.OPERATING);
                         } else {
-                            logger.warn("OpenId Flow extension could not be initialized.");
+                            //logger.warn("oxd configuration could not be initialized.");
                             setAppState(AppStateEnum.FAIL);
                         }
                     } else {
@@ -216,16 +216,8 @@ public class ConfigurationHandler extends JobListenerSupport {
 
     }
 
-    public String getExtraCssSnippet() {
-        return settings.getExtraCssSnippet();
-    }
-
     public AppStateEnum getAppState() {
         return appState;
-    }
-
-    public boolean isPasswordResetable() {
-        return settings.isEnablePassReset();
     }
 
     public Map<String, Integer> getAcrLevelMapping() {

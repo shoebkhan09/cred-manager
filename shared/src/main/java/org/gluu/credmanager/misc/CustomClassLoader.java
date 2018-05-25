@@ -45,6 +45,7 @@ public class CustomClassLoader implements ContextClassLoaderFactory {
         }
 
         try {
+            //TODO: implement a Map for lookup?
             loader.loadClass(className);
             logger.trace("Class '{}' found in current thread's context class loader", className);
             return loader;

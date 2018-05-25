@@ -1,10 +1,11 @@
 package org.gluu.credmanager.core.ldap;
 
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import org.gluu.credmanager.misc.Utils;
+
+import java.util.Optional;
 
 /**
  * This class provides an implementation of an object that can be used to
@@ -15,19 +16,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
  */
 @LDAPObject(structuralClass="gluuPerson",
         superiorClass="top")
-public class gluuPerson {
-
-    // The field to use to hold a read-only copy of the associated entry.
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
-
-    // The field used for RDN attribute inum.
-    @LDAPField(attribute="inum",
-            objectClass="gluuPerson",
-            inRDN=true,
-            filterUsage= FilterUsage.ALWAYS_ALLOWED,
-            requiredForEncode=true)
-    private String[] inum;
+public class PersonPreferences extends BaseLdapPerson {
 
     // The field used for optional attribute userPassword.
     @LDAPField(attribute="userPassword",
@@ -56,19 +45,15 @@ public class gluuPerson {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String[] oxTrustedDevicesInfo;
 
-    public String getInum()
-    {
-        if ((inum == null) ||
-                (inum.length == 0))
-        {
-            return null;
-        }
-        else
-        {
-            return inum[0];
-        }
-    }
-
+    /**
+     * Retrieves the first value for the field associated with the
+     * oxPreferredMethod attribute, if present.
+     *
+     * @return  The first value for the field associated with the
+     *          oxPreferredMethod attribute, or
+     *          {@code null} if that attribute was not present in the entry or
+     *          does not have any values.
+     */
     public String getPreferredMethod()
     {
         if ((oxPreferredMethod == null) ||
@@ -82,6 +67,15 @@ public class gluuPerson {
         }
     }
 
+    /**
+     * Retrieves the first value for the field associated with the
+     * oxStrongAuthPolicy attribute, if present.
+     *
+     * @return  The first value for the field associated with the
+     *          oxStrongAuthPolicy attribute, or
+     *          {@code null} if that attribute was not present in the entry or
+     *          does not have any values.
+     */
     public String getStrongAuthPolicy()
     {
         if ((oxStrongAuthPolicy == null) ||
@@ -95,6 +89,15 @@ public class gluuPerson {
         }
     }
 
+    /**
+     * Retrieves the first value for the field associated with the
+     * oxTrustedDevicesInfo attribute, if present.
+     *
+     * @return  The first value for the field associated with the
+     *          oxTrustedDevicesInfo attribute, or
+     *          {@code null} if that attribute was not present in the entry or
+     *          does not have any values.
+     */
     public String getTrustedDevicesInfo()
     {
         if ((oxTrustedDevicesInfo == null) ||
@@ -117,16 +120,15 @@ public class gluuPerson {
      */
     public void setPassword(final String userPassword)
     {
-        this.userPassword = new String[]{ userPassword };
+        this.userPassword = Utils.stringArrayFrom(userPassword);
     }
 
-    public void setPreferredMethod(final String method)
-    {
-        this.oxPreferredMethod = new String[]{ method };
+    public void setPreferredMethod(final String method) {
+        this.oxPreferredMethod = Utils.stringArrayFrom(method);
     }
 
     public void setTrustedDevices(String oxTrustedDevicesInfo) {
-        this.oxTrustedDevicesInfo = new String[] { oxTrustedDevicesInfo };
+        this.oxTrustedDevicesInfo = Utils.stringArrayFrom(oxTrustedDevicesInfo);
     }
 
 }

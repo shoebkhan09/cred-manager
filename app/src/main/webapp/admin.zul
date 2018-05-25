@@ -1,8 +1,8 @@
 <?init class="org.zkoss.zk.ui.util.Composition" arg0="/general.zul"?>
-<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
+<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver"?>
 <?page title="${applicationScope['appName']} - ${labels.adm.title}"?>
+<?link rel="icon" href="${sessionContext.faviconDataUri}"?>
 <?link rel="stylesheet" type="text/css" href="${sessionContext.cssPath}"?>
-<?link rel="icon" type="image/x-icon" href="${sessionContext.custdir}/images/favicon.ico" ?>
 
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul" xmlns:w="client" xmlns:n="native"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">

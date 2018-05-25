@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2018, Gluu
  */
-package org.gluu.credmanager.plugins.openidflow;
+package org.gluu.credmanager.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -11,6 +11,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
@@ -18,7 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import org.gluu.credmanager.conf.MainSettings;
 import org.gluu.credmanager.conf.OxdClientSettings;
 import org.gluu.credmanager.conf.OxdSettings;
-import org.gluu.credmanager.core.UserService;
 import org.gluu.credmanager.core.navigation.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.LdapService;
@@ -44,12 +44,7 @@ import org.xdi.oxd.common.params.UpdateSiteParams;
 import org.xdi.oxd.common.response.*;
 import org.zkoss.util.Pair;
 
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.gluu.credmanager.core.ConfigurationHandler.DEFAULT_ACR;
 
@@ -58,6 +53,7 @@ import static org.gluu.credmanager.core.ConfigurationHandler.DEFAULT_ACR;
  * authorization code flow of OpenId Connect spec
  * @author jgomer
  */
+@Named
 @ApplicationScoped
 public class OxdService {
 
@@ -70,7 +66,7 @@ public class OxdService {
     @Inject
     private LdapService ldapService;
 
-    private int consecutive=0;  //This is used only to debug and test
+    private int consecutive = 0;  //This is used only to debug and test
     private OxdSettings config;
     private ResteasyClient client;
     private ObjectMapper mapper;
@@ -89,7 +85,6 @@ public class OxdService {
         if (oxdConfig == null) {
             logger.error("No oxd configuration was provided");
         } else {
-
             String issuerUrl = ldapService.getIssuerUrl();
             String oxdHost = oxdConfig.getHost();
             String oxdRedirectUri = oxdConfig.getRedirectUri();
@@ -99,8 +94,8 @@ public class OxdService {
             } else {
 
                 String tmp = oxdConfig.getPostLogoutUri();
-                if (Utils.isNotEmpty(tmp)) {   //Use default post logout if not in config settings
-                    //Remove trailing slash if any in redirect URI
+                if (Utils.isEmpty(tmp)) {   //Use default post logout if not in config settings
+                    tmp = oxdRedirectUri;    //Remove trailing slash if any in redirect URI
                     tmp = tmp.endsWith("/") ? tmp.substring(0, tmp.length() - 1) : tmp;
                     oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
                 }
@@ -144,7 +139,7 @@ public class OxdService {
     }
 
     public void setSettings(OxdSettings config) throws Exception {
-
+        setSettings(config, false);
     }
 
     public void setSettings(OxdSettings config, boolean triggerRegistration) throws Exception {
@@ -158,7 +153,8 @@ public class OxdService {
 
         OxdClientSettings computedSettings;
         String clientName;
-        logger.info("Setting oxd configs (host: {}, port: {}, https extension: {}, post logout: {})", config.getHost(), config.getPort(), config.isUseHttpsExtension(), config.getPostLogoutUri());
+        logger.info("Setting oxd configs (host: {}, port: {}, https extension: {}, post logout: {})",
+                config.getHost(), config.getPort(), config.isUseHttpsExtension(), config.getPostLogoutUri());
 
         try {
             if (config.isUseHttpsExtension()) {
@@ -172,7 +168,7 @@ public class OxdService {
                 cmdParams.setClientName(clientName);
 
                 //TODO: bug 3.1.1?
-                List<String> scopes=new ArrayList<>(Arrays.asList(UserService.OPEN_ID_SCOPES));
+                List<String> scopes = new ArrayList<>(Arrays.asList(UserService.OPEN_ID_SCOPES));
                 scopes.add("uma_protection");
                 cmdParams.setScope(scopes);
                 //END
@@ -182,10 +178,10 @@ public class OxdService {
                 //cmdParams.setGrantType(Collections.singletonList("authorization_code"));      //this is the default grant
 
                 SetupClientResponse setup = restResponse(cmdParams, "setup-client", null, SetupClientResponse.class);
-                computedSettings=new OxdClientSettings(clientName, setup.getOxdId(), setup.getClientId(), setup.getClientSecret());
+                computedSettings = new OxdClientSettings(clientName, setup.getOxdId(), setup.getClientId(), setup.getClientSecret());
             }
             else{
-                clientName="cred-manager-" + consecutive;
+                clientName = "cred-manager-" + consecutive;
 
                 RegisterSiteParams cmdParams = new RegisterSiteParams();
                 cmdParams.setOpHost(config.getOpHost());
@@ -213,8 +209,7 @@ public class OxdService {
             }
             consecutive++;
             logger.info("oxd client registered successfully, oxd-id={}", computedSettings.getOxdId());
-        }
-        catch (Exception e){
+        } catch (Exception e){
             consecutive++;
             String msg="Setting oxd-server configs failed";
             logger.error(msg, e);
@@ -230,9 +225,9 @@ public class OxdService {
             RemoveSiteParams cmdParams = new RemoveSiteParams(oxdId);
             RemoveSiteResponse resp;
 
-            if (config.isUseHttpsExtension())
-                resp=restResponse(cmdParams, "remove-site", getPAT(), RemoveSiteResponse.class);
-            else {
+            if (config.isUseHttpsExtension()) {
+                resp = restResponse(cmdParams, "remove-site", getPAT(), RemoveSiteResponse.class);
+            } else {
                 CommandClient commandClient = null;
                 try {
                     commandClient = new CommandClient(config.getHost(), config.getPort());
@@ -264,9 +259,9 @@ public class OxdService {
         cmdParams.setPrompt(prompt);
 
         GetAuthorizationUrlResponse resp;
-        if (config.isUseHttpsExtension())
-            resp=restResponse(cmdParams, "get-authorization-url", getPAT(), GetAuthorizationUrlResponse.class);
-        else {
+        if (config.isUseHttpsExtension()) {
+            resp = restResponse(cmdParams, "get-authorization-url", getPAT(), GetAuthorizationUrlResponse.class);
+        } else {
             CommandClient commandClient = null;
             try {
                 commandClient = new CommandClient(config.getHost(), config.getPort());
@@ -281,7 +276,7 @@ public class OxdService {
     }
 
     public String getAuthzUrl(String acrValues) throws Exception {
-        return getAuthzUrl(Collections.singletonList(acrValues), null);  //"login"
+        return getAuthzUrl(Collections.singletonList(acrValues), null);
     }
 
     public Pair<String, String> getTokens(String code, String state) throws Exception{
@@ -292,9 +287,9 @@ public class OxdService {
         cmdParams.setState(state);
 
         GetTokensByCodeResponse resp;
-        if (config.isUseHttpsExtension())
+        if (config.isUseHttpsExtension()) {
             resp = restResponse(cmdParams, "get-tokens-by-code", getPAT(), GetTokensByCodeResponse.class);
-        else {
+        } else {
             CommandClient commandClient = null;
             try {
                 commandClient = new CommandClient(config.getHost(), config.getPort());
@@ -306,18 +301,19 @@ public class OxdService {
         }
         //validate accessToken with at_hash inside idToken: resp.getIdToken();
         return new Pair<>(resp.getAccessToken(), resp.getIdToken());
+
     }
 
-    public Map<String, List<String>> getUserClaims(String accessToken) throws Exception{
+    public Map<String, List<String>> getUserClaims(String accessToken) throws Exception {
 
         GetUserInfoParams cmdParams = new GetUserInfoParams();
         cmdParams.setOxdId(config.getClient().getOxdId());
         cmdParams.setAccessToken(accessToken);
 
         GetUserInfoResponse resp;
-        if (config.isUseHttpsExtension())
+        if (config.isUseHttpsExtension()) {
             resp = restResponse(cmdParams, "get-user-info", getPAT(), GetUserInfoResponse.class);
-        else {
+        } else {
             CommandClient commandClient = null;
             try {
                 commandClient = new CommandClient(config.getHost(), config.getPort());
@@ -331,7 +327,7 @@ public class OxdService {
 
     }
 
-    public String getLogoutUrl(String idTokenHint) throws Exception{
+    public String getLogoutUrl(String idTokenHint) throws Exception {
 
         GetLogoutUrlParams cmdParams = new GetLogoutUrlParams();
         cmdParams.setOxdId(config.getClient().getOxdId());
@@ -355,18 +351,23 @@ public class OxdService {
 
     }
 
-    public boolean updatePostLogoutUri(String uri) {
+    public boolean updateSite(String postLogoutUri, Long expiration) throws Exception {
 
         UpdateSiteParams cmdParams = new UpdateSiteParams();
         cmdParams.setOxdId(config.getClient().getOxdId());
-        cmdParams.setPostLogoutRedirectUri(uri);
+        if (postLogoutUri != null) {
+            cmdParams.setPostLogoutRedirectUri(postLogoutUri);
+        }
+        if (expiration != null) {
+            cmdParams.setClientSecretExpiresAt(new Date(expiration));
+        }
         return doUpdate(cmdParams);
 
     }
 
     public boolean extendSiteLifeTime() {
         /*
-        //Extending the life time cannot take place since scopes are changed by those defaulted in Gluu Server
+        //Extending the life time cannot take place because scopes are changed by those defaulted in Gluu Server
         //Unfortunately, the custom script that turns on the scopes is only run upon registration (not updates)
         //On the other hand, oxd site registration does not allow to set the expiration. To workaround it, the
         //associated client registration cust script is in charge of extending the lifetime
@@ -383,31 +384,26 @@ public class OxdService {
 
     }
 
-    private boolean doUpdate(UpdateSiteParams cmdParams) {
+    private boolean doUpdate(UpdateSiteParams cmdParams) throws Exception {
 
         UpdateSiteResponse resp = null;
-        try {
-            if (config.isUseHttpsExtension()) {
-                resp = restResponse(cmdParams, "update-site", getPAT(), UpdateSiteResponse.class);
-            } else {
-                CommandClient commandClient = null;
-                try {
-                    commandClient = new CommandClient(config.getHost(), config.getPort());
-                    Command command = new Command(CommandType.UPDATE_SITE).setParamsObject(cmdParams);
-                    resp = commandClient.send(command).dataAsResponse(UpdateSiteResponse.class);
-                } finally {
-                    CommandClient.closeQuietly(commandClient);
-                }
+        if (config.isUseHttpsExtension()) {
+            resp = restResponse(cmdParams, "update-site", getPAT(), UpdateSiteResponse.class);
+        } else {
+            CommandClient commandClient = null;
+            try {
+                commandClient = new CommandClient(config.getHost(), config.getPort());
+                Command command = new Command(CommandType.UPDATE_SITE).setParamsObject(cmdParams);
+                resp = commandClient.send(command).dataAsResponse(UpdateSiteResponse.class);
+            } finally {
+                CommandClient.closeQuietly(commandClient);
             }
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
         }
-
         return resp != null;
 
     }
 
-    private String getPAT() throws Exception{
+    private String getPAT() throws Exception {
 
         GetClientTokenParams cmdParams = new GetClientTokenParams();
         cmdParams.setOpHost(config.getOpHost());
@@ -423,7 +419,7 @@ public class OxdService {
 
     }
 
-    private <T> T restResponse(IParams params, String path, String token, Class <T> responseClass) throws Exception{
+    private <T> T restResponse(IParams params, String path, String token, Class <T> responseClass) throws Exception {
 
         String payload = mapper.writeValueAsString(params);
         logger.trace("Sending /{} request to oxd-https-extension with payload \n{}", path, payload);

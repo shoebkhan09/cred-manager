@@ -11,7 +11,7 @@ import com.unboundid.ldap.sdk.Filter;
 import org.gluu.credmanager.conf.sndfactor.TrustedDevice;
 import org.gluu.credmanager.conf.sndfactor.TrustedOrigin;
 import org.gluu.credmanager.core.TimerService;
-import org.gluu.credmanager.core.ldap.gluuPerson;
+import org.gluu.credmanager.core.ldap.PersonPreferences;
 import org.quartz.JobExecutionContext;
 import org.quartz.listeners.JobListenerSupport;
 import org.slf4j.Logger;
@@ -77,9 +77,9 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
         logger.info("TrustedDevicesSweeper. Running timer");
         long now = System.currentTimeMillis();
         StringEncrypter stringEncrypter = ldapService.getStringEncrypter();
-        List<gluuPerson> people = getPeopleTrustedDevices();
+        List<PersonPreferences> people = getPeopleTrustedDevices();
 
-        for (gluuPerson person : people) {
+        for (PersonPreferences person : people) {
             try {
                 String trustedDevicesInfo = person.getTrustedDevicesInfo();
                 if (stringEncrypter != null)
@@ -133,12 +133,12 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
 
     }
 
-    private List<gluuPerson> getPeopleTrustedDevices() {
+    private List<PersonPreferences> getPeopleTrustedDevices() {
 
-        List<gluuPerson> list = new ArrayList<>();
+        List<PersonPreferences> list = new ArrayList<>();
         try {
             String filther = Filter.createPresenceFilter("oxTrustedDevicesInfo").toString();
-            ldapService.find(gluuPerson.class, ldapService.getPeopleDn(), filther);
+            ldapService.find(PersonPreferences.class, ldapService.getPeopleDn(), filther);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -146,7 +146,7 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
 
     }
 
-    private void updateTrustedDevices(gluuPerson person, String jsonDevices) throws Exception {
+    private void updateTrustedDevices(PersonPreferences person, String jsonDevices) throws Exception {
 
         //TODO: is getinum needed in gluuPerson?
         String rdn = person.getInum();
@@ -157,7 +157,7 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
             person.setTrustedDevices(stringEncrypter.encrypt(jsonDevices));
         else
             person.setTrustedDevices(jsonDevices);
-        ldapService.modify(person, gluuPerson.class);
+        ldapService.modify(person, PersonPreferences.class);
 
     }
 }

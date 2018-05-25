@@ -80,7 +80,14 @@ public class HomeViewModel {
         sessionContext.setUser(user);
 
         userService.setupRequisites(user.getId());
-/**/
+
+/*
+        AuthnMethod twilioHandler = extensionsManager.getExtensionForAuthnMethod("twilio_sms");
+        twilioHandler.getEnrolledCreds("@!3245.DF39.6A34.9E97!0001!513A.9888!0000!A8F2.DE1E.D7FB");
+
+        AuthnMethod otpHandler = extensionsManager.getExtensionForAuthnMethod("otp");
+        otpHandler.getEnrolledCreds("@!3245.DF39.6A34.9E97!0001!513A.9888!0000!A8F2.DE1E.D7FB");
+*/
     }
 
     private void updateOffset(Object value) {

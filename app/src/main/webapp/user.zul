@@ -1,7 +1,8 @@
 <?init class="org.zkoss.zk.ui.util.Composition" arg0="/general.zul"?>
 <?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
 <?page title="${applicationScope.appName} - ${labels.usr.title}"?>
-<?link rel="icon" type="image/x-icon" href="${sessionContext.custdir}/images/favicon.ico" ?>
+<?link rel="icon" href="${sessionContext.faviconDataUri}" ?>
+<?link rel="stylesheet" type="text/css" href="${sessionContext.cssPath}"?>
 <?script src="/scripts/zxcvbn.js"?>
 <?script src="/scripts/main-util.js"?>
 
@@ -64,7 +65,7 @@
             </template>
         </div>
 
-        <zk if="${configurationHandler.passwordResetable}">
+        <zk if="${configurationHandler.settings.enablePassReset}">
             <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPwdResetOpened)">
                 <panelchildren sclass="padded form-horizontal">
                     <div sclass="panel5">

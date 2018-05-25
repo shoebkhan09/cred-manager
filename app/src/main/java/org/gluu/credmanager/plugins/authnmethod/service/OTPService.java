@@ -13,7 +13,7 @@ import com.lochbridge.oath.otp.TOTP;
 import com.lochbridge.oath.otp.TOTPBuilder;
 import com.lochbridge.oath.otp.keyprovisioning.OTPAuthURIBuilder;
 import com.lochbridge.oath.otp.keyprovisioning.OTPKey;
-import org.gluu.credmanager.core.ldap.gluuPersonOTP;
+import org.gluu.credmanager.core.ldap.PersonOTP;
 import org.gluu.credmanager.core.pojo.OTPDevice;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.plugins.authnmethod.OTPExtension;
@@ -67,8 +67,8 @@ public class OTPService extends BaseService {
 
         int total = 0;
         try {
-            gluuPersonOTP person = ldapService.get(gluuPersonOTP.class, ldapService.getPersonDn(userId));
-            total = (int) person.getExternalUidAsList().stream().filter(uid -> uid.startsWith("totp:") || uid.startsWith("hotp:")).count();
+            PersonOTP person = ldapService.get(PersonOTP.class, ldapService.getPersonDn(userId));
+            total = (int) person.getExternalUids().stream().filter(uid -> uid.startsWith("totp:") || uid.startsWith("hotp:")).count();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -80,12 +80,12 @@ public class OTPService extends BaseService {
 
         List<OTPDevice> devices = new ArrayList<>();
         try {
-            gluuPersonOTP person = ldapService.get(gluuPersonOTP.class, ldapService.getPersonDn(userId));
+            PersonOTP person = ldapService.get(PersonOTP.class, ldapService.getPersonDn(userId));
             String json = person.getOTPDevices();
             json = Utils.isEmpty(json) ? "[]" : mapper.readTree(json).get("devices").toString();
 
             List<OTPDevice> devs = mapper.readValue(json, new TypeReference<List<OTPDevice>>() { });
-            devices = person.getExternalUidAsList().stream().filter(uid -> uid.startsWith("totp:") || uid.startsWith("hotp:"))
+            devices = person.getExternalUids().stream().filter(uid -> uid.startsWith("totp:") || uid.startsWith("hotp:"))
                     .map(uid -> getExtraOTPInfo(uid, devs)).sorted().collect(Collectors.toList());
             logger.trace("getOTPDevices. User '{}' has {}", userId, devices.stream().map(OTPDevice::getId).collect(Collectors.toList()));
         } catch (Exception e) {
@@ -107,11 +107,11 @@ public class OTPService extends BaseService {
             String json = uids.length == 0 ? null : mapper.writeValueAsString(Collections.singletonMap("devices", vdevices));
 
             logger.debug("Updating otp devicces for user '{}'", userId);
-            gluuPersonOTP person = ldapService.get(gluuPersonOTP.class, userId);
+            PersonOTP person = ldapService.get(PersonOTP.class, userId);
             person.setOTPDevices(json);
             person.setExternalUid(uids);
 
-            success = ldapService.modify(person, gluuPersonOTP.class);
+            success = ldapService.modify(person, PersonOTP.class);
 
             if (success && newDevice != null) {
                 devices.add(newDevice);

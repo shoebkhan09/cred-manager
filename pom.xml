@@ -26,13 +26,16 @@
         <eventbus.version>3.1.1</eventbus.version>
         <log4j.version>2.8.2</log4j.version>
         <oxd.version>3.1.3.Final</oxd.version>
-        <ox.version>3.2.0-SNAPSHOT</ox.version>
+        <ox.version>3.1.4-SNAPSHOT</ox.version>
+        <!--ox.version>3.2.0-SNAPSHOT</ox.version-->
         <jackson.version>2.5.3</jackson.version>
         <zk.version>8.5.0</zk.version>
         <ldapsdk.version>3.2.0</ldapsdk.version>
         <quartz.version>2.2.3</quartz.version>
         <resteasy.version>3.0.21.Final</resteasy.version>
         <jaxr.version>3.0.12.Final</jaxr.version>
+        <mimemagic.version>0.1.3</mimemagic.version>
+        <commons-beanutils>1.8.3</commons-beanutils>
     </properties>
 
     <repositories>
@@ -106,6 +109,18 @@
                 <version>${jackson.version}</version>
             </dependency>
 
+            <!-- JMIME MAGIC -->
+            <dependency>
+                <groupId>net.sf.jmimemagic</groupId>
+                <artifactId>jmimemagic</artifactId>
+                <version>${mimemagic.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

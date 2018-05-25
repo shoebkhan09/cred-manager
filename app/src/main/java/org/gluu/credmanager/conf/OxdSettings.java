@@ -6,6 +6,7 @@
 package org.gluu.credmanager.conf;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -64,6 +65,7 @@ public class OxdSettings {
         return acrValues;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public OxdClientSettings getClient() {
         return client;
     }

@@ -160,6 +160,12 @@
             <groupId>org.zkoss.common</groupId>
             <artifactId>zcommon</artifactId>
             <version>${zk.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-jdk14</artifactId>
+                </exclusion>
+            </exclusions>
             <!--version>8.5.1-SNAPSHOT</version-->
         </dependency>
 
@@ -262,6 +268,12 @@
         <dependency>
             <groupId>org.pf4j</groupId>
             <artifactId>pf4j</artifactId>
+        </dependency>
+
+        <!-- JMIME MAGIC -->
+        <dependency>
+            <groupId>net.sf.jmimemagic</groupId>
+            <artifactId>jmimemagic</artifactId>
         </dependency>
 
     </dependencies>

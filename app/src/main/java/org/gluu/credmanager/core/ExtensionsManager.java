@@ -7,7 +7,6 @@ package org.gluu.credmanager.core;
 
 import org.gluu.credmanager.conf.MainSettings;
 import org.gluu.credmanager.extension.AuthnMethod;
-import org.gluu.credmanager.extension.OpenIdFlow;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.IExtensionsManager;
 import org.pf4j.*;
@@ -37,8 +36,6 @@ import java.util.stream.Stream;
 public class ExtensionsManager implements IExtensionsManager {
 
     public static final String ASSETS_DIR = "assets";
-
-    private static final Class<OpenIdFlow> OPENID_FLOW_CLASS = OpenIdFlow.class;
     private static final Class<AuthnMethod> AUTHN_METHOD_CLASS = AuthnMethod.class;
 
     @Inject
@@ -63,15 +60,12 @@ public class ExtensionsManager implements IExtensionsManager {
 
     private Deque<Pair<AuthnMethod, String>> authnMethodsExts;
 
-    private Deque<Pair<OpenIdFlow, String>> openIdFlowExts;
-
     private boolean inspectExternalPath;
 
     @PostConstruct
     private void inited() {
 
         authnMethodsExts = new LinkedList<>();
-        openIdFlowExts = new LinkedList<>();
 
         Path pluginsPath = Optional.ofNullable(mainSettings.getPluginsPath()).map(Paths::get).orElse(null);
         if (pluginsPath != null && Files.isDirectory(pluginsPath)) {
@@ -102,24 +96,6 @@ public class ExtensionsManager implements IExtensionsManager {
 
     }
 
-    private OpenIdFlow scanOpenIdMechanism() {
-
-        OpenIdFlow actualOIE = null;
-        List<OpenIdFlow> oidExtensions = pluginManager.getExtensions(OPENID_FLOW_CLASS);
-
-        if (oidExtensions == null || oidExtensions.size() == 0) {
-            logger.warn("No system extension found for OpenId flow!");
-        } else {
-            actualOIE = oidExtensions.stream().findAny().get();
-
-            if (oidExtensions.size() > 1) {
-                logger.warn("Several system extensions for OpenId flow were found, keeping only '{}'", actualOIE.getName());
-            }
-        }
-        return actualOIE;
-
-    }
-
     private void parsePluginAuthnMethodExtensions(String pluginId) {
 
         List<AuthnMethod> ames = pluginManager.getExtensions(AUTHN_METHOD_CLASS, pluginId);
@@ -132,19 +108,6 @@ public class ExtensionsManager implements IExtensionsManager {
                 authnMethodsExts.add(new Pair<>(ext, pluginId));
             }
 
-        }
-
-    }
-
-    private void parsePluginOpenIdFlowExtensions(String pluginId) {
-
-        List<OpenIdFlow> oidExtensions = pluginManager.getExtensions(OPENID_FLOW_CLASS, pluginId);
-        if (oidExtensions.size() > 0) {
-            logger.info("Plugin extends {} at {} point(s)", OPENID_FLOW_CLASS.getName(), oidExtensions.size());
-
-            for (OpenIdFlow ext: oidExtensions) {
-                openIdFlowExts.add(new Pair<>(ext, pluginId));
-            }
         }
 
     }
@@ -179,11 +142,6 @@ public class ExtensionsManager implements IExtensionsManager {
         List<AuthnMethod> authnMethodsExtsList = scanInnerAuthnMechanisms();
         authnMethodsExtsList.forEach(ame -> authnMethodsExts.add(new Pair<>(ame, null)));
 
-        OpenIdFlow openIdFlowExt = scanOpenIdMechanism();
-        if (openIdFlowExt != null) {
-            openIdFlowExts.add(new Pair<>(openIdFlowExt, null));
-        }
-
         if (inspectExternalPath) {
             logger.info("Loading external plugins...");
             pluginManager.loadPlugins();
@@ -202,11 +160,9 @@ public class ExtensionsManager implements IExtensionsManager {
                 logger.info("Plugin {} ({})", pluginId, wrapper.getDescriptor().getPluginClass());
 
                 parsePluginAuthnMethodExtensions(pluginId);
-                parsePluginOpenIdFlowExtensions(pluginId);
 
                 Set<String> classNames = pluginManager.getExtensionClassNames(pluginId);
                 //classNames.remove(AUTHN_METHOD_CLASS.getName());
-                //classNames.remove(OPENID_FLOW_CLASS.getName());
 
                 if (classNames.size() > 0) {
                     logger.info("Plugin's extensions are at: {}", classNames.toString());
@@ -221,10 +177,6 @@ public class ExtensionsManager implements IExtensionsManager {
             logger.warn("Several extensions pretend to handle the same acr.");
             logger.warn("Only the last one parsed for the plugin referenced in the config file will be effective");
             logger.warn("The system extension (if exists) will be used if no plugin can handle an acr");
-        }
-
-        if (openIdFlowExts.size() > 1) {
-            logger.warn("Only the last one extension added for OpenId Flow will be used.");
         }
 
     }
@@ -261,11 +213,6 @@ public class ExtensionsManager implements IExtensionsManager {
         } else {
             return idsStream.anyMatch(id -> id.equals(plugId));
         }
-    }
-
-    public OpenIdFlow getExtensionForOpenIdFlow() {
-        //Return the latest added available
-        return openIdFlowExts.size() == 0 ? null : openIdFlowExts.getLast().getX();
     }
 
     public ClassLoader getPluginClassLoader(String clsName) {
@@ -327,11 +274,6 @@ public class ExtensionsManager implements IExtensionsManager {
                         authnMethodsExts.remove(pair);
                     }
                 });
-                openIdFlowExts.forEach(pair -> {
-                    if (pluginId.equals(pair.getY())) {
-                        openIdFlowExts.remove(pair);
-                    }
-                });
                 zkService.removePluginLabels(pluginId);
                 registryHandler.remove(pluginId);
                 resourceExtractor.removeDestinationDirectory(getDestinationPathForPlugin(pluginId));
@@ -361,7 +303,6 @@ public class ExtensionsManager implements IExtensionsManager {
 
         if (PluginState.STARTED.equals(state)) {
             parsePluginAuthnMethodExtensions(pluginId);
-            parsePluginOpenIdFlowExtensions(pluginId);
 
             /*
             //Notifies activation/deactivation for extensions handling authentication methods

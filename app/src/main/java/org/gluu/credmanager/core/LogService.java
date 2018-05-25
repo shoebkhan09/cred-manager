@@ -15,12 +15,14 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * Most methods in this class assumes the SLF4J binding employed is Log4j2. If binding is changed, methods need to be
  * updated.
  * @author jgomer
  */
+@Named
 @ApplicationScoped
 public class LogService {
 

@@ -1,8 +1,7 @@
 @import url('common.css');
 /* Styles for desktop devices only */
 .logo{
-    width:158px;
-    height:62px;
+    max-width:160px;
 }
 .s5{
     width: 125px;
@@ -45,18 +44,20 @@
 .z-panel-header{
     font-size: 16px;
 }
+/*
 .btn{
     font-size: 16px;
-}
+}*/
 .btn-link{
     padding: 10px 0px 0px 0px;
 }
 .z-panel-head{
     padding-left:15px;
 }
+/*
 .form_button{
     font-size: 14px;
-}
+}*/
 .callout {
 	padding-left: 15px;
 	border-left: 6px solid #eee;

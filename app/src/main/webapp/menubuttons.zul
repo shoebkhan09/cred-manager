@@ -8,8 +8,9 @@
             <div sclass="btn-group padded" children="@load(vm.menuItems)">
                 <template name="children">
                     <button image="@load(c:cat3(sessionContext.custdir, '/', each.iconImageUrl))" style="@load(each.style)"
-                            href="@load(each.pageUrl)" sclass="${sessionContext.onMobile ? 'btn-xs' : 'btn-sm'} btn-primary form_button"
-                            label="@load(empty each.uiLabelKey ? each.label : c:l(each.uiLabelKey))" />
+                            label="@load(empty each.uiLabelKey ? each.label : c:l(each.uiLabelKey))"
+                            href="@load(each.pageUrl)" sclass="btn-primary btn-xs" />
+                    <!-- ${sessionContext.onMobile ? 'btn-xs' : 'btn-sm'}  -->
                 </template>
             </div>
         </div>

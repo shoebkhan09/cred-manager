@@ -25,6 +25,9 @@ public class SessionContext implements Serializable {
     @Inject
     private MainSettings settings;
 
+    @Inject
+    private ZKService zkService;
+
     private User user;
 
     private String custdir;
@@ -39,10 +42,18 @@ public class SessionContext implements Serializable {
 
     private ZoneOffset zoneOffset;
 
+    private String logoDataUri;
+
+    private String faviconDataUri;
+
     @PostConstruct
     private void inited() {
-        //custdir is fixed during the whole session no matter if admin specified a different thing
-        custdir = settings.getBrandingPath() == null ? "" : "/custom";
+
+        //these 3 variables are fixed during the whole session no matter if a different thing was specified later via admin UI
+        custdir = settings.getBrandingPath() == null ? "" : ZKService.DEFAULT_CUSTOM_PATH;
+        logoDataUri = zkService.getLogoDataUri();
+        faviconDataUri = zkService.getFaviconDataUri();
+
     }
 
     public ZoneOffset getZoneOffset() {
@@ -71,6 +82,14 @@ public class SessionContext implements Serializable {
 
     public String getCssPath() {
         return cssPath;
+    }
+
+    public String getLogoDataUri() {
+        return logoDataUri;
+    }
+
+    public String getFaviconDataUri() {
+        return faviconDataUri;
     }
 
     public void setCustdir(String custdir) {

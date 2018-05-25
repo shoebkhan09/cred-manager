@@ -4,8 +4,7 @@ body{
     padding:0 !important;
 }
 .logo{
-    width:120px;
-    height:47px;
+    max-width:120px;
 }
 .s5{
     width: 100px;
@@ -43,18 +42,20 @@ body{
 .z-panel-header{
     font-size: 13px;
 }
+/*
 .btn{
     font-size: 13px;
-}
+}*/
 .btn-link{
     padding: 0px 0px 0px 20px;
 }
 .z-panel-head{
     padding-left:12px;
 }
+/*
 .form_button{
     font-size: 12px;
-}
+}*/
 .callout {
 	padding-left: 12px;
 	border-left: 5px solid #eee;
@@ -96,6 +97,9 @@ body{
 .rule-sm{
     margin-top:10px;
     width: 320px;
+}
+.z-toolbar-content span{
+	font-size:12px;
 }
 .z-paging-info{
     display:none;

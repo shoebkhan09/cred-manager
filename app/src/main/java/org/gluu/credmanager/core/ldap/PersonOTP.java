@@ -5,12 +5,9 @@
  */
 package org.gluu.credmanager.core.ldap;
 
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import org.gluu.credmanager.misc.Utils;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,19 +19,7 @@ import java.util.List;
  */
 @LDAPObject(structuralClass="gluuPerson",
         superiorClass="top")
-public class gluuPersonOTP {
-
-    // The field to use to hold a read-only copy of the associated entry.
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
-
-    // The field used for RDN attribute ou.
-    @LDAPField(attribute="inum",
-            objectClass="gluuPerson",
-            inRDN=true,
-            filterUsage=FilterUsage.ALWAYS_ALLOWED,
-            requiredForEncode=true)
-    private String[] inum;
+public class PersonOTP extends BaseLdapPerson {
 
     // The field used for optional attribute oxMobileDevices.
     @LDAPField(attribute="oxExternalUid",
@@ -61,12 +46,8 @@ public class gluuPersonOTP {
     }
 
 
-    public List<String> getExternalUidAsList() {
-        if (Utils.isEmpty(oxExternalUid)) {
-            return Collections.emptyList();
-        } else {
-            return Arrays.asList(oxExternalUid);
-        }
+    public List<String> getExternalUids() {
+        return Utils.listfromArray(oxExternalUid);
     }
 
 
@@ -96,7 +77,7 @@ public class gluuPersonOTP {
      * Sets the values for the field associated with the
      * oxOTPDevices attribute.
      *
-     * @param  v  The values for the field associated with the
+     * @param  value  The values for the field associated with the
      *            oxOTPDevices attribute.
      */
     public void setOTPDevices(final String value)

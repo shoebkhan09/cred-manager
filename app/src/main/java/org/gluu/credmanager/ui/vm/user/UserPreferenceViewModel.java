@@ -99,8 +99,8 @@ public class UserPreferenceViewModel extends UserViewModel {
 
         //Note: It may happen user already has enrolled credentials, but admin changed availability of method. In that
         //case user should not be able to edit
-        uiEditable = totalCreds >= confHandler.getMinCredsFor2FA() && availMethods.size() > 0;
-        uiNotEnoughCredsFor2FA = totalCreds < confHandler.getMinCredsFor2FA() && enabledMethods.size() > 0;
+        uiEditable = totalCreds >= confHandler.getSettings().getMinCredsFor2FA() && availMethods.size() > 0;
+        uiNotEnoughCredsFor2FA = totalCreds < confHandler.getSettings().getMinCredsFor2FA() && enabledMethods.size() > 0;
 
         availMethods.add(new Pair<>(null, noMethodName));
 

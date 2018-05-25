@@ -5,7 +5,6 @@
  */
 package org.gluu.credmanager.core.ldap;
 
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import org.gluu.credmanager.misc.Utils;
 
@@ -22,19 +21,7 @@ import java.util.List;
  */
 @LDAPObject(structuralClass="gluuPerson",
         superiorClass="top")
-public class gluuPersonMobile {
-
-    // The field to use to hold a read-only copy of the associated entry.
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
-
-    // The field used for RDN attribute inum.
-    @LDAPField(attribute="inum",
-            objectClass="gluuPerson",
-            inRDN=true,
-            filterUsage=FilterUsage.ALWAYS_ALLOWED,
-            requiredForEncode=true)
-    private String[] inum;
+public class PersonMobile extends BaseLdapPerson {
 
     // The field used for optional attribute oxMobileDevices.
     @LDAPField(attribute="oxMobileDevices",

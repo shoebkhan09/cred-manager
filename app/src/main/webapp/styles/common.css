@@ -1,9 +1,9 @@
+@import url('bootstrap.min.css');
 .mainDiv{
     border:1px #00BE79 solid;
 }
 .header{
-    background:#00BE79;
-    color: #fff;
+    background-color:#00BE79;
 }
 .header .btn-link{
     color: #fff;
@@ -63,4 +63,18 @@ input[type="radio"], input[type="checkbox"]{
     border-style:solid;
     border-width:0 1px 0 0;
     border-color:#ccc;
+}
+.upload_button {
+    padding:10px;
+    color:#333;
+}
+.image_preview {
+    border:1px dashed #000;
+    background-color:#eee;
+}
+.color_picker {
+    padding:5px;
+    height:30px;
+    background-color:#fff;
+    border: 1px solid #ccc;
 }

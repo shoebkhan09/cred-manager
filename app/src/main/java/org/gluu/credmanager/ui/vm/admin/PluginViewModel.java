@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  * @author jgomer
  */
 @VariableResolver(DelegatingVariableResolver.class)
-public class PluginViewModel extends UserViewModel {
+public class PluginViewModel /*extends UserViewModel*/ {
 
     private static final Class<AuthnMethod> AUTHN_METHOD = AuthnMethod.class;
 
@@ -74,7 +74,7 @@ public class PluginViewModel extends UserViewModel {
         return uiAdding;
     }
 
-    @Init(superclass = true)
+    @Init//(superclass = true)
     public void init() {
         reloadPluginList();
     }
@@ -110,12 +110,17 @@ public class PluginViewModel extends UserViewModel {
                     if (pluginList.stream().anyMatch(pl -> pl.getDescriptor().getPluginId().equals(id))) {
                         Utils.showMessageUI(false, Labels.getLabel("adm.plugins_already_existing", new String[] { id }));
                     } else if (Stream.of(id, version).allMatch(Utils::isNotEmpty)) {
-                        String fileName = String.format("%s_%s.jar", id, version);
-                        //Copy the jar to plugins dir and use a suitablename
+                        String fileName = evt.getMedia().getName(); // String.format("%s_%s.jar", id, version);
+                        //Copy the jar to plugins dir
                         try {
+                            //TODO: https://github.com/pf4j/pf4j/issues/217, copy it to a tmp destination?
                             Path path = Files.write(Paths.get(extManager.getPluginsRoot().toString(), fileName), blob, StandardOpenOption.CREATE_NEW);
                             String pluginId = extManager.loadPlugin(path);
-
+                            /*
+                            logger.debug("unaded {}", extManager.unloadPlugin(pluginId));
+                            logger.debug("Deleted {} {} ", path, Files.deleteIfExists(path));
+                            logger.debug("eists {}", Files.exists(path));
+                            */
                             if (pluginId == null) {
                                 logger.warn("Loading plugin from {} returned no pluginId.", path.toString());
                                 Files.delete(path);
@@ -150,6 +155,7 @@ public class PluginViewModel extends UserViewModel {
     @NotifyChange({"pluginList"})
     @Command
     public void deletePlugin(@BindingParam("id") String pluginId) {
+        //TODO: https://github.com/pf4j/pf4j/issues/217, if not solved disable the plugin (and populate pluginList with started/resolved plugins only filter those )
         boolean success = extManager.deletePlugin(pluginId);
         if (success) {
             PluginData pluginData = pluginList.stream().filter(pl -> pl.getDescriptor().getPluginId().equals(pluginId))
@@ -183,7 +189,7 @@ public class PluginViewModel extends UserViewModel {
         try {
             hidePluginInfo();
             extManager.unloadPlugin(plugId);
-            //TODO: pf4j bug, uncomment deletion when solved
+            //TODO: https://github.com/pf4j/pf4j/issues/217, uncomment deletion when solved or copy jar to plugins dir
             //Files.delete(Paths.get(path));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

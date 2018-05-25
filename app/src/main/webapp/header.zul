@@ -2,25 +2,28 @@
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 
-    <hlayout width="100%" sclass="header" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.user.UserViewModel')">
-        <hlayout hflex="1" valign="middle">
-            <image sclass="logo" src="/images/logo.png"/>
+    <hlayout width="100%" sclass="header" viewModel="@id('vm') @init('org.gluu.credmanager.ui.vm.user.UserViewModel')" valign="middle">
+        <hlayout width="180px">
+            <image sclass="logo" src="${sessionContext.logoDataUri}"/>
         </hlayout>
-        <zk choose="">
-            <zk when="${sessionContext.onMobile}">
-                <div width="50px">
-                    <button sclass="btn-success btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
+        <div hflex="1" align="right" style="padding-right:5px">
+            <!--attribute name="width" if="${sessionContext.onMobile}">50px</attribute-->
+            <zk choose="">
+                <zk when="${sessionContext.onMobile}">
+                    <button sclass="btn-link dropdown-toggle" popup="pop, after_start, type=toggle"
                             style="font-size:30px;padding-left:0px" label="☰" />
-                </div>
+                </zk>
+                <zk>
+                    <!-- these 3 buttons MUST go in the same line -->
+                    <button sclass="btn-link dropdown-toggle header" popup="pop, after_start, type=toggle" style="font-size:16px"
+                            label="@load(c:cat3(c:l('general.welcome'),' ', sessionContext.user.givenName))" /><button
+                        sclass="btn-link dropdown-toggle header usericon" popup="pop, after_end, type=toggle" label=""
+                        iconSclass="glyphicon glyphicon-user" style="font-size:40px; padding:15px 5px 0px 5px; color:#333;"
+                /><button popup="pop, after_end, type=toggle" label="" sclass="btn-link dropdown-toggle header" iconSclass="caret" />
+                    <!--div sclass="glyphicon glyphicon-user" style="..."> </div-->
+                </zk>
             </zk>
-            <zk>
-                <div style="padding-right:10px">
-                    <button dir="reverse" sclass="btn-success btn-link dropdown-toggle" iconSclass="caret"
-                            popup="pop, after_start, type=toggle" image="${sessionContext.custdir}/images/shadowed_man.png"
-                            label="@load(c:cat3(c:l('general.welcome'),' ', sessionContext.user.givenName))" />
-                </div>
-            </zk>
-        </zk>
+        </div>
 
         <menupopup id="pop">
             <!-- LANGUAGE SELECTOR>

@@ -1,7 +1,10 @@
 <?page title="${applicationScope['appName']}"?>
 <?init class="org.gluu.credmanager.core.navigation.HomeInitiator"?>
+<?variable-resolver class="org.zkoss.zkplus.cdi.DelegatingVariableResolver" ?>
+<?link rel="icon" href="${sessionContext.faviconDataUri}"?>
 <?script src="/scripts/platform.js"?>
 <?script src="/scripts/main-util.js"?>
+
 <zk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.zkoss.org/2005/zul"
     xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.zkoss.org/2005/zul/zul.xsd">
 

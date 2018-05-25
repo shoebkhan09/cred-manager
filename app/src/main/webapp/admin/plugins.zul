@@ -40,7 +40,7 @@
                                 <column width="100px" label="${labels.adm.plugins_pluginId}" />
                                 <column width="65px" label="${labels.adm.plugins_status}" />
                                 <column label="${labels.adm.plugins_implements}" />
-                                <column width="125px" label="" />
+                                <column width="120px" label="" />
                             </columns>
                             <template name="model">
                                 <row style="cursor:pointer" onClick="@command('showPlugin', id=each.descriptor.pluginId)" tooltip="tooltip_details, after_center">
@@ -73,7 +73,7 @@
                         <image src="${sessionScope.custdir}/images/throbber.gif" id="throbber" visible="false" />
                         <button id="uplButton" label="${labels.adm.plugins_upload}" onUpload="@command('uploaded', uplEvent=event)"
                                 upload="zk.progressMonitor,maxsize=10240,multiple=false,accept=application/java-archive"
-                                disabled="@load(vm.uiAdding)" tooltip="tooltip_upload, after_end" style="padding:10px;color:#333" />
+                                disabled="@load(vm.uiAdding)" tooltip="tooltip_upload, after_end" sclass="upload_button" />
                     </hlayout>
                 </div>
             </vlayout>

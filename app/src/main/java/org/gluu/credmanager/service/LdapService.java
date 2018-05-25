@@ -13,14 +13,13 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import com.unboundid.ldap.sdk.persist.PersistedObjects;
 import org.gluu.credmanager.conf.LdapSettings;
 import org.gluu.credmanager.conf.MainSettings;
-import org.gluu.credmanager.core.ldap.gluuOrganization;
-import org.gluu.credmanager.core.ldap.gluuPersonMember;
-import org.gluu.credmanager.core.ldap.oxAuthConfiguration;
-import org.gluu.credmanager.core.ldap.oxCustomScript;
-import org.gluu.credmanager.core.ldap.oxTrustConfiguration;
+import org.gluu.credmanager.core.ldap.*;
 import org.gluu.credmanager.misc.Utils;
-import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
-import org.gluu.persist.ldap.operation.LdapOperationService;
+//import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
+//import org.gluu.persist.ldap.operation.LdapOperationService;
+import org.gluu.site.ldap.LDAPConnectionProvider;
+import org.gluu.site.ldap.OperationsFacade;
+import org.gluu.site.ldap.persistence.LdapEntryManager;
 import org.slf4j.Logger;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.PropertiesDecrypter;
@@ -52,7 +51,10 @@ public class LdapService implements ILdapService {
 
     private boolean inService;
 
-    private LdapOperationService ldapOperationService;
+    //private LdapOperationService ldapOperationService;
+    private OperationsFacade ldapOperationService;
+
+    private LdapEntryManager ldapEntryManager;
 
     private String orgInum;
 
@@ -94,25 +96,35 @@ public class LdapService implements ILdapService {
 
         try {
             mapper = new ObjectMapper();
-            LdapSettings ldapSettings = settings.getLdapSettings();
+            inService = setup(settings.getLdapSettings());
 
-            Properties ldapProperties = new FileConfiguration(ldapSettings.getOxLdapLocation()).getProperties();
-            String saltFile = ldapSettings.getSaltLocation();
-
-            if (Utils.isNotEmpty(saltFile)) {
-                String salt = new FileConfiguration(saltFile).getProperties().getProperty("encodeSalt");
-                stringEncrypter = StringEncrypter.instance(salt);
-                ldapProperties = PropertiesDecrypter.decryptProperties(stringEncrypter, ldapProperties);
-            }
-            ldapOperationService = new LdapEntryManagerFactory().createEntryManager(ldapProperties).getOperationService();
-
-            mapper = new ObjectMapper();
-            //Initialize important class members
-            inService = loadApplianceSettings(ldapProperties);
             logger.info("LDAPService was{} initialized successfully", inService ? "" : " not");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
+
+    }
+
+    public boolean setup(LdapSettings ldapSettings) throws Exception {
+
+        Properties ldapProperties = new FileConfiguration(ldapSettings.getOxLdapLocation()).getProperties();
+        String saltFile = ldapSettings.getSaltLocation();
+
+        if (Utils.isNotEmpty(saltFile)) {
+            String salt = new FileConfiguration(saltFile).getProperties().getProperty("encodeSalt");
+            stringEncrypter = StringEncrypter.instance(salt);
+            ldapProperties = PropertiesDecrypter.decryptProperties(stringEncrypter, ldapProperties);
+        }
+        //3.2.0 style
+        //ldapOperationService = new LdapEntryManagerFactory().createEntryManager(ldapProperties).getOperationService();
+        //ldapEntryManager = ldapOperationService.get...
+
+        //3.1.x style:
+        ldapEntryManager = new LdapEntryManager(new OperationsFacade(new LDAPConnectionProvider(ldapProperties)));
+        ldapOperationService = ldapEntryManager.getLdapOperationService();
+
+        //Initialize important class members
+        return loadApplianceSettings(ldapProperties);
 
     }
 
@@ -181,9 +193,9 @@ public class LdapService implements ILdapService {
         gluuOrganization organization = getOrganization();
         DN[] dns = organization.getGluuManagerGroupDNs();
 
-        gluuPersonMember personMember = get(gluuPersonMember.class, getPersonDn(userId));
+        Person personMember = get(Person.class, getPersonDn(userId));
         return personMember != null
-                && personMember.getMemberOfDNsAsList().stream().anyMatch(m -> Stream.of(dns).anyMatch(dn -> m.equals(dn)));
+                && personMember.getMemberOfDNs().stream().anyMatch(m -> Stream.of(dns).anyMatch(dn -> m.equals(dn)));
 
     }
 

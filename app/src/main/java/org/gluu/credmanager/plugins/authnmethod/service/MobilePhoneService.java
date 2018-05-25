@@ -10,7 +10,7 @@ import com.twilio.sdk.TwilioRestClient;
 import com.twilio.sdk.resource.factory.MessageFactory;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-import org.gluu.credmanager.core.ldap.gluuPersonMobile;
+import org.gluu.credmanager.core.ldap.PersonMobile;
 import org.gluu.credmanager.core.pojo.VerifiedMobile;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.plugins.authnmethod.OTPSmsExtension;
@@ -70,9 +70,9 @@ public class MobilePhoneService extends BaseService {
 
     public boolean isNumberRegistered(String number) {
 
-        gluuPersonMobile person = new gluuPersonMobile();
+        PersonMobile person = new PersonMobile();
         person.setMobile(number);
-        List<gluuPersonMobile> matchingPeople = ldapService.find(person, gluuPersonMobile.class, ldapService.getPeopleDn());
+        List<PersonMobile> matchingPeople = ldapService.find(person, PersonMobile.class, ldapService.getPeopleDn());
         return Utils.isNotEmpty(matchingPeople);
 
     }
@@ -129,11 +129,11 @@ public class MobilePhoneService extends BaseService {
             String json = numbers.length > 0 ? mapper.writeValueAsString(Collections.singletonMap("phones", vphones)) : null;
 
             logger.debug("Updating phones for user '{}'", userId);
-            gluuPersonMobile person = ldapService.get(gluuPersonMobile.class, ldapService.getPersonDn(userId));
+            PersonMobile person = ldapService.get(PersonMobile.class, ldapService.getPersonDn(userId));
             person.setMobileDevices(json);
             person.setMobile(numbers);
 
-            success = ldapService.modify(person, gluuPersonMobile.class);
+            success = ldapService.modify(person, PersonMobile.class);
 
             if (success && newPhone != null) {
                 //modify list only if LDAP update took place
@@ -155,7 +155,7 @@ public class MobilePhoneService extends BaseService {
 
         int total = 0;
         try {
-            gluuPersonMobile person = ldapService.get(gluuPersonMobile.class, ldapService.getPersonDn(userId));
+            PersonMobile person = ldapService.get(PersonMobile.class, ldapService.getPersonDn(userId));
             total = person.getMobileAsList().size();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -168,7 +168,7 @@ public class MobilePhoneService extends BaseService {
 
         List<VerifiedMobile> phones = new ArrayList<>();
         try {
-            gluuPersonMobile person = ldapService.get(gluuPersonMobile.class, ldapService.getPersonDn(userId));
+            PersonMobile person = ldapService.get(PersonMobile.class, ldapService.getPersonDn(userId));
             String json = person.getMobileDevices();
             json = Utils.isEmpty(json) ? "[]" : mapper.readTree(json).get("phones").toString();
 
