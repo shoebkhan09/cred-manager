@@ -31,9 +31,6 @@ public class MainSettings {
     @JsonProperty("enable_pass_reset")
     private boolean enablePassReset;
 
-    @JsonProperty("plugins_path")
-    private String pluginsPath;
-
     @JsonProperty("branding_path")
     private String brandingPath;
 
@@ -58,6 +55,9 @@ public class MainSettings {
 
     @JsonProperty("acr_plugin_mapping")
     private Map<String, String> acrPluginMap;
+
+    @JsonProperty("plugins")
+    private List<PluginInfo> knownPlugins;
 
     @JsonProperty("extra_css")
     private String extraCssSnippet;
@@ -97,11 +97,6 @@ public class MainSettings {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public String getPluginsPath() {
-        return pluginsPath;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public String getBrandingPath() {
         return brandingPath;
     }
@@ -131,6 +126,11 @@ public class MainSettings {
         return trustedDevicesSettings;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<PluginInfo> getKnownPlugins() {
+        return knownPlugins;
+    }
+
     public OxdSettings getOxdSettings() {
         return oxdSettings;
     }
@@ -145,10 +145,6 @@ public class MainSettings {
 
     public List<EnforcementPolicy> getEnforcement2FA() {
         return enforcement2FA;
-    }
-
-    public void setPluginsPath(String pluginsPath) {
-        this.pluginsPath = pluginsPath;
     }
 
     public void setEnablePassReset(boolean enablePassReset) {
@@ -197,6 +193,10 @@ public class MainSettings {
 
     public void setTrustedDevicesSettings(TrustedDevicesSettings trustedDevicesSettings) {
         this.trustedDevicesSettings = trustedDevicesSettings;
+    }
+
+    public void setKnownPlugins(List<PluginInfo> knownPlugins) {
+        this.knownPlugins = knownPlugins;
     }
 
 }

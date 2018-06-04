@@ -47,10 +47,10 @@ public class LdapSettingsViewModel extends MainViewModel {
 
     @NotifyChange({"ldapSettings"})
     @Command
-    public void save(){
+    public void save() {
 
         //salt is optional
-        if (Utils.isNotEmpty(ldapSettings.getOxLdapLocation()) && ldapSettings.getOxLdapLocation().trim().length()>0) {
+        if (Utils.isNotEmpty(ldapSettings.getOxLdapLocation()) && ldapSettings.getOxLdapLocation().trim().length() > 0) {
             String msg = updateLdapSettings();
             if (msg != null) {
                 reloadConfig();
@@ -60,8 +60,7 @@ public class LdapSettingsViewModel extends MainViewModel {
                 updateMainSettings();
             }
             //BindUtils.postNotifyChange(null, null, this, "ldapSettings");
-        }
-        else {
+        } else {
             Utils.showMessageUI(false, Labels.getLabel("adm.ldap_nonempty"));
         }
 
@@ -76,7 +75,7 @@ public class LdapSettingsViewModel extends MainViewModel {
 
         boolean success = false;
         String msg = null;
-        try{
+        try {
             logger.info("Testing newer LDAP settings");
             success = ldapService.setup(ldapSettings);
         } catch (Exception e) {

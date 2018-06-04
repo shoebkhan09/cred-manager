@@ -22,18 +22,21 @@ public class TrustedDeviceComparator implements Comparator<TrustedDevice> {
 
     public int compare(TrustedDevice t1, TrustedDevice t2) {
 
-        if (t1 == null && t2 == null)
+        if (t1 == null && t2 == null) {
             return 0;
-        if (t1 == null)
+        }
+        if (t1 == null) {
             return -1;
-        if (t2 == null)
+        }
+        if (t2 == null) {
             return 1;
+        }
 
         List<TrustedOrigin> o1 = t1.getOrigins();
         List<TrustedOrigin> o2 = t2.getOrigins();
 
-        o1 = o1==null ? Collections.emptyList() : o1;
-        o2 = o2==null ? Collections.emptyList() : o2;
+        o1 = o1 == null ? Collections.emptyList() : o1;
+        o2 = o2 == null ? Collections.emptyList() : o2;
 
         Long l1, l2;
 

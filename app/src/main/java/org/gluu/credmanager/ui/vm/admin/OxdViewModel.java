@@ -51,7 +51,7 @@ public class OxdViewModel extends MainViewModel {
 
     @NotifyChange("oxdSettings")
     @Command
-    public void switchUseOxdExtension(@BindingParam("use") boolean useExtension){
+    public void switchUseOxdExtension(@BindingParam("use") boolean useExtension) {
         oxdSettings.setUseHttpsExtension(useExtension);
         oxdSettings.setHost(null);
         oxdSettings.setPort(0);
@@ -75,7 +75,7 @@ public class OxdViewModel extends MainViewModel {
                 } else {
                     connected = Utils.hostAvailabilityCheck(new InetSocketAddress(oxdHost, oxdPort), 3500);
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
             if (!connected) {
@@ -99,7 +99,7 @@ public class OxdViewModel extends MainViewModel {
 
     @NotifyChange("oxdSettings")
     @Command
-    public void cancel(){
+    public void cancel() {
         reloadConfig();
     }
 
@@ -138,13 +138,13 @@ public class OxdViewModel extends MainViewModel {
 
                 //remove unneeded client
                 oxdService.removeSite(lastWorkingConfig.getClient().getOxdId());
-            } catch (Exception e){
+            } catch (Exception e) {
                 msg = e.getMessage();
                 try {
                     logger.warn("Reverting to previous working OXD settings");
                     //Revert to last working settings
                     oxdService.setSettings(lastWorkingConfig, false);
-                } catch (Exception e1){
+                } catch (Exception e1) {
                     msg += "\n" + Labels.getLabel("admin.error_reverting");
                     logger.error(e1.getMessage(), e1);
                 }

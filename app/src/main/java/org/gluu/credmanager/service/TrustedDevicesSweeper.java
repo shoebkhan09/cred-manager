@@ -53,8 +53,8 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
 
     public void activate(long locationExpiration, long deviceExpiration) {
 
-        this.locationExpiration=locationExpiration;
-        this.deviceExpiration=deviceExpiration;
+        this.locationExpiration = locationExpiration;
+        this.deviceExpiration = deviceExpiration;
         try {
             int oneDay = (int) TimeUnit.DAYS.toSeconds(1);
             timerService.addListener(this, quartzJobName);
@@ -82,8 +82,9 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
         for (PersonPreferences person : people) {
             try {
                 String trustedDevicesInfo = person.getTrustedDevicesInfo();
-                if (stringEncrypter != null)
+                if (stringEncrypter != null) {
                     trustedDevicesInfo = stringEncrypter.decrypt(trustedDevicesInfo);
+                }
 
                 List<TrustedDevice> list = mapper.readValue(trustedDevicesInfo, new TypeReference<List<TrustedDevice>>() { });
                 if (removeExpiredData(list, now)) {
@@ -122,7 +123,7 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
                     }
                 }
 
-                if (time - oldest > deviceExpiration){
+                if (time - oldest > deviceExpiration) {
                     list.remove(i);
                     i--;
                     changed = true;
@@ -153,10 +154,11 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
 
         logger.trace("TrustedDevicesSweeper. Cleaning expired trusted devices for user '{}'", rdn);
         StringEncrypter stringEncrypter = ldapService.getStringEncrypter();
-        if (stringEncrypter != null)
+        if (stringEncrypter != null) {
             person.setTrustedDevices(stringEncrypter.encrypt(jsonDevices));
-        else
+        } else {
             person.setTrustedDevices(jsonDevices);
+        }
         ldapService.modify(person, PersonPreferences.class);
 
     }

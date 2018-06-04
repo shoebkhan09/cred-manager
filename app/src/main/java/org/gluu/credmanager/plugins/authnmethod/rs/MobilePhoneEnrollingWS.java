@@ -67,7 +67,7 @@ public class MobilePhoneEnrollingWS {
         if (Utils.isEmpty(number)) {
             result = SendCode.NO_NUMBER;
         } else if (!mobilePhoneService.isNumberRegistered(number)
-                && !mobilePhoneService.isNumberRegistered(number.replaceAll("[-\\+\\s]",""))) {
+                && !mobilePhoneService.isNumberRegistered(number.replaceAll("[-\\+\\s]", ""))) {
             result = SendCode.NUMBER_ALREADY_ENROLLED;
         } else {
             try {

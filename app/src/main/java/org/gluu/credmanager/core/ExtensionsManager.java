@@ -6,6 +6,7 @@
 package org.gluu.credmanager.core;
 
 import org.gluu.credmanager.conf.MainSettings;
+import org.gluu.credmanager.conf.PluginInfo;
 import org.gluu.credmanager.extension.AuthnMethod;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.IExtensionsManager;
@@ -36,6 +37,8 @@ import java.util.stream.Stream;
 public class ExtensionsManager implements IExtensionsManager {
 
     public static final String ASSETS_DIR = "assets";
+
+    private static final String PLUGINS_DIR_NAME = "plugins";
     private static final Class<AuthnMethod> AUTHN_METHOD_CLASS = AuthnMethod.class;
 
     @Inject
@@ -56,25 +59,24 @@ public class ExtensionsManager implements IExtensionsManager {
     @Inject
     private RSRegistryHandler registryHandler;
 
+    private Path pluginsRoot;
+
     private PluginManager pluginManager;
 
     private Deque<Pair<AuthnMethod, String>> authnMethodsExts;
 
-    private boolean inspectExternalPath;
-
     @PostConstruct
     private void inited() {
 
+        pluginsRoot = Paths.get(System.getProperty("server.base"), PLUGINS_DIR_NAME);
+        pluginManager = new DefaultPluginManager();
         authnMethodsExts = new LinkedList<>();
 
-        Path pluginsPath = Optional.ofNullable(mainSettings.getPluginsPath()).map(Paths::get).orElse(null);
-        if (pluginsPath != null && Files.isDirectory(pluginsPath)) {
-            pluginManager = new DefaultPluginManager(pluginsPath);
-            inspectExternalPath = true;
-        }
-        if (pluginManager == null) {
-            logger.warn("No external plugins will be loaded: there is no valid location for searching");
-            pluginManager = new DefaultPluginManager();
+        if (Files.isDirectory(pluginsRoot)) {
+            purgePluginsPath();
+        } else {
+            pluginsRoot = null;
+            logger.warn("External plugins directory does not exist: there is no valid location for searching");
         }
 
     }
@@ -142,34 +144,46 @@ public class ExtensionsManager implements IExtensionsManager {
         List<AuthnMethod> authnMethodsExtsList = scanInnerAuthnMechanisms();
         authnMethodsExtsList.forEach(ame -> authnMethodsExts.add(new Pair<>(ame, null)));
 
-        if (inspectExternalPath) {
-            logger.info("Loading external plugins...");
-            pluginManager.loadPlugins();
+        if (pluginsRoot != null) {
+            List<PluginInfo> pls = Optional.ofNullable(mainSettings.getKnownPlugins()).orElse(Collections.emptyList());
 
-            logger.info("{} total plugins found", pluginManager.getPlugins().size());
-            pluginManager.startPlugins();
+            if (pls.size() > 0) {
+                logger.info("Loading external plugins...");
 
-            List<PluginWrapper> startedPlugins = pluginManager.getStartedPlugins();
-            logger.info("{} plugins started", startedPlugins.size());
-
-            for (PluginWrapper wrapper : startedPlugins) {
-
-                Path pluginPath = wrapper.getPluginPath();
-                String pluginId = wrapper.getPluginId();
-                logger.info("");
-                logger.info("Plugin {} ({})", pluginId, wrapper.getDescriptor().getPluginClass());
-
-                parsePluginAuthnMethodExtensions(pluginId);
-
-                Set<String> classNames = pluginManager.getExtensionClassNames(pluginId);
-                //classNames.remove(AUTHN_METHOD_CLASS.getName());
-
-                if (classNames.size() > 0) {
-                    logger.info("Plugin's extensions are at: {}", classNames.toString());
+                List<String> loaded = new ArrayList<>();
+                for (PluginInfo pl : pls) {
+                    String id = loadPlugin(Paths.get(pluginsRoot.toString(), pl.getRelativePath()));
+                    if (id != null) {
+                        loaded.add(id);
+                    }
                 }
-                reconfigureServices(pluginId, pluginPath, wrapper.getPluginClassLoader());
+
+                logger.info("Total plugins loaded {}", loaded.size());
+                int started = 0;
+
+                for (String pluginId : loaded) {
+                    if (pls.stream().anyMatch(pl -> pl.getId().equals(pluginId) && PluginState.STARTED.toString().equals(pl.getState()))) {
+
+                        if (startPlugin(pluginId, false)) {
+                            started++;
+                            PluginWrapper wrapper = pluginManager.getPlugin(pluginId);
+
+                            logger.info("Plugin {} ({}) started", pluginId, wrapper.getDescriptor().getPluginClass());
+
+                            Set<String> classNames = pluginManager.getExtensionClassNames(pluginId);
+                            //classNames.remove(AUTHN_METHOD_CLASS.getName());
+                            if (classNames.size() > 0) {
+                                logger.info("Plugin's extensions are at: {}", classNames.toString());
+                            }
+                            logger.info("");
+
+                        }
+                    }
+                }
+                logger.info("Plugins started {}", started);
             }
             zkService.refreshLabels();
+
         }
 
         long distinctAcrs = authnMethodsExts.stream().map(Pair::getX).map(AuthnMethod::getAcr).distinct().count();
@@ -206,13 +220,8 @@ public class ExtensionsManager implements IExtensionsManager {
     }
 
     public boolean pluginImplementsAuthnMethod(String acr, String plugId) {
-
         Stream<String> idsStream = authnMethodsExts.stream().filter(pair -> pair.getX().getAcr().equals(acr)).map(Pair::getY);
-        if (Utils.isEmpty(plugId)) {
-            return idsStream.anyMatch(id -> id == null);
-        } else {
-            return idsStream.anyMatch(id -> id.equals(plugId));
-        }
+        return idsStream.anyMatch(id -> plugId == null ? id == null : id.equals(plugId));
     }
 
     public ClassLoader getPluginClassLoader(String clsName) {
@@ -245,7 +254,7 @@ public class ExtensionsManager implements IExtensionsManager {
     }
 
     public Path getPluginsRoot() {
-        return pluginManager.getPluginsRoot();
+        return pluginsRoot;
     }
 
     public List<PluginWrapper> getPlugins() {
@@ -254,7 +263,11 @@ public class ExtensionsManager implements IExtensionsManager {
 
     public String loadPlugin(Path path) {
         String id = pluginManager.loadPlugin(path);
-        logger.debug("Loaded plugin {} now in state {}", id, pluginManager.getPlugin(id).getPluginState().toString());
+        if (id != null) {
+            logger.debug("Loaded plugin {}, now in state {}", id, pluginManager.getPlugin(id).getPluginState().toString());
+        } else {
+            logger.warn("Plugin found at {} could not be loaded", path.toString());
+        }
         return id;
     }
 
@@ -287,6 +300,7 @@ public class ExtensionsManager implements IExtensionsManager {
 
     public boolean deletePlugin(String pluginId) {
 
+        //Not used, see: https://github.com/pf4j/pf4j/issues/217
         boolean success = pluginManager.deletePlugin(pluginId);
         if (!success) {
             logger.warn("Plugin '{}' could not be unloaded or deleted", pluginId);
@@ -296,6 +310,10 @@ public class ExtensionsManager implements IExtensionsManager {
     }
 
     public boolean startPlugin(String pluginId) {
+        return startPlugin(pluginId, true);
+    }
+
+    private boolean startPlugin(String pluginId, boolean refreshLabels) {
 
         boolean success = false;
         PluginState state = pluginManager.startPlugin(pluginId);
@@ -312,8 +330,11 @@ public class ExtensionsManager implements IExtensionsManager {
                 getExtensionForAuthnMethod(acr).activate();
             } */
             reconfigureServices(pluginId, path, pluginManager.getPluginClassLoader(pluginId));
-            zkService.refreshLabels();
             success = true;
+
+            if (refreshLabels) {
+                zkService.refreshLabels();
+            }
         } else {
             logger.warn("Plugin loaded from {} not started. Current state is {}", path.toString(), state == null ? null : state.toString());
         }
@@ -331,6 +352,35 @@ public class ExtensionsManager implements IExtensionsManager {
         }
         zkService.readPluginLabels(pluginId, path);
         registryHandler.scan(pluginId, path, cl);
+
+    }
+
+    private void purgePluginsPath() {
+
+        //Deletes all files in path directory as a consequence of https://github.com/pf4j/pf4j/issues/217
+        //Also prevents cheating...
+        try {
+            List<PluginInfo> pls = Optional.ofNullable(mainSettings.getKnownPlugins()).orElse(Collections.emptyList());
+            List<String> validFileNames = pls.stream().map(PluginInfo::getRelativePath).collect(Collectors.toList());
+
+            Files.list(pluginsRoot).forEach(p -> {
+                if (Files.isRegularFile(p)) {
+                    if (!validFileNames.contains(p.getFileName().toString())) {
+                        try {
+                            Files.delete(p);
+                        } catch (Exception e) {
+                            logger.error("Error deleting unnecesary file {}: {}", p.toString(), e.getMessage());
+                        }
+                    }
+                } else if (Files.isDirectory(p)) {
+                    //TODO add support for directory-based plugins
+                }
+            });
+
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            logger.warn("An error occured while cleaning plugins directory {}", pluginsRoot.toString());
+        }
 
     }
 

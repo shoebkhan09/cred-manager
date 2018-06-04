@@ -27,8 +27,8 @@ public class CssSnippetHandler {
     private static final String PRIMARY_BUTTON_SELECTOR = "btn-success";
     private static final String AUXILIARY_BUTTON_SELECTOR = "btn-warning";
 
-    private static final String PRIMARY_BUTTON_DEF_COLOR="#123456";
-    private static final String AUXILIARY_BUTTON_DEF_COLOR="#654321";
+    private static final String PRIMARY_BUTTON_DEF_COLOR = "#123456";
+    private static final String AUXILIARY_BUTTON_DEF_COLOR = "#654321";
 
     private String logoDataUri;
 
@@ -116,15 +116,15 @@ public class CssSnippetHandler {
         snip += String.format(".%s{ background-color : %s; border-color: %s }\n", selector, color, color);
 
         String tone = getColorFrom(color, true);
-        snip += String.format(".%s{ background-color : %s; border-color: %s }\n",selector + ":disabled", tone, tone);
-        snip += String.format(".%s{ background-color : %s; border-color: %s }\n",selector + ":disabled:hover", tone, tone);
+        snip += String.format(".%s{ background-color : %s; border-color: %s }\n", selector + ":disabled", tone, tone);
+        snip += String.format(".%s{ background-color : %s; border-color: %s }\n", selector + ":disabled:hover", tone, tone);
 
         tone = getColorFrom(color, false);
-        snip += String.format(".%s{ background-color : %s; border-color: %s }\n",selector + ":hover", tone, tone);
-        snip += String.format(".%s{ background-color : %s; border-color: %s }\n",selector + ":focus", tone, tone);
+        snip += String.format(".%s{ background-color : %s; border-color: %s }\n", selector + ":hover", tone, tone);
+        snip += String.format(".%s{ background-color : %s; border-color: %s }\n", selector + ":focus", tone, tone);
 
         tone = getColorFrom(tone, false);
-        snip += String.format(".%s{ background-color : %s; border-color: %s }\n",selector + ":focus:active", tone, tone);
+        snip += String.format(".%s{ background-color : %s; border-color: %s }\n", selector + ":focus:active", tone, tone);
 
         return snip;
 

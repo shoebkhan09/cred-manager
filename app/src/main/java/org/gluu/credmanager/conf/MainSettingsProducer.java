@@ -28,19 +28,15 @@ import java.util.Map;
 public class MainSettingsProducer {
 
     private static final String DEFAULT_GLUU_BASE = "/etc/gluu";
+    //TODO: change4forprod
     private static final String CONF_FILE_RELATIVE_PATH = "conf/cred-manager2.json";
-    private static final String DEFAULT_EXTERNAL_PATH = "/opt/gluu/jetty/cred-manager/custom";
 
     @Inject
     private Logger logger;
 
     private String getGluuBase() {
-
         String candidateGluuBase = System.getProperty("gluu.base");
-        boolean windows = System.getProperty("os.name").toLowerCase().matches(".*win.*");
-
-        return (candidateGluuBase != null || windows) ? candidateGluuBase : DEFAULT_GLUU_BASE;
-
+        return (candidateGluuBase != null || Utils.onWindows()) ? candidateGluuBase : DEFAULT_GLUU_BASE;
     }
 
     /**
@@ -51,29 +47,6 @@ public class MainSettingsProducer {
     private File getConfigFile(String baseDir) {
         Path path = Paths.get(baseDir, CONF_FILE_RELATIVE_PATH);
         return Files.exists(path) ? path.toFile() : null;
-    }
-
-    private String getActualExternalPath(String path) {
-
-        String realPath = null;
-        if (Utils.isNotEmpty(path) && Files.isDirectory(Paths.get(path))) {
-            realPath = path;
-        }
-
-        if (realPath == null) {
-            logger.warn("External assets path {} does not exist", path);
-
-            if (Files.isDirectory(Paths.get(DEFAULT_EXTERNAL_PATH))) {
-                realPath = DEFAULT_EXTERNAL_PATH;
-                logger.info("Defaulting external assets path to {}", realPath);
-            }
-        }
-        if (realPath == null) {
-            logger.warn("External assets path could not be determined");
-        }
-
-        return realPath;
-
     }
 
     @Produces @ApplicationScoped
@@ -98,8 +71,6 @@ public class MainSettingsProducer {
                     //Parses config file in a Configs instance
                     settings = mapper.readValue(srcConfigFile, MainSettings.class);
                     settings.setSourceFile(srcConfigFile);
-
-                    settings.setPluginsPath(getActualExternalPath(settings.getPluginsPath()));
 
                     List<String> enabledMethods = settings.getEnabledMethods();
                     Map<String, String> acrPluginMapping = settings.getAcrPluginMap();

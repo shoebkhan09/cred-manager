@@ -18,7 +18,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * This class is a ZK converter employed to display dates appropriately according to user location.
@@ -47,8 +46,9 @@ public class CustomDateConverter implements Converter {
                 zid = (ZoneId) offset;
             } else {      //This covers the weird case in which there is no offset set
                 zid = ZoneOffset.UTC;
-                if (format.contains("hh") || format.contains("HH") || format.contains("mm"))
-                    format+=" '(GMT)'";
+                if (format.contains("hh") || format.contains("HH") || format.contains("mm")) {
+                    format += " '(GMT)'";
+                }
             }
             Instant instant = Instant.ofEpochMilli(timeStamp);
             OffsetDateTime odt = OffsetDateTime.ofInstant(instant, zid);

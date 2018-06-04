@@ -352,7 +352,7 @@ public class ConfigurationHandler extends JobListenerSupport {
                 if (extManager.pluginImplementsAuthnMethod(acr, plugId)) {
                     newMap.put(acr, plugId);
                 } else {
-                    if (Utils.isEmpty(plugId)) {
+                    if (plugId == null) {
                         logger.warn("There is no system extension that can work with acr '{}'", acr);
                     } else {
                         logger.warn("Plugin {} does not have extensions that can work with acr '{}' or plugin does not exist", plugId, acr);

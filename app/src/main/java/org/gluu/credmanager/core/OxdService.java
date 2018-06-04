@@ -19,7 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import org.gluu.credmanager.conf.MainSettings;
 import org.gluu.credmanager.conf.OxdClientSettings;
 import org.gluu.credmanager.conf.OxdSettings;
-import org.gluu.credmanager.core.navigation.WebUtils;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.LdapService;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
@@ -56,6 +55,8 @@ import static org.gluu.credmanager.core.ConfigurationHandler.DEFAULT_ACR;
 @Named
 @ApplicationScoped
 public class OxdService {
+
+    private static final String LOGOUT_PAGE_URL = "bye.zul";
 
     @Inject
     private Logger logger;
@@ -97,7 +98,7 @@ public class OxdService {
                 if (Utils.isEmpty(tmp)) {   //Use default post logout if not in config settings
                     tmp = oxdRedirectUri;    //Remove trailing slash if any in redirect URI
                     tmp = tmp.endsWith("/") ? tmp.substring(0, tmp.length() - 1) : tmp;
-                    oxdConfig.setPostLogoutUri(tmp + "/" + WebUtils.LOGOUT_PAGE_URL);
+                    oxdConfig.setPostLogoutUri(tmp + "/" + LOGOUT_PAGE_URL);
                 }
                 //TODO: bug 3.1.1?  https://github.com/GluuFederation/oxd/issues/124
                 oxdConfig.setOpHost(issuerUrl);
@@ -127,10 +128,12 @@ public class OxdService {
                         success = true;
 
                     } else {
-                        logger.error("Dynamic registration of OpenId Connect clients must be enabled in the server. Check expiration time is greater than zero");
+                        logger.error("Dynamic registration of OpenId Connect clients must be enabled in the server. "
+                                + "Check expiration time is greater than zero");
                     }
                 } catch (Exception e) {
-                    logger.warn("Users will not be able to login until a new sucessful attempt to refresh oxd-associated clients takes place. Restart the app to trigger the update immediately");
+                    logger.warn("Users will not be able to login until a new sucessful attempt to refresh oxd-associated "
+                            + "clients takes place. Restart the app to trigger the update immediately");
                 }
             }
         }
@@ -158,7 +161,7 @@ public class OxdService {
 
         try {
             if (config.isUseHttpsExtension()) {
-                clientName="cred-manager-extension-" + consecutive;
+                clientName = "cred-manager-extension-" + consecutive;
 
                 SetupClientParams cmdParams = new SetupClientParams();
                 cmdParams.setOpHost(config.getOpHost());
@@ -179,8 +182,7 @@ public class OxdService {
 
                 SetupClientResponse setup = restResponse(cmdParams, "setup-client", null, SetupClientResponse.class);
                 computedSettings = new OxdClientSettings(clientName, setup.getOxdId(), setup.getClientId(), setup.getClientSecret());
-            }
-            else{
+            } else {
                 clientName = "cred-manager-" + consecutive;
 
                 RegisterSiteParams cmdParams = new RegisterSiteParams();
@@ -209,9 +211,9 @@ public class OxdService {
             }
             consecutive++;
             logger.info("oxd client registered successfully, oxd-id={}", computedSettings.getOxdId());
-        } catch (Exception e){
+        } catch (Exception e) {
             consecutive++;
-            String msg="Setting oxd-server configs failed";
+            String msg = "Setting oxd-server configs failed";
             logger.error(msg, e);
             throw new Exception(msg, e);
         }
@@ -251,7 +253,7 @@ public class OxdService {
      * @return String consisting of an authentication request with desired parameters
      * @throws Exception
      */
-    private String getAuthzUrl(List<String> acrValues, String prompt) throws Exception{
+    private String getAuthzUrl(List<String> acrValues, String prompt) throws Exception {
 
         GetAuthorizationUrlParams cmdParams = new GetAuthorizationUrlParams();
         cmdParams.setOxdId(config.getClient().getOxdId());
@@ -279,7 +281,7 @@ public class OxdService {
         return getAuthzUrl(Collections.singletonList(acrValues), null);
     }
 
-    public Pair<String, String> getTokens(String code, String state) throws Exception{
+    public Pair<String, String> getTokens(String code, String state) throws Exception {
 
         GetTokensByCodeParams cmdParams = new GetTokensByCodeParams();
         cmdParams.setOxdId(config.getClient().getOxdId());
@@ -335,9 +337,9 @@ public class OxdService {
         cmdParams.setIdTokenHint(idTokenHint);
 
         LogoutResponse resp;
-        if (config.isUseHttpsExtension())
+        if (config.isUseHttpsExtension()) {
             resp = restResponse(cmdParams, "get-logout-uri", getPAT(), LogoutResponse.class);
-        else {
+        } else {
             CommandClient commandClient = null;
             try {
                 commandClient = new CommandClient(config.getHost(), config.getPort());
@@ -412,14 +414,14 @@ public class OxdService {
         cmdParams.setScope(Arrays.asList(UserService.OPEN_ID_SCOPES));
 
         GetClientTokenResponse resp = restResponse(cmdParams, "get-client-token", null, GetClientTokenResponse.class);
-        String token=resp.getAccessToken();
+        String token = resp.getAccessToken();
         logger.trace("getPAT. token={}", token);
 
         return token;
 
     }
 
-    private <T> T restResponse(IParams params, String path, String token, Class <T> responseClass) throws Exception {
+    private < T > T restResponse(IParams params, String path, String token, Class <T> responseClass) throws Exception {
 
         String payload = mapper.writeValueAsString(params);
         logger.trace("Sending /{} request to oxd-https-extension with payload \n{}", path, payload);
@@ -429,7 +431,7 @@ public class OxdService {
         Response response = target.request().header("Authorization", authz).post(Entity.json(payload));
 
         CommandResponse cmdResponse = response.readEntity(CommandResponse.class);
-        logger.trace("Response received was \n{}", cmdResponse==null ? null : cmdResponse.getData().toString());
+        logger.trace("Response received was \n{}", cmdResponse == null ? null : cmdResponse.getData().toString());
 
         return cmdResponse.getStatus().equals(ResponseStatus.OK) ? mapper.convertValue(cmdResponse.getData(), responseClass) : null;
 

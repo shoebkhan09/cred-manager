@@ -132,6 +132,7 @@ public class ResourceExtractor {
     }
 
     public void removeDestinationDirectory(Path destPath) throws IOException {
+        logger.debug("Removing directory {}", destPath.toString());
         recursiveDelete(destPath);
     }
 

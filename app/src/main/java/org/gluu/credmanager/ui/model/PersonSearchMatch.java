@@ -15,7 +15,7 @@ public class PersonSearchMatch extends User {
     private boolean alreadyReset;
     //Used to associate with checkboxes of the grid
     private boolean checked;
-    
+
     public boolean isAlreadyReset() {
         return alreadyReset;
     }

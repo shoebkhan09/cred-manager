@@ -11,5 +11,5 @@ package org.gluu.credmanager.core.navigation;
 //TODO: transform in a managed bean?
 public class WebUtils {
 
-    public static final String LOGOUT_PAGE_URL ="bye.zul";
+
 }

@@ -19,7 +19,13 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Base64;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import javax.enterprise.inject.spi.CDI;
 
@@ -28,13 +34,17 @@ import javax.enterprise.inject.spi.CDI;
  */
 public final class Utils {
 
-    private static Logger logger = LoggerFactory.getLogger(Utils.class);
+    private static Logger LOG = LoggerFactory.getLogger(Utils.class);
     private static ObjectMapper MAPPER = new ObjectMapper();
 
     public static final int FEEDBACK_DELAY_SUCC = 1500;
     public static final int FEEDBACK_DELAY_ERR = 3000;
 
     private Utils() { }
+
+    public static boolean onWindows() {
+        return System.getProperty("os.name").toLowerCase().matches(".*win.*");
+    }
 
     public static boolean isEmpty(String string) {
         return !isNotEmpty(string);
@@ -109,9 +119,10 @@ public final class Utils {
         }
         if (mime == null) {
             mime = "";
-            logger.trace("Cannot infer mime type of image");
+            LOG.trace("Cannot infer mime type of image");
+        } else {
+            LOG.trace("Using mime {}", mime);
         }
-        logger.trace("Using mime {}", mime);
         return String.format("data:%s;base64,%s", mime, encodedImg);
 
     }
@@ -138,7 +149,7 @@ public final class Utils {
         try {
             result = BeanUtils.cloneBean(obj);
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
         }
         return result;
 
@@ -159,11 +170,11 @@ public final class Utils {
     public static boolean hostAvailabilityCheck(SocketAddress address, int timeout) {
 
         boolean available = false;
-        try (Socket socket = new Socket()){
+        try (Socket socket = new Socket()) {
             socket.connect(address, timeout);
             available = true;
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            LOG.error(e.getMessage(), e);
         }
         return available;
     }
@@ -178,7 +189,7 @@ public final class Utils {
             //Intentionally left empty
         }
         if (!valid) {
-            logger.warn("Error validating url: {}", strUrl);
+            LOG.warn("Error validating url: {}", strUrl);
         }
         return valid;
 

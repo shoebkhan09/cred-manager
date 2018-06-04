@@ -39,7 +39,7 @@ public class PreferenceResetViewModel extends MainViewModel {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @WireVariable
-    UserService userService;
+    private UserService userService;
 
     private String searchPattern;
     private List<PersonSearchMatch> users;
@@ -62,7 +62,7 @@ public class PreferenceResetViewModel extends MainViewModel {
     }
 
     @Command
-    public void search(@BindingParam("box") Component box){
+    public void search(@BindingParam("box") Component box) {
 
         //Validates if input conforms to requirement of length
         if (Utils.isNotEmpty(searchPattern) && searchPattern.trim().length() < MINLEN_SEARCH_PATTERN) {
@@ -93,7 +93,7 @@ public class PreferenceResetViewModel extends MainViewModel {
         List<String> userInums = users.stream().filter(u -> !u.isAlreadyReset() && u.isChecked())
                 .map(PersonSearchMatch::getId).collect(Collectors.toList());
 
-        if (userInums.size()>0) { //proceed only if there is some fresh selection in the grid
+        if (userInums.size() > 0) { //proceed only if there is some fresh selection in the grid
             //Perform the actual resetting
             int total = userService.resetPreference(userInums);
             if (total == userInums.size()) {      //Check the no. of users changed matches the expected
@@ -124,7 +124,7 @@ public class PreferenceResetViewModel extends MainViewModel {
                 //Sync the user paired to this checkbox
                 user.setChecked(box.isChecked());
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
 
@@ -132,7 +132,7 @@ public class PreferenceResetViewModel extends MainViewModel {
 
     @NotifyChange({"users", "searchPattern"})
     @Command
-    public void cancelReset(){
+    public void cancelReset() {
         //Provoke the grid to disappear, and cleaning the search textbox
         users = null;
         searchPattern = null;

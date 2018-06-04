@@ -59,7 +59,7 @@
                                                 onClick="@command('startPlugin', id=each.descriptor.pluginId))" visible="@load(each.state eq 'stopped')" />
 
                                         <button label="${labels.adm.plugins_dodelete}" sclass="btn-warning btn-sm" disabled="@load(each.state eq 'started')"
-                                                onClick="@command('deletePlugin', id=each.descriptor.pluginId)" />
+                                                onClick="@command('deletePlugin', id=each.descriptor.pluginId, provider=each.descriptor.provider)" />
                                     </hlayout>
                                 </row>
                             </template>
@@ -85,7 +85,7 @@
                     <hlayout width="100%">
                         <label visible="@load(vm.uiAdding)" value="${labels.adm.plugins_adding_text}" />
                         <div hflex="1" align="right" visible="@load(not vm.uiAdding)">
-                            <button label="${labels.general.hide}" sclass="btn-warning btn-sm" onClick="@command('hidePluginInfo')" />
+                            <button label="${labels.general.hide}" sclass="btn-warning btn-sm" onClick="@command('hidePluginDetails')" />
                         </div>
                     </hlayout>
                     <div sclass="well" style="background-color:#fff">

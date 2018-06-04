@@ -42,7 +42,7 @@ public class HomeViewModel {
     private UserService userService;
 
     @AfterCompose
-    public void afterCompose(@ContextParam(ContextType.VIEW) Component view){
+    public void afterCompose(@ContextParam(ContextType.VIEW) Component view) {
         Selectors.wireEventListeners(view, this);
     }
 
@@ -116,7 +116,7 @@ public class HomeViewModel {
 
             int w = (int) width;
             //This attrib should be in the session, but it's more comfortable at the desktop level for testing purposes
-            sessionContext.setOnMobile(mobile && w < 992);	//If screen is wide enough, behave as desktop
+            sessionContext.setOnMobile(mobile && w < 992);    //If screen is wide enough, behave as desktop
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }

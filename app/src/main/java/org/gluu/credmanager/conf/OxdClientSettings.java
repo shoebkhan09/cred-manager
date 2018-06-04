@@ -21,7 +21,7 @@ public class OxdClientSettings {
         //Do not remove
     }
 
-    public OxdClientSettings(String clientName, String oxdId, String clientId, String clientSecret){
+    public OxdClientSettings(String clientName, String oxdId, String clientId, String clientSecret) {
 
         this.clientName = clientName;
         this.oxdId = oxdId;

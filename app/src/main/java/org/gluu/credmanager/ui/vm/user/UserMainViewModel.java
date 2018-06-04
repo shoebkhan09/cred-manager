@@ -148,7 +148,7 @@ public class UserMainViewModel extends UserViewModel {
         } else {
             strength = -1;
         }
-        BindUtils.postNotifyChange(null,	null, this, "strength");
+        BindUtils.postNotifyChange(null, null, this, "strength");
     }
 
     @NotifyChange({"newPassword", "newPasswordConfirm", "currentPassword", "strength", "uiPanelOpened"})

@@ -6,7 +6,6 @@
 package org.gluu.credmanager.ui.vm.admin;
 
 import org.gluu.credmanager.conf.MainSettings;
-import org.gluu.credmanager.core.ConfigurationHandler;
 import org.gluu.credmanager.core.ZKService;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.ui.vm.admin.branding.BrandingOption;
@@ -109,6 +108,8 @@ public class CustomBrandingViewModel extends MainViewModel {
                 }
                 uiOverrideButtonColors = snippetHandler.getMainButtonColor() != null;
                 break;
+            default:
+                //Added to pass style check
         }
 
     }
@@ -171,6 +172,8 @@ public class CustomBrandingViewModel extends MainViewModel {
                 zkService.setFaviconDataUri(snippetHandler.getFaviconDataUri());
                 updateSettings(null, snippetHandler.getSnippet(uiOverrideButtonColors));
                 break;
+            default:
+                //Added to pass style check
         }
     }
 

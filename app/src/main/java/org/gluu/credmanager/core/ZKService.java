@@ -13,7 +13,6 @@ import org.gluu.credmanager.ui.vm.admin.branding.CssSnippetHandler;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.slf4j.Logger;
-import org.zkoss.util.resource.LabelLocator;
 import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.WebApp;
 
@@ -22,7 +21,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletContext;
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -45,7 +43,6 @@ public class ZKService {
     private static final String DEFAULT_LOGO_URL = "/images/logo.png";
     private static final String DEFAULT_FAVICON_URL = "/images/favicon.ico";
     private static final String SYS_LABELS_LOCATION = "/WEB-INF/classes/labels/";
-    private static final Class<Closeable> CLOSEABLE_CLS = Closeable.class;
 
     @Inject
     private Logger logger;
@@ -65,7 +62,7 @@ public class ZKService {
 
     private WebApp app;
 
-    private Map<String, LabelLocator> labelLocators;
+    private Map<String, PluginLabelLocator> labelLocators;
 
     @PostConstruct
     private void inited() {
@@ -130,7 +127,7 @@ public class ZKService {
         String encoded = null;
         try {
             int i = url.lastIndexOf("/");
-            String fileName = i == -1 ? null : url.substring(i+1);
+            String fileName = i == -1 ? null : url.substring(i + 1);
 
             byte[] bytes = Files.readAllBytes(Paths.get(getAppFileSystemRoot(), url.split("/")));
             encoded = Utils.getImageDataUriEncoding(bytes, fileName);
@@ -153,11 +150,12 @@ public class ZKService {
                             return context.getResource(path).toString();
                         } catch (MalformedURLException e) {
                             logger.error("Error converting path {} to URL", path);
-                            return "";
+                            return null;
                         }
                     })
-                    .forEach(strUrl -> labelLocators.put(Double.toString(Math.random()),
-                            new SystemLabelLocator(strUrl.substring(0, strUrl.lastIndexOf(".")))));
+                    .filter(Utils::isNotEmpty)
+                    .map(strUrl -> new SystemLabelLocator(strUrl.substring(0, strUrl.lastIndexOf("."))))
+                    .forEach(Labels::register);
         }
 
     }
@@ -184,18 +182,19 @@ public class ZKService {
     }
 
     void readPluginLabels(String id, Path path) {
-        labelLocators.put(id, new PluginLabelLocator(path, EXTERNAL_LABELS_DIR));
+        logger.info("Registering labels of plugin {}", id);
+        PluginLabelLocator pll = new PluginLabelLocator(path, EXTERNAL_LABELS_DIR);
+        labelLocators.put(id, pll);
+        Labels.register(pll);
     }
 
     void removePluginLabels(String id) {
         try {
-            LabelLocator locator = labelLocators.get(id);
+            PluginLabelLocator locator = labelLocators.get(id);
             if (locator != null) {
-                if (CLOSEABLE_CLS.isAssignableFrom(locator.getClass())) {
-                    logger.debug("Closing label locator {}", id);
-                    CLOSEABLE_CLS.cast(locator).close();
-                }
+                logger.debug("Closing label locator {}", id);
                 labelLocators.remove(id);
+                locator.close();
             }
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
@@ -206,7 +205,7 @@ public class ZKService {
     void refreshLabels() {
         logger.info("");
         logger.info("Refreshing labels");
-        labelLocators.values().forEach(Labels::register);
+        //labelLocators.values().forEach(Labels::register);
         Labels.reset();
     }
 

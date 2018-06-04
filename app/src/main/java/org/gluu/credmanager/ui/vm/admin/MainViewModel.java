@@ -60,7 +60,7 @@ public class MainViewModel {
             if (sucessMessage == null) {
                 Utils.showMessageUI(true);
             } else {
-                Messagebox.show(sucessMessage,null, Messagebox.OK, Messagebox.INFORMATION);
+                Messagebox.show(sucessMessage, null, Messagebox.OK, Messagebox.INFORMATION);
             }
             success = true;
         } catch (Exception e) {
@@ -70,6 +70,7 @@ public class MainViewModel {
         return success;
 
     }
+
     boolean updateMainSettings() {
         return updateMainSettings(null);
     }

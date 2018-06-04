@@ -48,12 +48,15 @@ public class TrustedDevice {
         if (origins != null) {
             origins.sort((o1, o2) -> {
 
-                if (o1 == null && o2 == null)
+                if (o1 == null && o2 == null) {
                     return 0;
-                if (o1 == null)
+                }
+                if (o1 == null) {
                     return 1;
-                if (o2 == null)
+                }
+                if (o2 == null) {
                     return -1;
+                }
 
                 Long origin1 = Long.valueOf(o1.getTimestamp());
                 Long origin2 = Long.valueOf(o2.getTimestamp());

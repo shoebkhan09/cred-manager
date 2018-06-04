@@ -6,21 +6,16 @@
 package org.gluu.credmanager.ui.vm.admin;
 
 import org.gluu.credmanager.core.LogService;
-import org.gluu.credmanager.misc.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zkoss.bind.annotation.BindingParam;
 import org.zkoss.bind.annotation.Command;
 import org.zkoss.bind.annotation.Init;
 import org.zkoss.bind.annotation.NotifyChange;
-import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.select.annotation.VariableResolver;
 import org.zkoss.zk.ui.select.annotation.WireVariable;
 import org.zkoss.zkplus.cdi.DelegatingVariableResolver;
-import org.zkoss.zul.Messagebox;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,7 +51,7 @@ public class LogLevelViewModel extends MainViewModel {
 
     @NotifyChange({"selectedLogLevel"})
     @Command
-    public void change(@BindingParam("level") String newLevel){
+    public void change(@BindingParam("level") String newLevel) {
 
         //here it is assumed that changing log level is always a successful operation
         logService.updateLoggingLevel(newLevel);

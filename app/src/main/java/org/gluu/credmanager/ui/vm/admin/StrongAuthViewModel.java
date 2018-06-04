@@ -6,7 +6,6 @@
 package org.gluu.credmanager.ui.vm.admin;
 
 import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
-import org.gluu.credmanager.misc.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zkoss.bind.BindUtils;
@@ -37,7 +36,7 @@ import static org.gluu.credmanager.conf.sndfactor.EnforcementPolicy.EVERY_LOGIN;
 @VariableResolver(DelegatingVariableResolver.class)
 public class StrongAuthViewModel extends MainViewModel {
 
-    public static final Pair<Integer, Integer> BOUNDS_MINCREDS_2FA = new Pair<>(1,3);
+    public static final Pair<Integer, Integer> BOUNDS_MINCREDS_2FA = new Pair<>(1, 3);
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -96,7 +95,7 @@ public class StrongAuthViewModel extends MainViewModel {
     }
 
     @Command
-    public void change2FASettings(@BindingParam("val") Integer val){
+    public void change2FASettings(@BindingParam("val") Integer val) {
 
         val += BOUNDS_MINCREDS_2FA.getX();
 
@@ -110,7 +109,7 @@ public class StrongAuthViewModel extends MainViewModel {
 
     }
 
-    private void promptBefore2FAProceed(String message, int newval){
+    private void promptBefore2FAProceed(String message, int newval) {
 
         Messagebox.show(message, null, Messagebox.YES | Messagebox.NO, Messagebox.EXCLAMATION,
                 event -> {
@@ -131,7 +130,7 @@ public class StrongAuthViewModel extends MainViewModel {
         reloadConfig();
     }
 
-    private void update2FASettings(int minCreds, List<EnforcementPolicy> policies){
+    private void update2FASettings(int minCreds, List<EnforcementPolicy> policies) {
 
         getSettings().setMinCredsFor2FA(minCreds);
         getSettings().setEnforcement2FA(policies);

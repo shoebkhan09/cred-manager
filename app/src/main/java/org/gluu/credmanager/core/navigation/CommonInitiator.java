@@ -9,7 +9,6 @@ import org.gluu.credmanager.core.ConfigurationHandler;
 import org.gluu.credmanager.misc.AppStateEnum;
 import org.gluu.credmanager.misc.Utils;
 import org.zkoss.util.resource.Labels;
-import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Page;
 
 /**
@@ -25,7 +24,7 @@ public class CommonInitiator {
 
         switch (state) {
             case LOADING:
-                setPageErrors(page, err, "Credential manager is still starting. Try accessing again in a few seconds.");
+                setPageErrors(page, err, "Credential manager is still starting. Try access again in a few seconds.");
                 break;
             case FAIL:
                 setPageErrors(page, err, "Credential manager did not start properly. Contact your admin.");

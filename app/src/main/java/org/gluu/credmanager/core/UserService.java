@@ -35,7 +35,7 @@ public class UserService {
      */
     public static final String[] OPEN_ID_SCOPES = new String[]{ "openid", "profile", "user_name", "clientinfo" };
 
-    private static final String PREFERRED_METHOD_ATTR="oxPreferredMethod";
+    private static final String PREFERRED_METHOD_ATTR = "oxPreferredMethod";
 
     @Inject
     private Logger logger;
@@ -107,7 +107,7 @@ public class UserService {
      */
     public int resetPreference(List<String> userInums) {
 
-        int modified=0;
+        int modified = 0;
         try {
             for (String inum : userInums) {
                 if (setPreferredMethod(ldapService.getPersonDn(inum), null)) {
@@ -115,7 +115,7 @@ public class UserService {
                     logger.info("Reset preferred method for user '{}'", inum);
                 }
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
         return modified;
