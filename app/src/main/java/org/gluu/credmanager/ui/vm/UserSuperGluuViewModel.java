@@ -135,27 +135,12 @@ public class UserSuperGluuViewModel extends UserViewModel{
                     break;
                 case "poll":
                     newDevice = sgService.getLatestSuperGluuDevice(user, new Date().getTime());
-                    if (newDevice != null) {    //New device detected, stop polling
+                    uiEnrolled = newDevice != null;
+                    if (uiEnrolled) {    //New device detected, stop polling
                         stopPolling();
-                        try {
-                            logger.debug("qrScanResult. Got device {}", newDevice.getId());
-                            //It's enrolled in LDAP, nonetheless we are missing the nickname yet and also the check if
-                            //it has not previously been enrolled (by another user, for instance)
-                            uiEnrolled = sgService.isSGDeviceUnique(newDevice);
-                            if (uiEnrolled)
-                                BindUtils.postNotifyChange(null, null, this, "uiEnrolled");
-                            else {
-                                //drop duplicated device from LDAP
-                                userService.removeFidoDevice(newDevice);
-                                logger.info(Labels.getLabel("app.duplicated_sg_removed"), newDevice.getDeviceData().getUuid());
-                                showMessageUI(false, Labels.getLabel("usr.supergluu_already_enrolled"));
-                            }
-                        }
-                        catch (Exception e) {
-                            String error=e.getMessage();
-                            logger.error(error, e);
-                            showMessageUI(false, Labels.getLabel("general.error.detailed", new String[]{error}));
-                        }
+                        logger.debug("qrScanResult. Got device {}", newDevice.getId());
+                        //It's enrolled in LDAP, nonetheless we are missing the nickname yet
+                        BindUtils.postNotifyChange(null, null, this, "uiEnrolled");
                     }
                     break;
             }
