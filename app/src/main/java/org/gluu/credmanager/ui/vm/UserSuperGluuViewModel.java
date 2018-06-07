@@ -135,12 +135,27 @@ public class UserSuperGluuViewModel extends UserViewModel{
                     break;
                 case "poll":
                     newDevice = sgService.getLatestSuperGluuDevice(user, new Date().getTime());
-                    uiEnrolled = newDevice != null;
-                    if (uiEnrolled) {    //New device detected, stop polling
+                    if (newDevice != null) {    //New device detected, stop polling
                         stopPolling();
-                        logger.debug("qrScanResult. Got device {}", newDevice.getId());
-                        //It's enrolled in LDAP, nonetheless we are missing the nickname yet
-                        BindUtils.postNotifyChange(null, null, this, "uiEnrolled");
+                        try {
+                            logger.debug("qrScanResult. Got device {}", newDevice.getId());
+                            //It's enrolled in LDAP, nonetheless we are missing the nickname yet and also the check if
+                            //it has not previously been enrolled by the same user
+                            uiEnrolled = sgService.isSGDeviceUnique(newDevice, user);
+                            if (uiEnrolled)
+                                BindUtils.postNotifyChange(null, null, this, "uiEnrolled");
+                            else {
+                                //drop duplicated device from LDAP
+                                userService.removeFidoDevice(newDevice);
+                                logger.info(Labels.getLabel("app.duplicated_sg_removed"), newDevice.getDeviceData().getUuid());
+                                showMessageUI(false, Labels.getLabel("usr.supergluu_already_enrolled"));
+                            }
+                        }
+                        catch (Exception e) {
+                            String error=e.getMessage();
+                            logger.error(error, e);
+                            showMessageUI(false, Labels.getLabel("general.error.detailed", new String[]{error}));
+                        }
                     }
                     break;
             }

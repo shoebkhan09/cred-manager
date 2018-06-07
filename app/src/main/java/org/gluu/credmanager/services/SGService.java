@@ -118,16 +118,17 @@ public class SGService {
     /**
      * Determines if the device passed is enrolled exactly once or more times
      * @param dev A SuperGluuDevice instance
+     *  @param user A referene to a user
      * @return Boolean value indicating whether a device with this device's UUID is enrolled once for some user
      * @throws Exception If the device is not even enrolled
      */
-    public boolean isSGDeviceUnique(SuperGluuDevice dev) throws Exception{
+    public boolean isSGDeviceUnique(SuperGluuDevice dev, User user) throws Exception{
 
         boolean unique=false;
         String uiid=dev.getDeviceData().getUuid();
-        List<String> uuids=ldapService.getSGDevicesIDs(appConfig.getConfigSettings().getSgConfig().getRegistrationUri());
+        List<String> uuids=ldapService.getSGDevicesIDs(appConfig.getConfigSettings().getSgConfig().getRegistrationUri(), user.getRdn());
 
-        logger.trace("isSGDeviceUnique. All SG devices {}", uuids.toString());
+        logger.trace("isSGDeviceUnique. All SG user's devices {}", uuids.toString());
         int size=(int) uuids.stream().filter(uuid -> uuid.equals(uiid)).count();
         if (size==0)
             throw new Exception(Labels.getLabel("app.error_uniqueness", new String[]{uiid}));

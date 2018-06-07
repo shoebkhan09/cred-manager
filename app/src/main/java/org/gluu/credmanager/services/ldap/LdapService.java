@@ -304,17 +304,18 @@ public class LdapService {
 
     public <T extends FidoDevice> T getFidoDevice(String userRdn, long time, String oxApp, Class<T> clazz) throws Exception{
         List<T> list=getU2FDevices(userRdn, oxApp, clazz);
-        logger.debug("getFidoDevice. list is {}", list.stream().map(d -> d.getId()).collect(Collectors.toList()).toString());
+        logger.debug("getFidoDevice. list is {}", list.stream().map(FidoDevice::getId).collect(Collectors.toList()).toString());
         return Utils.getRecentlyCreatedDevice(list, time);
     }
 
-    public List<String> getSGDevicesIDs(String oxApplication) throws Exception{
+    public List<String> getSGDevicesIDs(String oxApplication, String userRdn) throws Exception{
 
         Filter filter=Filter.createANDFilter(Arrays.asList(
                 Filter.createEqualityFilter("oxApplication", oxApplication),
                 Filter.createEqualityFilter("oxStatus", DeviceRegistrationStatus.ACTIVE.getValue())));
 
-        List<SuperGluuDevice> list=ldapEntryManager.findEntries(usersDN, SuperGluuDevice.class, new String[]{"oxDeviceData"}, filter);
+        String dn=String.format("ou=fido,%s,%s", userRdn, usersDN);
+        List<SuperGluuDevice> list=ldapEntryManager.findEntries(dn, SuperGluuDevice.class, new String[]{"oxDeviceData"}, filter);
         return list.stream().filter(d -> d.getDeviceData()!=null).map(d -> d.getDeviceData().getUuid()).collect(Collectors.toList());
 
     }
