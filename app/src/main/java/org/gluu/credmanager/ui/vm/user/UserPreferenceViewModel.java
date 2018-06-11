@@ -75,7 +75,7 @@ public class UserPreferenceViewModel extends UserViewModel {
     public String getSelectedMethodName() {
 
         Optional<String> optCred = Optional.ofNullable(selectedMethod).map(acr -> {
-            AuthnMethod extension = extManager.getExtensionForAuthnMethod(acr);
+            AuthnMethod extension = extManager.getExtensionForAcr(acr);
             return extension == null ? null : Labels.getLabel(extension.getUINameKey());
         });
         return optCred.orElse(noMethodName);

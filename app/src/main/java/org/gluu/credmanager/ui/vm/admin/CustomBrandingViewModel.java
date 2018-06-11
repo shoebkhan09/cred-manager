@@ -208,13 +208,8 @@ public class CustomBrandingViewModel extends MainViewModel {
 
         settings.setBrandingPath(brandPath);
         settings.setExtraCssSnippet(cssSnippet);
-        if (updateMainSettings()) {
-            if (brandingOption.equals(BrandingOption.NONE)) {
-                Utils.showMessageUI(true, Labels.getLabel("adm.branding_defaulted"));
-            } else {
-                Messagebox.show(Labels.getLabel("adm.branding_changed"), null, Messagebox.OK, Messagebox.INFORMATION);
-            }
-        }
+        String msg = brandingOption.equals(BrandingOption.NONE) ? Labels.getLabel("adm.branding_defaulted") : Labels.getLabel("adm.branding_changed");
+        updateMainSettings(msg);
 
     }
 
