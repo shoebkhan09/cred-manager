@@ -32,7 +32,7 @@
                           checked="@load(vm.enforcementPolicies.contains(self.id))" onCheck="@command('checkPolicy', evt=event)" />
 
                 <div align="center" sclass="padded">
-                    <button label="${labels.general.save}" sclass="btn-success form_button"
+                    <button label="${labels.general.save}" sclass="btn-success"
                             disabled="@load(empty vm.enforcementPolicies)" onClick="@command('change2FASettings', val=mincreds.selectedIndex)" />
                 </div>
             </vlayout>

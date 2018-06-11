@@ -20,7 +20,7 @@
                         </div>
                     </div>
                     <div align="center">
-                        <button label="${labels.general.save}" sclass="btn-success form_button" onClick="@command('save')" />
+                        <button label="${labels.general.save}" sclass="btn-success" onClick="@command('save')" />
                     </div>
                 </div>
             </vlayout>

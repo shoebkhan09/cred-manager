@@ -19,7 +19,7 @@
                     <hlayout spacing="10px" valign="bottom">
                         <textbox sclass="s8 form-control" placeholder="${labels.adm.resets_textbox_placeholder}"
                                  value="@bind(vm.searchPattern)" focus="true" id="pattern" />
-                        <button label="${labels.general.search}" sclass="btn-success form_button" onClick="@command('search', box=pattern)" />
+                        <button label="${labels.general.search}" sclass="btn-success" onClick="@command('search', box=pattern)" />
                     </hlayout>
                 </div>
 
@@ -31,8 +31,8 @@
                         <grid model="@load(vm.users)" mold="paging" pageSize="10" sclass="grid_users">
                             <columns sizable="true" >
                                 <column width="25px" label="" />
-                                <column width="${sessionScope.onMobile ? '80px' : '90px'}" label="${labels.adm.reset_column_username}" />
-                                <column unless="${sessionScope.onMobile}" label="${labels.adm.reset_column_name}" />
+                                <column width="${sessionContext.onMobile ? '80px' : '90px'}" label="${labels.adm.reset_column_username}" />
+                                <column unless="${sessionContext.onMobile}" label="${labels.adm.reset_column_name}" />
                                 <column label="${labels.adm.reset_column_familyname}" />
                             </columns>
                             <template name="model">
@@ -40,14 +40,14 @@
                                 <row onClick="@command('rowClicked', evt=event, val=each)" style="cursor:pointer">
                                     <checkbox id="@load(each.id)" disabled="@load(each.alreadyReset)" checked="@bind(each.checked)" />
                                     <label value="@load(each.userName)" />
-                                    <label unless="${sessionScope.onMobile}" value="@load(each.givenName)" />
+                                    <label unless="${sessionContext.onMobile}" value="@load(each.givenName)" />
                                     <label value="@load(each.lastName)" />
                                 </row>
                             </template>
                         </grid>
                         <hlayout spacing="30px">
-                            <button label="${labels.adm.resets_reset}" sclass="btn-success form_button" onClick="@command('doReset')" />
-                            <button label="${labels.general.cancel}" sclass="btn-success form_button" onClick="@command('cancelReset')"/>
+                            <button label="${labels.adm.resets_reset}" sclass="btn-success" onClick="@command('doReset')" />
+                            <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancelReset')"/>
                         </hlayout>
 
                     </vlayout>

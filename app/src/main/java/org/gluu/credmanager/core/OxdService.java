@@ -421,7 +421,7 @@ public class OxdService {
 
     }
 
-    private < T > T restResponse(IParams params, String path, String token, Class <T> responseClass) throws Exception {
+    private <T> T restResponse(IParams params, String path, String token, Class<T> responseClass) throws Exception {
 
         String payload = mapper.writeValueAsString(params);
         logger.trace("Sending /{} request to oxd-https-extension with payload \n{}", path, payload);
