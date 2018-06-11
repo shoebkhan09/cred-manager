@@ -78,10 +78,9 @@ public class UserService {
     }
 
     public List<AuthnMethod> getLiveAuthnMethods() {
-        //The following map contains entries associated to active acr methods in oxauth
-        Map<String, Integer> authnMethodLevels = confHandler.getAcrLevelMapping();
-        return extManager.getAuthnMethodExts().stream().filter(aMethod -> authnMethodLevels.get(aMethod.getAcr()) != null)
-                .sorted(Comparator.comparing(aMethod -> -authnMethodLevels.get(aMethod.getAcr()))).collect(Collectors.toList());
+        Set<String> mappedAcrs = confHandler.getSettings().getAcrPluginMap().keySet();
+        return extManager.getAuthnMethodExts().stream().filter(aMethod -> mappedAcrs.contains(aMethod.getAcr()))
+                .collect(Collectors.toList());
     }
 
     public List<Pair<AuthnMethod, Integer>> getUserMethodsCount(String userId, Set<String> retainMethods) {
@@ -159,5 +158,17 @@ public class UserService {
         return success;
 
     }
+
+    /**
+     * Determines if there are no users with this type of method as preferred in LDAP
+     * @param acr
+     * @return False if any user has type as his preferred. True otherwise
+     */
+    public boolean zeroPreferences(String acr){
+        PersonPreferences ppfs = new PersonPreferences();
+        ppfs.setPreferredMethod(acr);
+        return ldapService.find(ppfs, PersonPreferences.class, ldapService.getPeopleDn()).size() == 0;
+    }
+
 
 }

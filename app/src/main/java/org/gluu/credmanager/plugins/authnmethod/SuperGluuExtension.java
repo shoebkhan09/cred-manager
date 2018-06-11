@@ -91,4 +91,8 @@ public class SuperGluuExtension implements AuthnMethod {
         return false;
     }
 
+    public void reloadConfiguration() {
+        sgService.reloadConfiguration();
+    }
+
 }

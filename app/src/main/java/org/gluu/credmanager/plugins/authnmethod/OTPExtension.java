@@ -94,4 +94,8 @@ public class OTPExtension extends BaseSystemExtension implements AuthnMethod {
         return true;
     }
 
+    public void reloadConfiguration() {
+        otpService.reloadConfiguration();
+    }
+
 }

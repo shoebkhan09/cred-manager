@@ -96,4 +96,8 @@ public class OTPSmsExtension extends BaseSystemExtension implements AuthnMethod 
         return true;
     }
 
+    public void reloadConfiguration() {
+        mobService.reloadConfiguration();
+    }
+
 }

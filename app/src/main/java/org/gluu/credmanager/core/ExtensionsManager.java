@@ -12,7 +12,6 @@ import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.IExtensionsManager;
 import org.pf4j.*;
 import org.slf4j.Logger;
-import org.zkoss.util.Pair;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -27,7 +26,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.JarInputStream;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author jgomer
@@ -63,14 +61,14 @@ public class ExtensionsManager implements IExtensionsManager {
 
     private PluginManager pluginManager;
 
-    private Deque<Pair<AuthnMethod, String>> authnMethodsExts;
+    private Map<String, List<AuthnMethod>> plugExtensionMap;
 
     @PostConstruct
     private void inited() {
 
         pluginsRoot = Paths.get(System.getProperty("server.base"), PLUGINS_DIR_NAME);
         pluginManager = new DefaultPluginManager();
-        authnMethodsExts = new LinkedList<>();
+        plugExtensionMap = new HashMap<>();    //It accepts null keys
 
         if (Files.isDirectory(pluginsRoot)) {
             purgePluginsPath();
@@ -81,68 +79,10 @@ public class ExtensionsManager implements IExtensionsManager {
 
     }
 
-    private List<AuthnMethod> scanInnerAuthnMechanisms() {
-
-        List<AuthnMethod> actualAMEs = new ArrayList<>();
-        List<AuthnMethod> authnMethodExtensions = pluginManager.getExtensions(AUTHN_METHOD_CLASS);
-        if (authnMethodExtensions != null) {
-
-            for (AuthnMethod ext : authnMethodExtensions) {
-                String acr = ext.getAcr();
-                String name = ext.getName();
-                logger.info("Found system extension '{}' for {}", name, acr);
-                actualAMEs.add(ext);
-            }
-        }
-        return actualAMEs;
-
-    }
-
-    private void parsePluginAuthnMethodExtensions(String pluginId) {
-
-        List<AuthnMethod> ames = pluginManager.getExtensions(AUTHN_METHOD_CLASS, pluginId);
-        if (ames.size() > 0) {
-            logger.info("Plugin extends {} at {} point(s)", AUTHN_METHOD_CLASS.getName(), ames.size());
-
-            for (AuthnMethod ext : ames) {
-                String acr = ext.getAcr();
-                logger.info("Extension point found to deal with acr value '{}'", acr);
-                authnMethodsExts.add(new Pair<>(ext, pluginId));
-            }
-
-        }
-
-    }
-
-    private Path getDestinationPathForPlugin(String pluginId) {
-        return Paths.get(zkService.getAppFileSystemRoot(), RSRegistryHandler.ENDPOINTS_PREFIX, pluginId);
-    }
-
-    private void extractResources(String pluginId, Path path) throws IOException {
-
-        Path destPath = getDestinationPathForPlugin(pluginId);
-        logger.info("Extracting resources for plugin {} to {}", pluginId, destPath.toString());
-
-        if (Files.isDirectory(path)) {
-            path = Paths.get(path.toString(), ASSETS_DIR);
-            if (Files.isDirectory(path)) {
-                resourceExtractor.createDirectory(path, destPath);
-            } else {
-                logger.info("No resources to extract");
-            }
-        } else if (Utils.isJarFile(path)) {
-            try (JarInputStream jis = new JarInputStream(new BufferedInputStream(new FileInputStream(path.toString())), false)) {
-                resourceExtractor.createDirectory(jis, ASSETS_DIR + "/", destPath);
-            }
-        }
-
-    }
-
     void scan() {
 
         //Load inner extensions first, then load plugins
-        List<AuthnMethod> authnMethodsExtsList = scanInnerAuthnMechanisms();
-        authnMethodsExtsList.forEach(ame -> authnMethodsExts.add(new Pair<>(ame, null)));
+        plugExtensionMap.put(null, scanInnerAuthnMechanisms());
 
         if (pluginsRoot != null) {
             List<PluginInfo> pls = Optional.ofNullable(mainSettings.getKnownPlugins()).orElse(Collections.emptyList());
@@ -186,33 +126,26 @@ public class ExtensionsManager implements IExtensionsManager {
 
         }
 
-        long distinctAcrs = authnMethodsExts.stream().map(Pair::getX).map(AuthnMethod::getAcr).distinct().count();
-        if (distinctAcrs < authnMethodsExts.size()) {
+        long distinctAcrs = plugExtensionMap.values().stream().flatMap(List::stream).map(AuthnMethod::getAcr).distinct().count();
+        if (distinctAcrs < plugExtensionMap.values().stream().mapToLong(List::size).sum()) {
             logger.warn("Several extensions pretend to handle the same acr.");
-            logger.warn("Only the last one parsed for the plugin referenced in the config file will be effective");
+            logger.warn("Only the first one parsed for the plugin referenced in the config file will be effective");
             logger.warn("The system extension (if exists) will be used if no plugin can handle an acr");
         }
 
     }
 
-    public AuthnMethod getExtensionForAuthnMethod(String acr) {
+    public AuthnMethod getExtensionForAcr(String acr) {
 
         AuthnMethod handler = null;
         String plugId = mainSettings.getAcrPluginMap().get(acr);
-        Iterator<Pair<AuthnMethod, String>> iterator = authnMethodsExts.descendingIterator();
 
-        while (iterator.hasNext() && handler == null) {
-            Pair<AuthnMethod, String> pair = iterator.next();
-            handler = pair.getX();
-            if (acr.equals(handler.getAcr())) {
-
-                if (Utils.isEmpty(plugId)) {    //Find the proper system extension
-                    handler =  pair.getY() == null ? handler : null;
-                } else {
-                    handler = pair.getY().equals(plugId) ? handler : null;
-                }
-            } else {
-                handler = null;
+        List<AuthnMethod> exts = plugExtensionMap.get(plugId);
+        //Returns the first occurrence!
+        for (AuthnMethod aMethod : exts) {
+            if (aMethod.getAcr().equals(acr)) {
+                handler = exts.get(0);
+                break;
             }
         }
         return handler;
@@ -220,8 +153,7 @@ public class ExtensionsManager implements IExtensionsManager {
     }
 
     public boolean pluginImplementsAuthnMethod(String acr, String plugId) {
-        Stream<String> idsStream = authnMethodsExts.stream().filter(pair -> pair.getX().getAcr().equals(acr)).map(Pair::getY);
-        return idsStream.anyMatch(id -> plugId == null ? id == null : id.equals(plugId));
+        return plugExtensionMap.get(plugId).stream().anyMatch(aMethod -> aMethod.getAcr().equals(acr));
     }
 
     public ClassLoader getPluginClassLoader(String clsName) {
@@ -246,7 +178,7 @@ public class ExtensionsManager implements IExtensionsManager {
     }
 
     public List<AuthnMethod> getAuthnMethodExts() {
-        return authnMethodsExts.stream().map(Pair::getX).collect(Collectors.toList());
+        return plugExtensionMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
     }
 
     public <T> List<T> getSystemExtensionsForClass(Class<T> clazz) {
@@ -282,11 +214,7 @@ public class ExtensionsManager implements IExtensionsManager {
         PluginState state = pluginManager.stopPlugin(pluginId);
         try {
             if (state.equals(PluginState.STOPPED)) {
-                authnMethodsExts.forEach(pair -> {
-                    if (pluginId.equals(pair.getY())) {
-                        authnMethodsExts.remove(pair);
-                    }
-                });
+                plugExtensionMap.remove(pluginId);
                 zkService.removePluginLabels(pluginId);
                 registryHandler.remove(pluginId);
                 resourceExtractor.removeDestinationDirectory(getDestinationPathForPlugin(pluginId));
@@ -325,9 +253,9 @@ public class ExtensionsManager implements IExtensionsManager {
             /*
             //Notifies activation/deactivation for extensions handling authentication methods
             Set<String> acrs = configurationHandler.retrieveAcrs();
-            authnMethodsExts.forEach(pair -> pair.getX().deactivate());
+            plugExtensionMap.forEach(pair -> pair.getX().deactivate());
             for (String acr : acrs) {
-                getExtensionForAuthnMethod(acr).activate();
+                getExtensionForAcr(acr).activate();
             } */
             reconfigureServices(pluginId, path, pluginManager.getPluginClassLoader(pluginId));
             success = true;
@@ -339,6 +267,65 @@ public class ExtensionsManager implements IExtensionsManager {
             logger.warn("Plugin loaded from {} not started. Current state is {}", path.toString(), state == null ? null : state.toString());
         }
         return success;
+
+    }
+
+    private List<AuthnMethod> scanInnerAuthnMechanisms() {
+
+        List<AuthnMethod> actualAMEs = new ArrayList<>();
+        List<AuthnMethod> authnMethodExtensions = pluginManager.getExtensions(AUTHN_METHOD_CLASS);
+        if (authnMethodExtensions != null) {
+
+            for (AuthnMethod ext : authnMethodExtensions) {
+                String acr = ext.getAcr();
+                String name = ext.getName();
+                logger.info("Found system extension '{}' for {}", name, acr);
+                actualAMEs.add(ext);
+            }
+        }
+        return actualAMEs;
+
+    }
+
+    private void parsePluginAuthnMethodExtensions(String pluginId) {
+
+        List<AuthnMethod> ames = pluginManager.getExtensions(AUTHN_METHOD_CLASS, pluginId);
+        if (ames.size() > 0) {
+            logger.info("Plugin extends {} at {} point(s)", AUTHN_METHOD_CLASS.getName(), ames.size());
+
+            for (AuthnMethod ext : ames) {
+                logger.info("Extension point found to deal with acr value '{}'", ext.getAcr());
+            }
+
+            List<AuthnMethod> exts = new ArrayList<>(ames);
+            //I think this is safer than simply plugExtensionMap.put(pluginId, ames)
+            plugExtensionMap.put(pluginId, exts);
+
+        }
+
+    }
+
+    private Path getDestinationPathForPlugin(String pluginId) {
+        return Paths.get(zkService.getAppFileSystemRoot(), RSRegistryHandler.ENDPOINTS_PREFIX, pluginId);
+    }
+
+    private void extractResources(String pluginId, Path path) throws IOException {
+
+        Path destPath = getDestinationPathForPlugin(pluginId);
+        logger.info("Extracting resources for plugin {} to {}", pluginId, destPath.toString());
+
+        if (Files.isDirectory(path)) {
+            path = Paths.get(path.toString(), ASSETS_DIR);
+            if (Files.isDirectory(path)) {
+                resourceExtractor.createDirectory(path, destPath);
+            } else {
+                logger.info("No resources to extract");
+            }
+        } else if (Utils.isJarFile(path)) {
+            try (JarInputStream jis = new JarInputStream(new BufferedInputStream(new FileInputStream(path.toString())), false)) {
+                resourceExtractor.createDirectory(jis, ASSETS_DIR + "/", destPath);
+            }
+        }
 
     }
 

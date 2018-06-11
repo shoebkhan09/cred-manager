@@ -252,18 +252,22 @@ public class PluginViewModel extends MainViewModel {
     @Command
     public void stopPlugin(@BindingParam("id") String pluginId) {
 
-        boolean success = extManager.stopPlugin(pluginId);
-        if (success) {
-            String stopped = PluginState.STOPPED.toString();
-            PluginData pluginData = pluginList.stream().filter(pl -> pl.getDescriptor().getPluginId().equals(pluginId))
-                    .findAny().get();
-            pluginData.setState(Labels.getLabel("adm.plugins_state." + stopped));
-
-            PluginInfo pl = getSettings().getKnownPlugins().stream().filter(apl -> apl.getId().equals(pluginId)).findAny().get();
-            pl.setState(stopped);
-            updateMainSettings();
+        if (getSettings().getAcrPluginMap().values().contains(pluginId)) {
+            Messagebox.show(Labels.getLabel("adm.plugin_plugin_bound_method"), null, Messagebox.OK, Messagebox.EXCLAMATION);
         } else {
-            Utils.showMessageUI(false);
+            boolean success = extManager.stopPlugin(pluginId);
+            if (success) {
+                String stopped = PluginState.STOPPED.toString();
+                PluginData pluginData = pluginList.stream().filter(pl -> pl.getDescriptor().getPluginId().equals(pluginId))
+                        .findAny().get();
+                pluginData.setState(Labels.getLabel("adm.plugins_state." + stopped));
+
+                PluginInfo pl = getSettings().getKnownPlugins().stream().filter(apl -> apl.getId().equals(pluginId)).findAny().get();
+                pl.setState(stopped);
+                updateMainSettings();
+            } else {
+                Utils.showMessageUI(false);
+            }
         }
         hidePluginDetails();
 

@@ -91,4 +91,8 @@ public class SecurityKeyExtension implements AuthnMethod {
         return false;
     }
 
+    public void reloadConfiguration() {
+        u2fService.reloadConfiguration();
+    }
+
 }
