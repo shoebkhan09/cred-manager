@@ -18,52 +18,78 @@
                 <label value="@load(vm.introText)" />
             </div>
             <div sclass="callout padded">
-                <label value="${c:l(vm.secondFactorAllowed ? 'usr.warn_lock': 'usr.strong.unavailable')}" />
+                <label value="${c:l(vm.methodsAvailability ? 'usr.warn_lock': 'usr.strong.unavailable')}" />
             </div>
         </vlayout>
 
-        <include src="user/preferred.zul" />
+        <zk if="${vm.methodsAvailability and vm.has2faRequisites}">
+            <include src="user/preferred.zul" />
 
-        <div children="@load(vm.widgets)">
-            <template name="children">
+            <div children="@load(vm.widgets)">
+                <template name="children">
 
-                <panel title="${c:l(each.panelTitleKey)}" sclass="padded" border="normal">
-                    <panelchildren sclass="padded">
-                        <vlayout>
-                            <label value="${c:l(each.panelTextKey)}"/>
+                    <panel title="${c:l(each.panelTitleKey)}" sclass="padded" border="normal">
+                        <panelchildren sclass="padded">
+                            <vlayout>
+                                <label value="${c:l(each.panelTextKey)}"/>
 
-                            <zk if="${not empty each.getEnrolledCreds(sessionContext.user.id)}">
-                                <separator />
-                                <label value="${labels.usr.you_added}" />
+                                <zk if="${not empty each.getEnrolledCreds(sessionContext.user.id)}">
+                                    <separator />
+                                    <label value="${labels.usr.you_added}" />
 
-                                <vlayout sclass="summary" children="@load(each.getEnrolledCreds(sessionContext.user.id))">
-                                    <template name="children">
-                                        <hlayout sclass="de_emphasized">
-                                            <label sclass="bold" value="@load(empty each.nickName ? c:l('general.no_named') : each.nickName)" />
-                                            <zk if="${not empty each.addedOn}">
-                                                <label value=" -" />
-                                                <label value="@load(c:toLowerCase(c:l('general.added_on')))" />
-                                                <label value="@load(each.addedOn) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d yyyy', offset = sessionContext.zoneOffset)" />
-                                            </zk>
-                                        </hlayout>
-                                    </template>
+                                    <vlayout sclass="summary" children="@load(each.getEnrolledCreds(sessionContext.user.id))">
+                                        <template name="children">
+                                            <hlayout sclass="de_emphasized">
+                                                <label sclass="bold" value="@load(empty each.nickName ? c:l('general.no_named') : each.nickName)" />
+                                                <zk if="${not empty each.addedOn}">
+                                                    <label value=" -" />
+                                                    <label value="@load(c:toLowerCase(c:l('general.added_on')))" />
+                                                    <label value="@load(each.addedOn) @converter('org.gluu.credmanager.ui.CustomDateConverter', format='MMM d yyyy', offset = sessionContext.zoneOffset)" />
+                                                </zk>
+                                            </hlayout>
+                                        </template>
+                                    </vlayout>
+                                </zk>
+
+                                <div sclass="padded" align="center">
+                                    <vlayout>
+                                        <button label="${c:l(each.panelButtonKey)}" sclass="btn-success" href="${each.pageUrl}"/>
+                                        <zk if="${not empty each.panelBottomTextKey}">
+                                            <n:span class="de_emphasized">${c:l(each.panelBottomTextKey)}</n:span>
+                                        </zk>
+                                    </vlayout>
+                                </div>
+                            </vlayout>
+                        </panelchildren>
+                    </panel>
+
+                </template>
+            </div>
+        </zk>
+        <zk if="${vm.methodsAvailability and not vm.has2faRequisites}">
+
+            <vlayout sclass="padded">
+                <label value="${labels.usr.strong.requisite_text}" />
+                <separator />
+                <div sclass="row" children="@load(vm.pre2faMethods)">
+                    <template name="children">
+                        <div sclass="col-sm-6 col-md-4">
+                            <a sclass="thumbnail" href="${each.pageUrl}" style="text-decoration:none">
+                                <vlayout sclass="caption">
+                                    <n:h3>${c:l(each.panelTitleKey)}</n:h3>
+                                    <label value="${c:l(each.panelTextKey)}" />
+                                    <div align="center">
+                                        <button label="${labels.general.go}" sclass="btn-success" href="${each.pageUrl}"/>
+                                    </div>
                                 </vlayout>
-                            </zk>
+                            </a>
+                        </div>
+                    </template>
+                </div>
+            </vlayout>
 
-                            <div sclass="padded" align="center">
-                                <vlayout>
-                                    <button label="${c:l(each.panelButtonKey)}" sclass="btn-success" href="${each.pageUrl}"/>
-                                    <zk if="${not empty each.panelBottomTextKey}">
-                                        <n:span class="de_emphasized">${c:l(each.panelBottomTextKey)}</n:span>
-                                    </zk>
-                                </vlayout>
-                            </div>
-                        </vlayout>
-                    </panelchildren>
-                </panel>
+        </zk>
 
-            </template>
-        </div>
 
         <zk if="${configurationHandler.settings.enablePassReset}">
             <panel title="${labels.usr.passreset_title}" sclass="padded" border="normal" collapsible="true" open="@load(vm.uiPwdResetOpened)">
@@ -86,10 +112,6 @@
                             <label sclass="de_emphasized col-sm-offset-5" visible="@load(not empty vm.strengthText)"
                                    style="padding-left:20px" value="${labels.usr.pass.strength.title}" />
                             <label sclass="de_emphasized bold" value="@load(vm.strengthText)"/>
-                            <!--vlayout>
-                                <label value="${labels.usr.passreset_strength_hint}" sclass="de_emphasized"/>
-                                <label sclass="de_emphasized" value="@load(vm.strengthText)"/>
-                            </vlayout-->
                         </div>
                         <div sclass="form-group">
                             <label value="${labels.usr.passreset_confirm}" sclass="control-label form-label col-sm-5"/>
@@ -100,9 +122,8 @@
                         <div align="center">
                             <separator />
                             <hlayout spacing="20px" valign="bottom" sclass="padded">
-                                <button label="&#160;${labels.usr.passreset_change}&#160;" sclass="btn-success"
+                                <button label="${labels.usr.passreset_change}" sclass="btn-success"
                                         onClick="@command('resetPass')" disabled="@load(empty vm.currentPassword or empty vm.newPassword)"/>
-                                        <!-- or empty vm.newPasswordConfirm -->
                                 <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancel')"/>
                             </hlayout>
                         </div>

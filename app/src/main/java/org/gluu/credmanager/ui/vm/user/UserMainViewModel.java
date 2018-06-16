@@ -32,6 +32,7 @@ import org.zkoss.zkplus.cdi.DelegatingVariableResolver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This is the ViewModel of page user.zul (the main page of this app).
@@ -53,9 +54,11 @@ public class UserMainViewModel extends UserViewModel {
     private ExtensionsManager extManager;
 
     private String introText;
-    private boolean secondFactorAllowed;
+    private boolean methodsAvailability;
+    private boolean has2faRequisites;
 
     private List<AuthnMethod> widgets;
+    private List<AuthnMethod> pre2faMethods;
 
     private String currentPassword;
     private String newPassword;
@@ -70,6 +73,14 @@ public class UserMainViewModel extends UserViewModel {
 
     public boolean isUiPwdResetOpened() {
         return uiPwdResetOpened;
+    }
+
+    public boolean isMethodsAvailability() {
+        return methodsAvailability;
+    }
+
+    public boolean isHas2faRequisites() {
+        return has2faRequisites;
     }
 
     @DependsOn("strength")
@@ -109,12 +120,12 @@ public class UserMainViewModel extends UserViewModel {
         this.newPasswordConfirm = newPasswordConfirm;
     }
 
-    public boolean isSecondFactorAllowed() {
-        return secondFactorAllowed;
-    }
-
     public List<AuthnMethod> getWidgets() {
         return widgets;
+    }
+
+    public List<AuthnMethod> getPre2faMethods() {
+        return pre2faMethods;
     }
 
     @Init(superclass = true)
@@ -123,15 +134,18 @@ public class UserMainViewModel extends UserViewModel {
         strength = -1;
 
         Set<String> enabledAcrs = confHandler.getEnabledAcrs();
-        secondFactorAllowed = enabledAcrs.size() > 0;
+        methodsAvailability = enabledAcrs.size() > 0;
         widgets = new ArrayList<>();
 
-        if (secondFactorAllowed) {
+        if (methodsAvailability) {
             StringBuffer helper = new StringBuffer();
             enabledAcrs.forEach(acr -> helper.append(", ").append(Labels.getLabel("usr.main_intro." + acr)));
             String orgName = ldapService.getOrganization().getDisplayName();
             introText = Labels.getLabel("usr.main_intro", new String[] { orgName, helper.substring(2) });
             widgets = userService.getLiveAuthnMethods();
+
+            pre2faMethods = widgets.stream().filter(AuthnMethod::mayBe2faActivationRequisite).collect(Collectors.toList());
+            has2faRequisites = pre2faMethods.stream().anyMatch(aMethod ->  aMethod.getTotalUserCreds(user.getId(), true) > 0);
         }
 
     }
