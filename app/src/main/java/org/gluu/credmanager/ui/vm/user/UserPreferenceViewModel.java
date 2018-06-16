@@ -5,6 +5,8 @@
  */
 package org.gluu.credmanager.ui.vm.user;
 
+import org.gluu.credmanager.conf.MainSettings;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
 import org.gluu.credmanager.core.ConfigurationHandler;
 import org.gluu.credmanager.core.ExtensionsManager;
 import org.gluu.credmanager.extension.AuthnMethod;
@@ -50,6 +52,7 @@ public class UserPreferenceViewModel extends UserViewModel {
     private boolean uiEditing;
     private boolean uiEditable;
     private boolean uiNotEnoughCredsFor2FA;
+    private boolean uiAllowedToSetPolicy;
 
     public boolean isUiNotEnoughCredsFor2FA() {
         return uiNotEnoughCredsFor2FA;
@@ -63,6 +66,10 @@ public class UserPreferenceViewModel extends UserViewModel {
         return uiEditable;
     }
 
+    public boolean isUiAllowedToSetPolicy() {
+        return uiAllowedToSetPolicy;
+    }
+
     public List<Pair<String, String>> getAvailMethods() {
         return availMethods;
     }
@@ -74,16 +81,14 @@ public class UserPreferenceViewModel extends UserViewModel {
     @DependsOn("selectedMethod")
     public String getSelectedMethodName() {
 
-        Optional<String> optCred = Optional.ofNullable(selectedMethod).map(acr -> {
-            AuthnMethod extension = extManager.getExtensionForAcr(acr);
-            return extension == null ? null : Labels.getLabel(extension.getUINameKey());
-        });
-        return optCred.orElse(noMethodName);
+        return Optional.ofNullable(selectedMethod).map(extManager::getExtensionForAcr)
+                .map(aMethod -> Labels.getLabel(aMethod.get().getUINameKey())).orElse(noMethodName);
     }
 
     @Init(superclass = true)
     public void childInit() {
 
+        MainSettings settings = confHandler.getSettings();
         selectedMethod = user.getPreferredMethod();
         noMethodName = Labels.getLabel("usr.method.none");
 
@@ -99,11 +104,11 @@ public class UserPreferenceViewModel extends UserViewModel {
 
         //Note: It may happen user already has enrolled credentials, but admin changed availability of method. In that
         //case user should not be able to edit
-        uiEditable = totalCreds >= confHandler.getSettings().getMinCredsFor2FA() && availMethods.size() > 0;
-        uiNotEnoughCredsFor2FA = totalCreds < confHandler.getSettings().getMinCredsFor2FA() && enabledMethods.size() > 0;
+        uiEditable = totalCreds >= settings.getMinCredsFor2FA() && availMethods.size() > 0;
+        uiNotEnoughCredsFor2FA = totalCreds < settings.getMinCredsFor2FA() && enabledMethods.size() > 0;
 
         availMethods.add(new Pair<>(null, noMethodName));
-
+        uiAllowedToSetPolicy = settings.getEnforcement2FA().contains(EnforcementPolicy.CUSTOM);
     }
 
     @NotifyChange({"uiEditing", "selectedMethod"})

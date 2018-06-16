@@ -5,8 +5,6 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import org.gluu.credmanager.misc.Utils;
 
-import java.util.Optional;
-
 /**
  * This class provides an implementation of an object that can be used to
  * represent gluuPerson objects in the directory.
@@ -127,8 +125,12 @@ public class PersonPreferences extends BaseLdapPerson {
         this.oxPreferredMethod = Utils.stringArrayFrom(method);
     }
 
-    public void setTrustedDevices(String oxTrustedDevicesInfo) {
-        this.oxTrustedDevicesInfo = Utils.stringArrayFrom(oxTrustedDevicesInfo);
+    public void setStrongAuthPolicy(String policy) {
+        this.oxStrongAuthPolicy = Utils.stringArrayFrom(policy);
+    }
+
+    public void setTrustedDevices(String trustedDevicesInfo) {
+        this.oxTrustedDevicesInfo = Utils.stringArrayFrom(trustedDevicesInfo);
     }
 
 }

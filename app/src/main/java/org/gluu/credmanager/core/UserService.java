@@ -5,7 +5,12 @@
  */
 package org.gluu.credmanager.core;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unboundid.ldap.sdk.Filter;
+import org.gluu.credmanager.conf.sndfactor.EnforcementPolicy;
+import org.gluu.credmanager.conf.sndfactor.TrustedDevice;
+import org.gluu.credmanager.conf.sndfactor.TrustedDeviceComparator;
 import org.gluu.credmanager.core.ldap.Person;
 import org.gluu.credmanager.core.ldap.PersonPreferences;
 import org.gluu.credmanager.core.pojo.User;
@@ -13,6 +18,7 @@ import org.gluu.credmanager.extension.AuthnMethod;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.LdapService;
 import org.slf4j.Logger;
+import org.xdi.util.security.StringEncrypter;
 import org.zkoss.util.Pair;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -48,6 +54,8 @@ public class UserService {
 
     @Inject
     private ConfigurationHandler confHandler;
+
+    private ObjectMapper mapper=new ObjectMapper();
 
     public boolean passwordMatch(String userName, String password) {
 
@@ -170,5 +178,73 @@ public class UserService {
         return ldapService.find(ppfs, PersonPreferences.class, ldapService.getPeopleDn()).size() == 0;
     }
 
+    public Pair<Set<String>, List<TrustedDevice>> get2FAPolicyData(String userId) {
+
+        Set<String> list = new HashSet<>();
+        List<TrustedDevice> trustedDevices = new ArrayList<>();
+        try {
+            PersonPreferences person = ldapService.get(PersonPreferences.class, ldapService.getPersonDn(userId));
+            String policy = person.getStrongAuthPolicy();
+
+            if (Utils.isNotEmpty(policy)) {
+                Stream.of(policy.split(",\\s*")).forEach(str -> {
+                    try {
+                        list.add(EnforcementPolicy.valueOf(str.toUpperCase()).toString());
+                    } catch (Exception e) {
+                        logger.error("The policy '{}' is not recognized", str);
+                    }
+                });
+            }
+
+            String trustedDevicesInfo = ldapService.getEncryptedString(person.getTrustedDevicesInfo());
+            if (Utils.isNotEmpty(trustedDevicesInfo)) {
+                trustedDevices = mapper.readValue(trustedDevicesInfo, new TypeReference<List<TrustedDevice>>() { });
+                trustedDevices.forEach(TrustedDevice::sortOriginsDescending);
+
+                TrustedDeviceComparator comparator = new TrustedDeviceComparator(true);
+                trustedDevices.sort((first, second) -> comparator.compare(second, first));
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return new Pair<>(list, trustedDevices);
+
+    }
+
+    public boolean update2FAPolicies(String userId, Set<String> policies) {
+
+        boolean updated = false;
+        String str = policies.stream().map(String::toLowerCase).reduce("", (partial, next) -> partial + ", " + next);
+        try {
+            PersonPreferences person = ldapService.get(PersonPreferences.class, ldapService.getPersonDn(userId));
+            person.setStrongAuthPolicy(str.substring(2));
+            updated = ldapService.modify(person, PersonPreferences.class);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return updated;
+
+    }
+
+    public boolean deleteTrustedDevice(String userId, List<TrustedDevice> devices, int index) {
+
+        boolean updated = false;
+        List<TrustedDevice> copyOfDevices = new ArrayList<>(devices);
+        try {
+            copyOfDevices.remove(index);
+            String updatedJson = ldapService.getEncryptedString(mapper.writeValueAsString(copyOfDevices));
+
+            PersonPreferences person = ldapService.get(PersonPreferences.class, ldapService.getPersonDn(userId));
+            person.setTrustedDevices(updatedJson);
+            if (ldapService.modify(person, PersonPreferences.class)) {
+                devices.remove(index);
+                updated = true;
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return updated;
+
+    }
 
 }
