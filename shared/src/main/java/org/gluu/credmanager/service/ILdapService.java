@@ -26,6 +26,7 @@ public interface ILdapService {
     String getGroupsDn();
     String getScopesDn();
     String getClientsDn();
+    String getCustomScriptsDn();
     String getOrganizationInum();
     gluuOrganization getOrganization();
     Map<String, String> getCustScriptConfigProperties(String displayName);

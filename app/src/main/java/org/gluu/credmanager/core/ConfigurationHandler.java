@@ -14,6 +14,7 @@ import org.gluu.credmanager.event.AppStateChangeEvent;
 import org.gluu.credmanager.extension.AuthnMethod;
 import org.gluu.credmanager.misc.AppStateEnum;
 import org.gluu.credmanager.misc.Utils;
+import org.gluu.credmanager.service.AuthnScriptsReloader;
 import org.gluu.credmanager.service.LdapService;
 import org.gluu.credmanager.service.TrustedDevicesSweeper;
 import org.greenrobot.eventbus.EventBus;
@@ -76,6 +77,9 @@ public class ConfigurationHandler extends JobListenerSupport {
 
     @Inject
     private TrustedDevicesSweeper devicesSweeper;
+
+    @Inject
+    private AuthnScriptsReloader scriptsReloader;
 
     private Set<String> serverAcrs;
 
@@ -183,6 +187,7 @@ public class ConfigurationHandler extends JobListenerSupport {
 
                         extManager.scan();
                         //TODO: uncomment
+                        //scriptsReloader.init();
                         if (true /*oxdService.initialize()*/) {
                             refreshAcrPluginMapping();
                             setAppState(AppStateEnum.OPERATING);

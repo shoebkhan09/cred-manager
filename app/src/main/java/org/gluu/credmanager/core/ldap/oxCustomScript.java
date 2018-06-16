@@ -5,6 +5,11 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import org.gluu.credmanager.misc.Utils;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * This class provides an implementation of an object that can be used to
@@ -84,30 +89,116 @@ public class oxCustomScript
              filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
   private String[] oxScriptType;
 
-  /**
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        oxCustomScript that = (oxCustomScript) o;
+        return Objects.equals(ldapEntry, that.ldapEntry) &&
+                Arrays.equals(inum, that.inum) &&
+                Arrays.equals(description, that.description) &&
+                Objects.equals(displayName, that.displayName) &&
+                Arrays.equals(gluuStatus, that.gluuStatus) &&
+                Arrays.equals(oxConfigurationProperty, that.oxConfigurationProperty) &&
+                Arrays.equals(oxLevel, that.oxLevel) &&
+                Arrays.equals(oxModuleProperty, that.oxModuleProperty) &&
+                Arrays.equals(oxRevision, that.oxRevision) &&
+                Arrays.equals(oxScript, that.oxScript) &&
+                Arrays.equals(oxScriptType, that.oxScriptType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ldapEntry, inum, description, displayName, gluuStatus, oxConfigurationProperty, oxLevel,
+                oxModuleProperty, oxRevision, oxScript, oxScriptType);
+    }
+
+
+    public String getDisplayName() {
+        return displayName;
+    }
+    /**
+     * Retrieves the values for the field associated with the
+     * oxConfigurationProperty attribute, if present.
+     *
+     * @return  The values for the field associated with the
+     *          oxConfigurationProperty attribute, or
+     *          {@code null} if that attribute was not present in the entry.
+     */
+    public String[] getConfigurationProperties()
+    {
+        return oxConfigurationProperty;
+    }
+
+    public List<String> getModuleProperties() {
+        return Utils.listfromArray(oxModuleProperty);
+    }
+
+    /**
+     * Retrieves the first value for the field associated with the
+     * oxScript attribute, if present.
+     *
+     * @return  The first value for the field associated with the
+     *          oxScript attribute, or
+     *          {@code null} if that attribute was not present in the entry or
+     *          does not have any values.
+     */
+    public String getScript()
+    {
+        if ((oxScript == null) ||
+                (oxScript.length == 0))
+        {
+            return null;
+        }
+        else
+        {
+            return oxScript[0];
+        }
+    }
+
+    /**
+     * Retrieves the first value for the field associated with the
+     * oxRevision attribute, if present.
+     *
+     * @return  The first value for the field associated with the
+     *          oxRevision attribute, or
+     *          {@code null} if that attribute was not present in the entry or
+     *          does not have any values.
+     */
+    public String getRevision()
+    {
+        if ((oxRevision == null) ||
+                (oxRevision.length == 0))
+        {
+            return null;
+        }
+        else
+        {
+            return oxRevision[0];
+        }
+    }
+ /**
    * Sets the value for the field associated with the
    * displayName attribute.
    *
-   * @param  v  The value for the field associated with the
+   * @param displayName  The value for the field associated with the
    *            displayName attribute.
    */
-  public void setDisplayName(final String v)
+  public void setDisplayName(String displayName)
   {
-    this.displayName = v;
+    this.displayName = displayName;
   }
 
-
-  /**
-   * Retrieves the values for the field associated with the
-   * oxConfigurationProperty attribute, if present.
-   *
-   * @return  The values for the field associated with the
-   *          oxConfigurationProperty attribute, or
-   *          {@code null} if that attribute was not present in the entry.
-   */
-  public String[] getConfigurationProperties()
-  {
-    return oxConfigurationProperty;
-  }
+    /**
+     * Sets the value for the field associated with the
+     * oxRevision attribute.
+     *
+     * @param revision  The value for the field associated with the
+     *            oxRevision attribute.
+     */
+    public void setRevision(String revision)
+    {
+        this.oxRevision = new String[] { revision };
+    }
 
 }
