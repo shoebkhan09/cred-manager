@@ -135,7 +135,7 @@ public class ExtensionsManager implements IExtensionsManager {
 
     }
 
-    public AuthnMethod getExtensionForAcr(String acr) {
+    public Optional<AuthnMethod> getExtensionForAcr(String acr) {
 
         AuthnMethod handler = null;
         String plugId = mainSettings.getAcrPluginMap().get(acr);
@@ -148,7 +148,7 @@ public class ExtensionsManager implements IExtensionsManager {
                 break;
             }
         }
-        return handler;
+        return Optional.ofNullable(handler);
 
     }
 

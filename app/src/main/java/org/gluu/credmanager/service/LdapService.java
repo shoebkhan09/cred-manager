@@ -87,8 +87,12 @@ public class LdapService implements ILdapService {
         return dynRegEnabled ? oxAuthConfDynamic.get("dynamicRegistrationExpirationTime").asInt() : -1;
     }
 
-    public StringEncrypter getStringEncrypter() {
-        return stringEncrypter;
+    public String getEncryptedString(String str) throws StringEncrypter.EncryptionException {
+        return stringEncrypter == null ? str : stringEncrypter.encrypt(str);
+    }
+
+    public String getDecryptedString(String str) throws StringEncrypter.EncryptionException  {
+        return stringEncrypter == null ? str :  stringEncrypter.decrypt(str);
     }
 
     @PostConstruct
@@ -132,11 +136,10 @@ public class LdapService implements ILdapService {
 
         Map<String, String> properties = null;
         try {
-            String dn = oxAuthConfStatic.get("baseDn").get("scripts").asText();
             oxCustomScript script = new oxCustomScript();
             script.setDisplayName(displayName);
 
-            List<oxCustomScript> scripts = find(script, oxCustomScript.class, dn);
+            List<oxCustomScript> scripts = find(script, oxCustomScript.class, getCustomScriptsDn());
             if (scripts.size() > 0) {
                 String[] props = scripts.get(0).getConfigurationProperties();
 
@@ -179,6 +182,10 @@ public class LdapService implements ILdapService {
 
     public String getScopesDn() {
         return oxAuthConfStatic.get("baseDn").get("scopes").asText();
+    }
+
+    public String getCustomScriptsDn() {
+        return oxAuthConfStatic.get("baseDn").get("scripts").asText();
     }
 
     public String getOrganizationInum() {

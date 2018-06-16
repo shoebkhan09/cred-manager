@@ -43,7 +43,7 @@
                         <div sclass="col-sm-4">&#160;</div>
                         <div sclass="col-sm-8">
                             <hlayout spacing="25px" sclass="padded">
-                                <button label="&#160;${labels.general.save}&#160;" sclass="btn-success" onClick="@command('saveOxdSettings')" />
+                                <button label="${labels.general.save}" sclass="btn-success" onClick="@command('saveOxdSettings')" />
                                 <button label="${labels.general.cancel}" sclass="btn-success" onClick="@command('cancel')" />
                             </hlayout>
                         </div>

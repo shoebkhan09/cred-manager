@@ -17,7 +17,7 @@ import org.zkoss.zkplus.cdi.DelegatingVariableResolver;
  * @author jgomer
  */
 @VariableResolver(DelegatingVariableResolver.class)
-public class UserOTPViewModel extends UserViewModel {
+public class OTPViewModel extends UserViewModel {
 
     private static final int QR_SCAN_TIMEOUT = 60;
 

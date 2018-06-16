@@ -74,19 +74,15 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
     @Override
     public void jobToBeExecuted(JobExecutionContext context) {
 
-        logger.info("TrustedDevicesSweeper. Running timer");
+        logger.info("TrustedDevicesSweeper. Running timer job");
         long now = System.currentTimeMillis();
-        StringEncrypter stringEncrypter = ldapService.getStringEncrypter();
         List<PersonPreferences> people = getPeopleTrustedDevices();
 
         for (PersonPreferences person : people) {
             try {
-                String trustedDevicesInfo = person.getTrustedDevicesInfo();
-                if (stringEncrypter != null) {
-                    trustedDevicesInfo = stringEncrypter.decrypt(trustedDevicesInfo);
-                }
-
+                String trustedDevicesInfo = ldapService.getDecryptedString(person.getTrustedDevicesInfo());
                 List<TrustedDevice> list = mapper.readValue(trustedDevicesInfo, new TypeReference<List<TrustedDevice>>() { });
+
                 if (removeExpiredData(list, now)) {
                     //update list
                     String jsonStr = mapper.writeValueAsString(list);
@@ -153,12 +149,7 @@ public class TrustedDevicesSweeper extends JobListenerSupport {
         String rdn = person.getInum();
 
         logger.trace("TrustedDevicesSweeper. Cleaning expired trusted devices for user '{}'", rdn);
-        StringEncrypter stringEncrypter = ldapService.getStringEncrypter();
-        if (stringEncrypter != null) {
-            person.setTrustedDevices(stringEncrypter.encrypt(jsonDevices));
-        } else {
-            person.setTrustedDevices(jsonDevices);
-        }
+        person.setTrustedDevices(ldapService.getEncryptedString(jsonDevices));
         ldapService.modify(person, PersonPreferences.class);
 
     }

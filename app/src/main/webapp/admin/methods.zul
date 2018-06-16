@@ -10,7 +10,8 @@
                         <columns>
                             <column width="${sessionContext.onMobile ? '25px' : '55px'}" label="${sessionContext.onMobile ? '' : labels.adm.methods_enabled_method}" />
                             <column label="${labels.adm.methods_acr}" />
-                            <column width="45%" label="${labels.adm.methods_plugin}" />
+                            <column width="40%" label="${labels.adm.methods_plugin}" />
+                            <column width="50px" />
                         </columns>
                         <template name="model">
                             <row>
@@ -27,7 +28,7 @@
                     </grid>
                     <separator />
                     <separator />
-                    <button disabled="@load(empty vm.methods)" label="&#160;${labels.general.save}&#160;" sclass="btn-success" onClick="@command('save')" />
+                    <button disabled="@load(empty vm.methods)" label="${labels.general.save}" sclass="btn-success" onClick="@command('save')" />
                 </div>
                 <n:span sclass="de_emphasized">${labels.adm.methods_hint}</n:span>
             </vlayout>
