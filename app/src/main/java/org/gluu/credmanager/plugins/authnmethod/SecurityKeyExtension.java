@@ -34,7 +34,7 @@ public class SecurityKeyExtension implements AuthnMethod {
     }
 
     public String getUINameKey() {
-        return "general.credentials.SECURITY_KEY";
+        return "usr.u2f_label";
     }
 
     public String getName() {

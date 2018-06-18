@@ -86,9 +86,10 @@ public class UserService {
     }
 
     public List<AuthnMethod> getLiveAuthnMethods() {
+        Map<String, Integer> authnMethodLevels = confHandler.getAcrLevelMapping();
         Set<String> mappedAcrs = confHandler.getSettings().getAcrPluginMap().keySet();
         return extManager.getAuthnMethodExts().stream().filter(aMethod -> mappedAcrs.contains(aMethod.getAcr()))
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(aMethod -> -authnMethodLevels.get(aMethod.getAcr()))).collect(Collectors.toList());
     }
 
     public List<Pair<AuthnMethod, Integer>> getUserMethodsCount(String userId, Set<String> retainMethods) {

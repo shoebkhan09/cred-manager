@@ -34,7 +34,7 @@ public class SuperGluuExtension implements AuthnMethod {
     }
 
     public String getUINameKey() {
-        return "general.credentials.SUPER_GLUU";
+        return "usr.supergluu_label";
     }
 
     public String getName() {

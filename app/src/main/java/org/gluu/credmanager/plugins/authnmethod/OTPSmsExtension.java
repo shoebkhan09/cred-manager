@@ -36,7 +36,7 @@ public class OTPSmsExtension extends BaseSystemExtension implements AuthnMethod 
     }
 
     public String getUINameKey() {
-        return "general.credentials.VERIFIED_PHONE";
+        return "usr.mobile_label";
     }
 
     public String getName() {

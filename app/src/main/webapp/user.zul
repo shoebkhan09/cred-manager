@@ -71,20 +71,22 @@
             <vlayout sclass="padded">
                 <label value="${labels.usr.strong.requisite_text}" />
                 <separator />
-                <div sclass="row" children="@load(vm.pre2faMethods)">
-                    <template name="children">
-                        <div sclass="col-sm-6 col-md-4">
-                            <a sclass="thumbnail" href="${each.pageUrl}" style="text-decoration:none">
-                                <vlayout sclass="caption">
-                                    <n:h3>${c:l(each.panelTitleKey)}</n:h3>
-                                    <label value="${c:l(each.panelTextKey)}" />
-                                    <div align="center">
-                                        <button label="${labels.general.go}" sclass="btn-success" href="${each.pageUrl}"/>
-                                    </div>
-                                </vlayout>
-                            </a>
-                        </div>
-                    </template>
+                <div style="padding:0 10px">
+                    <div sclass="row" children="@load(vm.pre2faMethods)">
+                        <template name="children">
+                            <div sclass="col-sm-6 col-md-4">
+                                <a sclass="thumbnail" href="${each.pageUrl}" style="text-decoration:none">
+                                    <vlayout sclass="caption">
+                                        <n:h3>${c:l(each.panelTitleKey)}</n:h3>
+                                        <label value="${c:l(each.panelTextKey)}" />
+                                        <div align="center">
+                                            <button label="${labels.general.go}" sclass="btn-success" href="${each.pageUrl}"/>
+                                        </div>
+                                    </vlayout>
+                                </a>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </vlayout>
 

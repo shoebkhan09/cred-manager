@@ -36,7 +36,7 @@ public class OTPExtension extends BaseSystemExtension implements AuthnMethod {
     }
 
     public String getUINameKey() {
-        return "general.credentials.OTP";
+        return "usr.gauth_label";
     }
 
     public String getName() {

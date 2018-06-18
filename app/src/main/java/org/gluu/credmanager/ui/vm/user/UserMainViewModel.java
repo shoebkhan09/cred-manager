@@ -133,16 +133,14 @@ public class UserMainViewModel extends UserViewModel {
         uiPwdResetOpened = true;
         strength = -1;
 
-        Set<String> enabledAcrs = confHandler.getEnabledAcrs();
-        methodsAvailability = enabledAcrs.size() > 0;
-        widgets = new ArrayList<>();
+        widgets = userService.getLiveAuthnMethods();
+        methodsAvailability = widgets.size() > 0;
 
         if (methodsAvailability) {
             StringBuffer helper = new StringBuffer();
-            enabledAcrs.forEach(acr -> helper.append(", ").append(Labels.getLabel("usr.main_intro." + acr)));
+            widgets.forEach(aMethod -> helper.append(", ").append(aMethod.getPanelTitleKey()));
             String orgName = ldapService.getOrganization().getDisplayName();
             introText = Labels.getLabel("usr.main_intro", new String[] { orgName, helper.substring(2) });
-            widgets = userService.getLiveAuthnMethods();
 
             pre2faMethods = widgets.stream().filter(AuthnMethod::mayBe2faActivationRequisite).collect(Collectors.toList());
             has2faRequisites = pre2faMethods.stream().anyMatch(aMethod ->  aMethod.getTotalUserCreds(user.getId(), true) > 0);
