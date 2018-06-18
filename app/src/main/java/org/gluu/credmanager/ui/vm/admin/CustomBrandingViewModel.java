@@ -103,9 +103,7 @@ public class CustomBrandingViewModel extends MainViewModel {
                 if (snippetHandler.getLogoDataUri() == null) {
                     snippetHandler.setLogoDataUri(zkService.getLogoDataUri());
                 }
-                if (snippetHandler.getHeaderColor() == null) {
-                    snippetHandler.setHeaderColor("#ffffff");
-                }
+                snippetHandler.assignMissingHeaderColors();
                 uiOverrideButtonColors = snippetHandler.getMainButtonColor() != null;
                 break;
             default:

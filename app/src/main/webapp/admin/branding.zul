@@ -49,18 +49,27 @@
                             </vlayout>
                         </div>
                         <separator />
-                        <hlayout sclass="dpadded" valign="middle">
-                            <label value="${labels.adm.branding_quick_header}" sclass="bold de_emphasized" />
-                            <separator />
-                            <separator />
-                            <h:input type="color" class="color_picker" value="@bind(vm.snippetHandler.headerColor)"
-                                     data-preferred-format="hex" data-show-input="true"/>
-                        </hlayout>
+                        <div sclass="row">
+                            <hlayout valign="middle" sclass="col-md-4 dpadded">
+                                <label value="${labels.adm.branding_quick_header}" sclass="bold de_emphasized" />
+                                <separator />
+                                <separator />
+                                <h:input type="color" class="color_picker" value="@bind(vm.snippetHandler.headerColor)"
+                                         data-preferred-format="hex" data-show-input="true"/>
+                            </hlayout>
+                            <hlayout valign="middle" sclass="col-md-4 dpadded">
+                                <label value="${labels.adm.branding_quick_panelheader}" sclass="bold de_emphasized" />
+                                <separator />
+                                <separator />
+                                <h:input type="color" class="color_picker" value="@bind(vm.snippetHandler.panelHeadColor)"
+                                         data-preferred-format="hex" data-show-input="true"/>
+                            </hlayout>
+                        </div>
                         <vlayout sclass="dpadded">
                             <label value="${labels.adm.branding_quick_button}" sclass="bold de_emphasized" />
                             <separator />
                             <vlayout sclass="col-md-offset-1">
-                                <n:span>${labels.adm.branding_quick_button_text}</n:span>
+                                <!--n:span>${labels.adm.branding_quick_button_text}</n:span-->
 
                                 <radiogroup id="groupie2" />
                                 <radio label="${labels.adm.branding_quick_button_default}" selected="@load(not vm.uiOverrideButtonColors)"
@@ -69,17 +78,21 @@
                                        onCheck="@command('buttonColorChanging', override=true)" radiogroup="groupie2" />
 
                                 <separator />
-                                <div id="buttoneer" visible="@load(vm.uiOverrideButtonColors)" sclass="row col-sm-offset-1">
-                                    <label value="${labels.adm.branding_quick_button_main}" sclass="col-md-3" style="font-size:90%;padding-top:10px" />
-                                    <div sclass="col-md-3" style="padding-left:0px">
+                                <div visible="@load(vm.uiOverrideButtonColors)" sclass="row col-xs-offset-1">
+                                    <hlayout valign="middle" sclass="col-md-4 dpadded">
+                                        <label value="${labels.adm.branding_quick_button_main}" />
+                                        <separator />
+                                        <separator />
                                         <h:input type="color" class="color_picker" value="@bind(vm.snippetHandler.mainButtonColor)"
                                                  data-preferred-format="hex" data-show-input="true"/>
-                                    </div>
-                                    <label value="${labels.adm.branding_quick_button_auxiliary}" sclass="col-md-3" style="font-size:90%;padding-top:10px" />
-                                    <div sclass="col-md-3" style="padding-left:0px">
+                                    </hlayout>
+                                    <hlayout valign="middle" sclass="col-md-4 dpadded">
+                                        <label value="${labels.adm.branding_quick_button_auxiliary}" />
+                                        <separator />
+                                        <separator />
                                         <h:input type="color" class="color_picker" value="@bind(vm.snippetHandler.auxButtonColor)"
                                                  data-preferred-format="hex" data-show-input="true"/>
-                                    </div>
+                                    </hlayout>
                                 </div>
                             </vlayout>
                         </vlayout>
