@@ -5,7 +5,7 @@
  */
 package org.gluu.credmanager.plugins.menuitem;
 
-import org.gluu.credmanager.extension.UserMenuItem;
+import org.gluu.credmanager.extension.NavigationMenuItem;
 import org.gluu.credmanager.misc.Utils;
 import org.pf4j.Extension;
 
@@ -13,7 +13,7 @@ import org.pf4j.Extension;
  * @author jgomer
  */
 @Extension
-public class BackHomeExtension implements UserMenuItem {
+public class BackHomeExtension implements NavigationMenuItem {
 
     public boolean isDisplayable(String userId, String url) {
         return !(Utils.isEmpty(url) || url.equals("/index.zul"));

@@ -5,13 +5,10 @@
  */
 package org.gluu.credmanager.extension;
 
-import org.pf4j.ExtensionPoint;
-
 /**
  * @author jgomer
  */
-public interface UserMenuItem extends ExtensionPoint {
-    boolean isDisplayable(String userId, String url);
+public interface MenuItem {
     String getPageUrl();
     String getIconImageUrl();
     String getLabel();
