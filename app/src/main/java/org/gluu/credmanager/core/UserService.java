@@ -18,7 +18,6 @@ import org.gluu.credmanager.extension.AuthnMethod;
 import org.gluu.credmanager.misc.Utils;
 import org.gluu.credmanager.service.LdapService;
 import org.slf4j.Logger;
-import org.xdi.util.security.StringEncrypter;
 import org.zkoss.util.Pair;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -246,6 +245,21 @@ public class UserService {
         }
         return updated;
 
+    }
+
+    public String generateRandEnrollmentCode(String userId) {
+
+        String code = UUID.randomUUID().toString();
+        Person person = ldapService.get(Person.class, ldapService.getPersonDn(userId));
+        person.setOxEnrollmentCode(code);
+        return ldapService.modify(person, Person.class) ? code : null;
+
+    }
+
+    public boolean cleanRandEnrollmentCode(String userId) {
+        Person person = ldapService.get(Person.class, ldapService.getPersonDn(userId));
+        person.setOxEnrollmentCode();
+        return ldapService.modify(person, Person.class);
     }
 
 }

@@ -11,9 +11,9 @@ public class FidoDevice extends RegisteredCredential implements Comparable<FidoD
     private String id;
     private long counter;
     private Date creationDate;
+    private Date lastAccessTime;
     private String status;
     private String application;
-    private String deviceData;
 
     public String getId() {
         return id;
@@ -35,12 +35,8 @@ public class FidoDevice extends RegisteredCredential implements Comparable<FidoD
         return creationDate;
     }
 
-    public String getDeviceData() {
-        return deviceData;
-    }
-
-    public void setDeviceData(String deviceData) {
-        this.deviceData = deviceData;
+    public Date getLastAccessTime() {
+        return lastAccessTime;
     }
 
     public void setApplication(String application) {
@@ -53,6 +49,10 @@ public class FidoDevice extends RegisteredCredential implements Comparable<FidoD
 
     public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
+    }
+
+    public void setLastAccessTime(Date lastAccessTime) {
+        this.lastAccessTime = lastAccessTime;
     }
 
     public void setStatus(String status) {

@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.enterprise.inject.spi.CDI;
 
@@ -193,6 +195,11 @@ public final class Utils {
         }
         return valid;
 
+    }
+
+    //Takes a List, applies a map turning elements into booleans, and returns the index of first true occurrence
+    public static <T> int firstTrue(List<T> list, Function<? super T, ? extends Boolean> map){
+        return list.stream().map(map).collect(Collectors.toList()).indexOf(true);
     }
 
 }

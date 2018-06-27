@@ -60,6 +60,12 @@ public class oxDeviceRegistration {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private Date[] creationDate;
 
+    // The field used for optional attribute creationDate.
+    @LDAPField(attribute="oxLastAccessTime",
+            objectClass="oxDeviceRegistration",
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private Date[] oxLastAccessTime;
+
     // The field used for optional attribute oxStatus.
     @LDAPField(attribute="oxStatus",
             objectClass="oxDeviceRegistration",
@@ -95,6 +101,19 @@ public class oxDeviceRegistration {
         else
         {
             return creationDate[0];
+        }
+    }
+
+    public Date getLastAccessTime() {
+
+        if ((oxLastAccessTime == null) ||
+                (oxLastAccessTime.length == 0))
+        {
+            return null;
+        }
+        else
+        {
+            return oxLastAccessTime[0];
         }
     }
 
@@ -159,12 +178,16 @@ public class oxDeviceRegistration {
         this.displayName = displayName;
     }
 
-    public void setOxApplication(String oxApplication) {
-        this.oxApplication = new String[]{ oxApplication };
+    public void setOxApplication(String ...oxApplication) {
+        this.oxApplication = oxApplication;
     }
 
-    public void setOxStatus(String oxStatus) {
-        this.oxStatus = new String[]{ oxStatus };
+    public void setOxStatus(String ...oxStatus) {
+        this.oxStatus = oxStatus;
+    }
+
+    public void setOxId(String ...oxId) {
+        this.oxId = oxId;
     }
 
 }

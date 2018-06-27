@@ -24,6 +24,10 @@ public class Person extends BaseLdapPerson {
     @LDAPField()
     private String[] sn;
 
+    // The field used for optional attribute sn.
+    @LDAPField()
+    private String[] oxEnrollmentCode;
+
     // The field used for optional attribute gluuManagerGroup.
     @LDAPField(attribute="memberOf",
             objectClass="gluuPerson",
@@ -89,6 +93,40 @@ public class Person extends BaseLdapPerson {
 
     public List<DN> getMemberOfDNs() {
         return Utils.listfromArray(memberOf);
+    }
+
+    /**
+     * Retrieves the first value for the field associated with the
+     * oxEnrollmentCode attribute, if present.
+     *
+     * @return  The first value for the field associated with the
+     *          oxEnrollmentCode attribute, or
+     *          {@code null} if that attribute was not present in the entry or
+     *          does not have any values.
+     */
+    public String getFirstOxEnrollmentCode()
+    {
+        if ((oxEnrollmentCode == null) ||
+                (oxEnrollmentCode.length == 0))
+        {
+            return null;
+        }
+        else
+        {
+            return oxEnrollmentCode[0];
+        }
+    }
+
+    /**
+     * Sets the values for the field associated with the
+     * oxEnrollmentCode attribute.
+     *
+     * @param  v  The values for the field associated with the
+     *            oxEnrollmentCode attribute.
+     */
+    public void setOxEnrollmentCode(final String... v)
+    {
+        this.oxEnrollmentCode = v;
     }
 
 }
